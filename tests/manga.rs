@@ -57,3 +57,58 @@ fn bounded_small_and_hostile_terminal_dimensions() {
         assert!(s.width <= ui::MAX_WIDTH && s.height <= ui::MAX_HEIGHT);
     }
 }
+
+#[test]
+fn fresh_consumer_replays_focus_actions_and_screen_not_only_semantics() {
+    use ui::{InputKey, InputRecord};
+    let keys = vec![
+        InputRecord {
+            at_ms: 9000,
+            key: InputKey::Right,
+        },
+        InputRecord {
+            at_ms: 10000,
+            key: InputKey::Enter,
+        },
+        InputRecord {
+            at_ms: 10123,
+            key: InputKey::Char('n'),
+        },
+    ];
+    let mut live = Manga::default();
+    for key in &keys {
+        live.key(key.at_ms, key.key.event());
+    }
+    let encoded = serde_json::to_vec(&keys).unwrap();
+    let restored: Vec<InputRecord> = serde_json::from_slice(&encoded).unwrap();
+    let replay = ui::replay(Manga::default(), &restored, 11000).unwrap();
+    assert_eq!(live.actions, replay.actions);
+    assert_eq!(live.focus, replay.focus);
+    for (w, h) in [(56, 24), (80, 24), (120, 32), (160, 40)] {
+        assert_eq!(
+            live.frame(11000, w, h, ColorDepth::Mono),
+            replay.frame(11000, w, h, ColorDepth::Mono)
+        );
+    }
+    // Negative control: semantic actions alone omit the focus-only input.
+    let incomplete = Manga {
+        actions: live.actions.clone(),
+        ..Manga::default()
+    };
+    assert_ne!(
+        live.frame(11000, 80, 24, ColorDepth::Mono),
+        incomplete.frame(11000, 80, 24, ColorDepth::Mono)
+    );
+}
+
+#[test]
+fn selection_spam_cannot_silently_consume_the_permission_slot() {
+    let mut app = Manga::default();
+    for _ in 0..64 {
+        app.key(10000, KeyEvent::new(KeyCode::Enter, KeyModifiers::empty()));
+    }
+    assert!(ui::plain(&app.frame(10000, 80, 24, ColorDepth::Mono)).contains("INPUT REJECTED"));
+    app.key(10001, KeyEvent::char('n'));
+    assert_eq!(sem::snapshot(18000, &app.actions).permission, Some(false));
+    assert!(sem::snapshot(18000, &app.actions).artifacts.is_empty());
+}

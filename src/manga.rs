@@ -10,12 +10,14 @@ use gibson::{BorderType, Color, ColorDepth, FocusId, FocusRing, Node, Rect, Styl
 pub struct Manga {
     pub focus: FocusRing,
     pub actions: Vec<TimedAction>,
+    pub notice: Option<String>,
 }
 impl Default for Manga {
     fn default() -> Self {
         Self {
             focus: FocusRing::new((1..=4).map(FocusId)),
             actions: Vec::new(),
+            notice: None,
         }
     }
 }
@@ -27,9 +29,22 @@ impl Manga {
             .min(3)
     }
     fn act(&mut self, at_ms: u64, action: Action) {
-        if self.actions.len() < 64 {
-            self.actions.push(TimedAction { at_ms, action });
+        let permission = matches!(action, Action::ResolvePermission { .. });
+        if self.actions.last().is_some_and(|a| a.at_ms > at_ms) {
+            self.notice = Some("Action timestamps must be ordered".into());
+            return;
         }
+        let state = semantic_fixture::snapshot(at_ms, &self.actions);
+        if let Err(error) = semantic_fixture::validate_action(&state, &action) {
+            self.notice = Some(error);
+            return;
+        }
+        if self.actions.len() >= if permission { 64 } else { 63 } {
+            self.notice = Some("Action budget reached; one permission slot reserved".into());
+            return;
+        }
+        self.actions.push(TimedAction { at_ms, action });
+        self.notice = None;
     }
 }
 impl App for Manga {
@@ -254,7 +269,9 @@ impl App for Manga {
             ));
             ui::mount(&mut out, splash, Rect::new(1, 8, w - 2, middle_h));
         }
-        let (title, receipt) = if state.permission_pending {
+        let (title, receipt) = if let Some(notice) = &self.notice {
+            ("INPUT REJECTED", notice.clone())
+        } else if state.permission_pending {
             (
                 "A REAL CHOICE",
                 "Y allow local artifact / N deny — this emits a recorded action".to_string(),

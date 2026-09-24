@@ -1,0 +1,28 @@
+name: External consumer gates
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consumers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # freeze verifier checks committed helper provenance
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable action
+        with:
+          toolchain: 1.98.1
+          components: rustfmt, clippy
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --locked
+      - run: cargo build --locked --release --bins
+      - name: Frozen substrate and helper integrity (once frozen)
+        run: |
+          if [ -f docs/FREEZE.json ]; then python3 scripts/verify_freeze.py; fi

@@ -2,3 +2,7 @@
 pub mod manga;
 pub mod semantic_fixture;
 pub mod ui;
+
+pub mod reactions;
+
+pub mod instruments;

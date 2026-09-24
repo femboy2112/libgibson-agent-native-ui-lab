@@ -1,3 +1,5 @@
 /target/
 *.ppm
 *.log
+__pycache__/
+*.pyc

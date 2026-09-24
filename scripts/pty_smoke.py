@@ -17,7 +17,7 @@ import termios
 import time
 
 
-def capture(binary, width, height, color):
+def capture(binary, width, height, color, include_raw=False):
     master, slave = pty.openpty()
     fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack("HHHH", height, width, 0, 0))
     initial = termios.tcgetattr(slave)
@@ -54,7 +54,8 @@ def capture(binary, width, height, color):
         assert b"panic" not in data, "panic in capture"
         return dict(binary=os.path.basename(binary), size=[width, height], color=color,
                     exit=proc.returncode, bytes=len(data), termios_restored=restored,
-                    resized=resized, seconds=round(time.monotonic()-start, 3))
+                    resized=resized, seconds=round(time.monotonic()-start, 3),
+                    raw_hex=data.hex() if include_raw else None)
     finally:
         if proc.poll() is None:
             proc.kill()

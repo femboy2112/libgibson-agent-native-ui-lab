@@ -42,3 +42,17 @@ grade manga art or a claim about arbitrary graphical interfaces.
 
 Real debug-binary PTY checks passed at 56×24 Mono,120×32 TrueColor,160×40
 ANSI16: pause,Tab,N,resize to56×24,Esc; exit0 and termios/alternate-screen restored.
+These initial PTY checks prove lifecycle under input traffic, not semantic delivery.
+
+## Adversarial corrections before API freeze
+
+A separate read-only review found that actions alone do not reconstruct Tab-only
+focus changes. The earlier repeated-frame test was insufficient for interactive
+replay. The lab now records a bounded ordered input stream and reconstructs a
+fresh consumer; a negative control proves action-only reconstruction yields a
+different frame. This is consumer trace completeness, not a LibGibson bug.
+
+The review also found silent action dropping at the 64-action ceiling. A visible
+rejection now appears; ordinary actions reserve the last slot for permission.
+A 64-Enter-then-deny regression demonstrates denial still withholds the artifact.
+Neither counterexample has been erased from the evidence history.
