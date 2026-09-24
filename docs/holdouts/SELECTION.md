@@ -54,3 +54,37 @@ TrueColor/Mono, frozen 0/0/0. This is a fictional rehearsal, not equipment contr
 
 These two were assigned only after this protocol commit. The third selection
 awaits the replacement proposals; no result from H1/H2 affects its eligibility.
+
+## Replacement round and final trio
+
+The same fresh proposer returned three replacements, reading no further files:
+
+- **Heapwalk:** bounded arena allocation/free/compaction with identity-preserving
+  address ribbons. Not selected: resource-allocation proximity to excluded
+  resource-flow work, and less geometric diversity than the alternatives.
+- **Weavebench:** editable four-shaft loom draft, Boolean crossings, shuttle,
+  and cyclic float inspection. FRESH; selected for discrete topological editing,
+  dense subcell interlacing and cross-representation coordinate identity.
+- **Sightline:** visitor visibility in a gallery with door/partition occlusion.
+  FRESH but not selected: more spatial-occlusion overlap with Foldroom and
+  stage geometry than Weavebench. No implementation/result was consulted.
+
+Final trio: **Foldroom, Cuebox, Weavebench**. Root inspected all dossier examples
+and searched the concrete domains (folding/carton, theater/stage cues,
+weaving/loom/textile) with no matches. The proposer did not receive that screen
+list. The third protocol was recorded before its implementer was spawned.
+
+H3 **Weavebench**: four shafts/four treadles, 16×16 repeat, at most four shown
+repeats, deterministic 16-row weaving. Keyboard threading/tie-up/treadling
+edits, selected crossing linked to controls, over/under visibly different in
+Mono, shuttle and enlarged crossing inspector. Acceptance: independent Boolean
+lift oracle, cyclic float enumeration, exact dependent-cell change after edit,
+explicit-action replay and stable selected coordinate across resize, four
+sizes × TrueColor/Mono, frozen 0/0/0. No yarn mechanics/strength claim.
+
+Implementers use separate `fork_turns=none` contexts with their own brief,
+public API source and the frozen runner; no prior experiment code or other
+holdout implementation is supplied. Root owns integration and may fix consumer
+bugs only within the frozen API. This reduces designer-history coupling but
+retains shared model/library/host provenance. Neither the candidate pool nor
+implementation effort measures universal expressivity or human developer ease.
