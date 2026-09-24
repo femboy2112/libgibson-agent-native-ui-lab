@@ -1,0 +1,72 @@
+{
+  "libgibson_sha": "e5ede0a4ab8ff52caa567ee10d45824e42c1ebc6",
+  "toolchain": "Rust 1.98.1",
+  "tests": {
+    "unit": 226,
+    "integration": 348,
+    "total": 574,
+    "fx_lab_example_extra": 3
+  },
+  "local_commands": [
+    {
+      "command": "cargo +1.98.1 fmt --check",
+      "exit": 0,
+      "seconds": 1.17
+    },
+    {
+      "command": "cargo +1.98.1 clippy --all-targets --all-features -- -D warnings",
+      "exit": 0,
+      "seconds": 1.98
+    },
+    {
+      "command": "cargo +1.98.1 test",
+      "exit": 0,
+      "seconds": 107.28
+    },
+    {
+      "command": "cargo +1.98.1 build --release",
+      "exit": 0,
+      "seconds": 17.31
+    },
+    {
+      "command": "cargo +1.98.1 build --examples",
+      "exit": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": "cargo +1.98.1 build --release --examples",
+      "exit": 0,
+      "seconds": 48.82
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"-D warnings\" cargo +1.98.1 doc --no-deps",
+      "exit": 0,
+      "seconds": 1.17
+    },
+    {
+      "command": "cargo +1.98.1 test --example fx_lab",
+      "exit": 0,
+      "seconds": 1.52
+    },
+    {
+      "command": "RUSTUP_TOOLCHAIN=1.98.1 bash scripts/dev/bindings_smoke.sh --asan",
+      "exit": 0,
+      "seconds": 20.27
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "seconds": 0.0
+    }
+  ],
+  "public_runs": {
+    "flagship_exact_tip": 35958652277,
+    "flagship_merge_main": 35960000454,
+    "research_dossier_tip": 35960750682,
+    "research_dossier_merge_main": 35961022598,
+    "lab_planned_consumers": 35962374210,
+    "lab_freeze": 35962407150
+  },
+  "public_result": "All listed runs completed successfully; LibGibson runs have five executed jobs, lab runs one consumer job.",
+  "boundary": "Local elapsed seconds are observations on one host, not performance guarantees."
+}

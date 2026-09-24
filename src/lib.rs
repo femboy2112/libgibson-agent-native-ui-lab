@@ -6,3 +6,7 @@ pub mod ui;
 pub mod reactions;
 
 pub mod instruments;
+
+pub mod cuebox;
+pub mod foldroom;
+pub mod weavebench;
