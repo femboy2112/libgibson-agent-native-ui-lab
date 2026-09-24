@@ -82,9 +82,12 @@ lift oracle, cyclic float enumeration, exact dependent-cell change after edit,
 explicit-action replay and stable selected coordinate across resize, four
 sizes × TrueColor/Mono, frozen 0/0/0. No yarn mechanics/strength claim.
 
-Implementers use separate `fork_turns=none` contexts with their own brief,
-public API source and the frozen runner; no prior experiment code or other
-holdout implementation is supplied. Root owns integration and may fix consumer
+Foldroom and Cuebox implementers use separate `fork_turns=none` contexts with
+their own brief, public API source and frozen runner. Two attempts to create a
+third implementation context were rejected by the four-thread tool limit.
+Weavebench therefore reuses the fresh proposer context: it has seen the proposal
+pool, but no prior experiment code or other holdout implementation. This is a
+weaker design/implementation separation for H3, recorded before implementation. Root owns integration and may fix consumer
 bugs only within the frozen API. This reduces designer-history coupling but
 retains shared model/library/host provenance. Neither the candidate pool nor
 implementation effort measures universal expressivity or human developer ease.
