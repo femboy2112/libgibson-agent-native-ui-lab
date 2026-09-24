@@ -1,0 +1,29 @@
+{
+  "libgibson_sha": "e5ede0a4ab8ff52caa567ee10d45824e42c1ebc6",
+  "lab_helper_ir_sha": "1d1d27286b50c752527021697c14fd8a32ccd0ea",
+  "frozen_at_utc": "2026-09-24T05:59:50.744624+00:00",
+  "files": {
+    "Cargo.lock": "6c19b10c42f5ce7b35b4881a350ef348036f9de397637ac8c3334d7bb3699c94",
+    "Cargo.toml": "621496bcf16d44d6e60b4709f63f994d8fbe665cebc062368275c627d6c2bd51",
+    "docs/FROZEN_API_GUIDE.md": "350207eced6ff5756507e4e612838fdda76481d33752766054496b1a240b9b30",
+    "rust-toolchain.toml": "a7a23801522d469e93021507fc88e9f5651056fce0e6aa22b3d3157c5f3dc6fe",
+    "scripts/pty_smoke.py": "596456e1849f1e1705f40fe06c3b05700ed63270614c74942fa0916a80f6ee84",
+    "scripts/verify_freeze.py": "a8c61b0f405a03f3a01fad40c94db3d639bc5f33ea266e6c4a483416be07bd13",
+    "src/bin/instruments.rs": "6871d0f19ce9f0b23d5eef96a3fa8a63c8d24a8370978501815c8e6e8b9d0b0f",
+    "src/bin/manga.rs": "7e782d4f03aec98877f123cb9591090ed5f48089a9497d8b8a87e8bff6e763ba",
+    "src/bin/reactions.rs": "0e754723eec2f13c14de94206d6d35efb0bae03ea3590e5622cf456d0700c54c",
+    "src/instruments.rs": "fd8d0ba3ba82659877d8f50a27fc39e4a44bdc07c31f6768f9513211698f0858",
+    "src/manga.rs": "f709d5e7694139613f1c4de8b6d86c526d724aff64b7379d09ab8ee5e72d5b7a",
+    "src/reactions.rs": "5355594f5aacfa74d6ee186a40709f6c1d351491654c20ae9084e8ed83e27394",
+    "src/semantic_fixture.rs": "04e0914ec0e84c7bf1cea1f937016445d00d0df21f3a61425218db522ae30f15",
+    "src/ui.rs": "7d8d9c2bdf9df39c4eb7b4a0f2de43e03ef0afe09cf9a6f85bfceafca98c7bf1",
+    "tests/cross_consumer.rs": "9a4478a9bc27cab094f7fac3d78524e1fc0855f7def415faa45aa7a650f055d9",
+    "tests/input_replay.rs": "5700553a7123f369a3709538859db031e58fd6588a167ff53e92268b62869a27",
+    "tests/instruments.rs": "6f257657cad5e1e267fd9e9b113946d9841a36d80b4b4a1079d4c42fd738c579",
+    "tests/manga.rs": "96f580caab44e5f250358dbf3fa60b71b49c3befe3c3075e3df04cf7e2b2522c",
+    "tests/pty_semantics.rs": "7e392fed55ab498180395973407902ff17c2a68d6abaef78070aa9a2fe8da00c",
+    "tests/reactions.rs": "fd336af6fdf90b912d9453c88dedae5d991d968f08d2357e5e6e3906ffef5694",
+    "tests/semantic_fixture.rs": "c89cfcc863b0a6b89df26a54adb19b206c80eec566327516a090c67538ea592e"
+  },
+  "permitted_additions": "New independent holdout modules/binaries/tests/docs and additive module exports in src/lib.rs only. No edits to frozen files. Documentation/CI may record results without changing substrate."
+}
