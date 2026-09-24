@@ -38,3 +38,23 @@ required. [First-contact A](docs/MANGA_FIRST_CONTACT.md),
 [B](docs/REACTION_FIRST_CONTACT.md), [C](docs/INSTRUMENT_FIRST_CONTACT.md),
 and [reconciliation](docs/CROSS_EXPERIMENT_FRICTION.md) distinguish consumer bugs,
 API ergonomics and deliberate safety bounds.
+
+
+Post-freeze holdouts:
+
+```sh
+cargo run --release --bin foldroom
+cargo run --release --bin cuebox
+cargo run --release --bin weavebench
+```
+
+Each footer describes its controls. Foldroom scrubs prescribed hinges and orbits
+selected faces; Cuebox branches a rehearsal and captures/restores modal focus;
+Weavebench edits the draft behind visible over/under crossings. These are bounded
+research consumers, not production domain tools. See the
+[final report](docs/AGENT_NATIVE_UI_FINAL_REPORT.md),
+[freeze receipt](docs/API_FREEZE.md), and
+[selection record](docs/holdouts/SELECTION.md). No core promotion was justified.
+
+Final local suite: 61 integration tests. Frozen dependency/helper/IR integrity is
+checked with `python3 scripts/verify_freeze.py` locally and in public CI.

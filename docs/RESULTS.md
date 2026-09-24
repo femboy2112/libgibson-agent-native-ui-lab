@@ -27,5 +27,10 @@ Shared fixture/model provenance limits independence. No universal "easy" or
 arbitrary-runtime-UI claim is made. Long-session resource behavior, mouse,
 embedded lifecycle and non-Linux terminals are outside this finite campaign.
 
-Holdouts have not been selected yet. Their record will follow the committed
-freeze, with failures retained and no API/helper rescue allowed.
+## Completed post-freeze campaign
+
+Foldroom, Cuebox and Weavebench meet their finite contracts using the frozen
+public API. Selection exclusions, context limits, consumer failures/corrections,
+61-test final inventory and verdict boundaries are in the
+[final report](AGENT_NATIVE_UI_FINAL_REPORT.md). No core promotion or helper/IR
+rescue occurred. The 32-test result above is the historical pre-freeze checkpoint.
