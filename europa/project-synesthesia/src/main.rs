@@ -87,8 +87,11 @@ fn run_headless(
 
     for index in 0..count {
         let loop_start = Instant::now();
-        let at_ms = fixed_time
-            .unwrap_or_else(|| (index as u128 * interval.as_millis()).min(u64::MAX as u128) as u64);
+        // A 30 FPS interval is 33⅓ ms. Rounding it to 33 ms on every
+        // synthetic frame would drift three seconds over a 9,000-frame run.
+        let at_ms = fixed_time.unwrap_or_else(|| {
+            ((index as u128 * 1_000) / options.fps as u128).min(u64::MAX as u128) as u64
+        });
         let dsp_start = Instant::now();
         let frame = model.engine.render_at_ms(at_ms, model.seed);
         let dsp_time = dsp_start.elapsed();
@@ -231,7 +234,11 @@ fn run_interactive(
         let dsp_start = Instant::now();
         let frame = model.engine.render_at_ms(music_ms, model.seed);
         let dsp_time = dsp_start.elapsed();
-        model.history.push(&frame.spectrum);
+        // HOLD freezes the spectral timeline; an edit while held still adds
+        // one new row when it changes the actual signal.
+        if model.playing || model.history.age(0) != Some(&frame.spectrum) {
+            model.history.push(&frame.spectrum);
+        }
         let modal = model.modal_label();
         let status = if let Some(output) = &audio {
             let timing = output.timing();
@@ -279,9 +286,6 @@ fn run_interactive(
         };
         context.set_root(scene.root);
         context.render_now()?;
-        if let Some(output) = &audio {
-            output.update(&model.engine, model.playing);
-        }
         let current_stats = context.stats();
         let bytes = current_stats
             .frame_bytes
@@ -319,10 +323,8 @@ fn run_interactive(
         previous_stats = current_stats;
         next_frame += interval * (late_steps + 1).max(1) as u32;
 
-        // Audio and the sequencer clock run independently of this frame deadline.
-        if let Some(output) = &audio {
-            output.update(&model.engine, model.playing);
-        }
+        // Audio state is published on edits and transport changes above. Its
+        // callback owns its clock and never waits for a visual frame.
     }
 
     input_pump.stop();

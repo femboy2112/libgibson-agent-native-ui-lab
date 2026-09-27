@@ -108,4 +108,37 @@ fn arrows_tabs_and_modal_text_are_consumed_by_the_application_model() {
         .all(|t| (1..=STEPS_PER_TRACK as u8).contains(&t.pattern_length)));
 }
 
+#[test]
+fn track_navigation_is_available_on_occupied_steps() {
+    let mut model = AppModel::from_options(&Options::default()).unwrap();
+    let now = Instant::now();
+    let key = |code| Event::Key(KeyEvent::new(code, gibson::input::KeyModifiers::empty()));
+    assert!(model.engine.tracks[0].steps[0].note.is_some());
+    model.handle_event(&key(KeyCode::Char('k')), now);
+    assert_eq!(model.selected_track, 3);
+    model.handle_event(&key(KeyCode::Char('j')), now);
+    assert_eq!(model.selected_track, 0);
+    assert_eq!(model.engine.tracks[0].steps[0].note, Some(36));
+}
+
+#[test]
+fn typed_adsr_values_replace_the_field_and_tab_moves_between_stages() {
+    let mut model = AppModel::from_options(&Options::default()).unwrap();
+    let now = Instant::now();
+    let key = |code| Event::Key(KeyEvent::new(code, gibson::input::KeyModifiers::empty()));
+    model.handle_event(&key(KeyCode::Char('e')), now);
+    for digit in ['0', '.', '5'] {
+        model.handle_event(&key(KeyCode::Char(digit)), now);
+    }
+    model.handle_event(&key(KeyCode::Enter), now);
+    assert_eq!(model.engine.patch.attack, 0.5);
+    model.handle_event(&key(KeyCode::Char('e')), now);
+    model.handle_event(&key(KeyCode::Tab), now);
+    for digit in ['0', '.', '2', '5'] {
+        model.handle_event(&key(KeyCode::Char(digit)), now);
+    }
+    model.handle_event(&key(KeyCode::Enter), now);
+    assert_eq!(model.engine.patch.decay, 0.25);
+}
+
 const FFT_BINS_FOR_TEST: usize = crate::engine::FFT_BINS;

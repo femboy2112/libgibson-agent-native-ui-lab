@@ -216,6 +216,12 @@ impl AppModel {
                 })
             }
             KeyCode::Char('w') => self.cycle_waveform(),
+            // Always available, even when the current grid step contains a
+            // note (Up/Down edit its pitch in that case).
+            KeyCode::Char('j') => self.selected_track = (self.selected_track + 1) % TRACK_COUNT,
+            KeyCode::Char('k') => {
+                self.selected_track = (self.selected_track + TRACK_COUNT - 1) % TRACK_COUNT
+            }
             KeyCode::Char('m') => {
                 self.engine.tracks[self.selected_track].muted =
                     !self.engine.tracks[self.selected_track].muted
@@ -411,7 +417,7 @@ impl AppModel {
                     match field {
                         0 => self.engine.patch.cutoff_hz = value.clamp(40.0, 18_000.0),
                         1 => self.engine.patch.resonance = value.clamp(0.0, 0.98),
-                        _ => adjust_envelope(&mut self.engine.patch, field - 2, value),
+                        _ => set_envelope(&mut self.engine.patch, field - 2, value),
                     }
                 }
             }
@@ -433,5 +439,14 @@ fn adjust_envelope(patch: &mut Patch, field: usize, delta: f32) {
         1 => patch.decay = (patch.decay + delta).clamp(0.0, 5.0),
         2 => patch.sustain = (patch.sustain + delta).clamp(0.0, 1.0),
         _ => patch.release = (patch.release + delta).clamp(0.001, 5.0),
+    }
+}
+
+fn set_envelope(patch: &mut Patch, field: usize, value: f32) {
+    match field {
+        0 => patch.attack = value.clamp(0.001, 5.0),
+        1 => patch.decay = value.clamp(0.0, 5.0),
+        2 => patch.sustain = value.clamp(0.0, 1.0),
+        _ => patch.release = value.clamp(0.001, 5.0),
     }
 }
