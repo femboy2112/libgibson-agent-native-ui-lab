@@ -1,0 +1,25 @@
+# Regenerate: ./target/release/palimpsest --demo=medium --view=atlas --ansi16 --dump --frame-only --width=80 --height=24 | python3 scripts/flatten_dump.py 80 24
+ PALIMPSEST ◈ 877c6dd  refactor: rename src/core.rs…               HISTORY ATLAS
+        ┬2024-01-11 ┬2024-01-18  ┬2024-01-25 ┬2024-02-01  ┬2024-02-08
+○○─○──○○──○─●─●──●─●─●─●─●──●●─●◉◉◉◉●●●●─●●─●●●●─●●●●●●─●●●●─●●●●●●●●●●●●●●●●●●●
+│─○──○─○─○─●──●●──●─●─●──●─●─●─●│─
+│─○─○──○○──●─●─●──●─●─●─●─●─●─●│─
+│─○─○─○─○──●─●─●─●──●─●─●─●─●─●│
+─○──○─○─○─○─●─●──●─●─●─●──●─●─●─
+
+
+
+
+
+
+
+▅▅▅▅▅▅▅▅❰······························································❱▅▅▅▅▅▅▅█
+ 130 commits in view lens 45d @ 1.79px/d
+┌─  SELECTION  ────────────────────────────────────────────────────────────────┐
+│877c6dd   refactor: rename src/core.rs to src/foundation.rs                   │
+│Grace Hopper · 2024-02-26 (1d ago)                                            │
+│1 file  +4 / −0                                                               │
+│tips main                                                                     │
+│refactor: rename src/core.rs to src/foundation.rs                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+

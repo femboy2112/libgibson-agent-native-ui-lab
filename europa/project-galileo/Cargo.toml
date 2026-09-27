@@ -1,0 +1,21 @@
+[package]
+name = "project-galileo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.2.0" }
+vt100 = "0.16"
+
+[lib]
+name = "project_galileo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "project-galileo"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -1,0 +1,21 @@
+[package]
+name = "palimpsest"
+version = "0.2.0"
+edition = "2021"
+description = "PALIMPSEST — an interactive git repository time machine / code archaeology workstation"
+rust-version = "1.85"
+
+[[bin]]
+name = "palimpsest"
+path = "src/main.rs"
+
+[dependencies]
+libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.2.0" }
+git2 = { version = "0.19", default-features = false }
+unicode-width = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 2
