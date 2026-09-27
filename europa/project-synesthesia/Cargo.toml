@@ -1,0 +1,20 @@
+[package]
+name = "synesthesia"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "A live terminal music workstation and audiovisual synthesizer"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "synesthesia"
+path = "src/main.rs"
+
+[dependencies]
+libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.2.0" }
+cpal = "0.16"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -66,3 +66,9 @@ Project Galileo:
 
 Project Palimpsest:
   europa/project-palimpsest/
+
+[Project Synesthesia](europa/project-synesthesia/) is a separate playable
+terminal music workstation consuming the released LibGibson v0.2.0 tag. Its
+[experiment report](europa/project-synesthesia/EXPERIMENT_REPORT.md) records
+the new measurements and claim limits. The older root experiments and their
+frozen dependency remain historical evidence.
