@@ -220,6 +220,9 @@ Benchmarked on Linux x86_64, release build:
 3. **Issue [#37](https://github.com/femboy2112/libgibson/issues/37)**: `UiRuntime` unconditionally triggers `MotionRole::Enter` for all `Key::Named` elements, causing `SurfaceFx::Dissolve` to clear them to spaces on the initial frame.
    - *Impact*: All keyed elements are invisible at $t=0$ or in headless captures without pre-roll.
    - *Workaround*: Set `env.motion = MotionPreference::None` for fixed captures, and omit `.key()` from static buttons.
+4. **Issue [#43](https://github.com/femboy2112/libgibson/issues/43)**: `Ergonomics & Architecture Report: Real-time multi-scale scientific visualization`.
+   - *Impact*: Comprehensive report detailing size-blind surface embedding, canvas compositing boilerplate, greedy input routing, and entrance motion traps.
+   - *Workaround*: Documents workarounds used in Galileo and proposes concrete API enhancements for v0.3.0.
 
 ## Known Limitations
 
