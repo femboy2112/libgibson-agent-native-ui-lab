@@ -216,6 +216,71 @@ fn lens_tab_toggles_pane_focus_and_files_scroll() {
 }
 
 #[test]
+fn lens_hunk_navigation_and_search_are_scoped_to_the_diff() {
+    let mut app = app_for("medium");
+    app.ensure_lens();
+    app.view = View::Lens;
+    // A second hunk makes the key-routing collision directly observable.
+    let first = app.lens.diff.as_ref().unwrap().files[0].hunks[0].clone();
+    app.lens.diff.as_mut().unwrap().files[0].hunks.push(first);
+
+    press_char(&mut app, 'n');
+    assert_eq!(
+        app.lens.hunk_cursor, 1,
+        "n advances a diff hunk, not a history hit"
+    );
+    let (_, rows) = render_frame(&mut app, 100, 30);
+    assert!(
+        frame_text(&rows).contains("◈ @@"),
+        "focused hunk remains visible"
+    );
+    press_char(&mut app, 'N');
+    assert_eq!(app.lens.hunk_cursor, 0, "N returns to the previous hunk");
+
+    let original = app.sel_row().unwrap().oid.clone();
+    press_char(&mut app, '/');
+    assert_eq!(app.mode, InputMode::LensSearch);
+    for c in "src/".chars() {
+        press_char(&mut app, c);
+    }
+    assert!(
+        !app.lens.matches.is_empty(),
+        "paths in the diff are searchable"
+    );
+    assert_eq!(
+        app.sel_row().unwrap().oid,
+        original,
+        "diff search never changes commit"
+    );
+    press(&mut app, KeyCode::Enter);
+    assert_eq!(app.mode, InputMode::Normal);
+    assert_eq!(app.lens.file_cursor, app.lens.matches[0].0);
+    press_char(&mut app, 'm');
+    assert_eq!(app.sel_row().unwrap().oid, original);
+}
+
+#[test]
+fn browser_treats_q_as_a_filter_character() {
+    let mut app = app_for("tiny");
+    press_char(&mut app, 'f');
+    press_char(&mut app, 'q');
+    assert_eq!(app.mode, InputMode::FileBrowser);
+    assert_eq!(app.browser.as_ref().unwrap().filter, "q");
+    press(&mut app, KeyCode::Esc);
+    assert_eq!(app.mode, InputMode::Normal);
+}
+
+#[test]
+fn documented_zoom_prefix_uses_two_keys() {
+    let mut app = app_for("tiny");
+    press_char(&mut app, 'z');
+    assert_eq!(app.mode, InputMode::ZoomPreset);
+    press_char(&mut app, '4');
+    assert_eq!(app.mode, InputMode::Normal);
+    assert!((app.anim.as_ref().unwrap().to_px - palimpsest::app::ZOOM_PRESETS[4].1).abs() < 1e-3);
+}
+
+#[test]
 fn provenance_unfolds_fiber_and_jumps_to_origin() {
     let mut app = app_for("tiny");
     app.ensure_lens();
@@ -244,6 +309,33 @@ fn provenance_unfolds_fiber_and_jumps_to_origin() {
         app.view,
         View::Lens,
         "Enter must jump into the origin's lens"
+    );
+}
+
+#[test]
+fn provenance_excludes_append_hunk_context_from_first_line_fiber() {
+    let mut app = app_for("medium");
+    app.ensure_prov("src/hot/module_0.rs");
+    app.view = View::Provenance;
+    let first = app.prov.blame.as_ref().unwrap().lines[0].clone();
+    assert_eq!(first.line_no, 1);
+    assert_ne!(first.oid, app.sel_row().unwrap().oid);
+    press_char(&mut app, 'u');
+    assert!(app.prov.unfolded);
+    assert!(
+        app.prov.fiber.is_empty(),
+        "later appends at row 5 and beyond must not claim the unchanged first line"
+    );
+    let (_, rows) = render_frame(&mut app, 120, 40);
+    assert!(frame_text(&rows).contains("no later nearby edits"));
+
+    // The same append is honestly nearby the original closing brace at row 4.
+    app.prov.line_cursor = 3;
+    press_char(&mut app, 'u'); // fold first
+    press_char(&mut app, 'u'); // unfold row 4
+    assert!(
+        !app.prov.fiber.is_empty(),
+        "row-5 addition is nearby the original row-4 brace"
     );
 }
 
@@ -345,5 +437,10 @@ fn strata_enter_selects_event_commit() {
         app.sel_row().unwrap().oid,
         expected,
         "Enter must select the event commit"
+    );
+    assert_eq!(
+        app.view,
+        View::Lens,
+        "Enter opens that commit cross-section"
     );
 }

@@ -325,6 +325,16 @@ fn run_dump(app: &mut App, args: &Args) {
     }
     let frame = ctx.take_output();
 
+    // The plain live frame is useful for visual inspection at constrained
+    // sizes. The default dump still exercises scrollback insertion below.
+    if args.frame_only {
+        let _ = std::io::stdout().write_all(frame.as_bytes());
+        if args.profile {
+            report_profile(app, &mut ctx, "frame-only");
+        }
+        return;
+    }
+
     // Emit one of each scrollback artifact after the frame, so captures prove
     // the full pipeline (frame + artifact + re-rendered live region).
     app::keys::emit_dossier(app);

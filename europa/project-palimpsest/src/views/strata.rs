@@ -20,8 +20,8 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     // Ruler identical to the atlas (visual continuity).
     super::atlas::draw_ruler_pub(&mut s, cam, w, pal);
 
-    let path = app.strata.path.clone();
-    let events = app.strata.events.clone();
+    let path = &app.strata.path;
+    let events = &app.strata.events;
     if events.is_empty() {
         let msg = if path.is_empty() {
             "no file selected — press f to browse, or s in the diff lens"
@@ -35,15 +35,16 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
 
     let t_min = events.iter().map(|e| e.time).min().unwrap_or(0);
     let t_max = events.iter().map(|e| e.time).max().unwrap_or(1);
-    let span = (t_max - t_min).max(1);
-    let x_of =
-        |t: i64| -> u16 { (((t - t_min) as f32 / span as f32) * (w as f32 - 2.0) + 1.0) as u16 };
+    // The file occupies the same time coordinates as the atlas and ruler.
+    // Fitting it independently to the width made a commit appear under an
+    // incorrect date on row 0, breaking the atlas -> strata transition.
+    let x_of = |t: i64| -> i32 { cam.x_of(t, w) };
 
     let identity_y = 1u16;
     if identity_y < h {
         let identity = format!(
             " {} ─ {} events, {} to {}",
-            truncate(&path, w.saturating_sub(40) as usize),
+            truncate(path, w.saturating_sub(40) as usize),
             events.len(),
             fmt_date(t_min),
             fmt_date(t_max)
@@ -62,9 +63,13 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     if band_y + 1 < h {
         let x0 = x_of(t_min);
         let x1 = x_of(t_max);
-        for x in x0..=x1.min(w.saturating_sub(1)) {
-            s.set_cell(x, band_y, cell(glyphs::STRAND, pal.s_accent()));
-            s.set_cell(x, band_y + 1, cell(glyphs::RAIL_FADED, pal.s_border()));
+        for x in x0.max(0)..=x1.min(w as i32 - 1) {
+            s.set_cell(x as u16, band_y, cell(glyphs::STRAND, pal.s_accent()));
+            s.set_cell(
+                x as u16,
+                band_y + 1,
+                cell(glyphs::RAIL_FADED, pal.s_border()),
+            );
         }
         // events as ticks; magnitude colors the tick height
         let max_churn = events
@@ -73,11 +78,12 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
             .max()
             .unwrap_or(1)
             .max(1);
-        for e in &events {
+        for e in events {
             let x = x_of(e.time);
-            if x >= w {
+            if x < 0 || x >= w as i32 {
                 continue;
             }
+            let x = x as u16;
             let heavy = (e.adds + e.dels) as f32 / max_churn as f32;
             let style = if heavy > 0.66 {
                 pal.s_warning()
@@ -106,50 +112,84 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
                 );
             }
         }
-        // first/last touch labels
-        print_if_empty(
-            &mut s,
-            0,
-            band_y,
-            &truncate(&fmt_age(t_min, app.now), 12),
-            pal.s_faint(),
-            Some(12),
+        // The atlas selection remains a pin; the ledger cursor picks a touch
+        // event on that same axis. Both anchors survive without color.
+        if let Some(selected) = app.sel_row() {
+            let x = x_of(selected.time);
+            if (0..w as i32).contains(&x) {
+                s.set_cell(x as u16, band_y + 1, cell(glyphs::PIN, pal.s_selection()));
+            }
+        }
+        if let Some(e) = events.get(app.strata.cursor) {
+            let x = x_of(e.time);
+            if (0..w as i32).contains(&x) {
+                s.set_cell(
+                    x as u16,
+                    band_y,
+                    cell(glyphs::NODE_SELECTED, pal.s_selection()),
+                );
+            }
+        }
+        // Age labels live below the band. Painting them on the event rail
+        // could leave partial words such as `1mo` pierced by a touch mark.
+        let age_line = format!(
+            " first touch {} ago · latest touch {} ago",
+            fmt_age(t_min, app.now),
+            fmt_age(t_max, app.now)
         );
-        let last_label = fmt_age(t_max, app.now);
-        let lx = w.saturating_sub(14);
-        print_if_empty(&mut s, lx, band_y, &last_label, pal.s_faint(), Some(14));
+        s.print_str(
+            0,
+            band_y + 2,
+            &truncate(&age_line, w as usize),
+            pal.s_faint(),
+            Some(w),
+        );
     }
 
     // ---- author strip (row 5) ----------------------------------------------------
     let author_y = band_y + 3;
     if author_y < h && w >= 70 {
         let mut counts: std::collections::BTreeMap<&str, u32> = Default::default();
-        for e in &events {
+        for e in events {
             *counts.entry(e.author.as_str()).or_insert(0) += 1;
         }
         let total = events.len() as u32;
         let mut x = 0u16;
         let mut legend = String::new();
+        let marks = [
+            glyphs::RAIL_ACTIVE,
+            glyphs::STRAND_DORMANT,
+            glyphs::RAIL,
+            glyphs::RAIL_FADED,
+        ];
         for (ai, (author, n)) in counts.iter().enumerate() {
             let width = ((*n as f32 / total as f32) * w as f32).round() as u16;
             let style = pal.s_lane(ai);
             for dx in 0..width {
                 if x + dx < w {
-                    s.set_cell(x + dx, author_y, cell(glyphs::BAR_BLOCKS[6], style));
+                    s.set_cell(x + dx, author_y, cell(marks[ai % marks.len()], style));
                 }
             }
+            if x + width < w {
+                s.set_cell(x + width, author_y, cell(glyphs::VERT, pal.s_border()));
+            }
+            legend.push_str(&format!(
+                "{} {}:{}, ",
+                marks[ai % marks.len()],
+                truncate(author, 10),
+                n
+            ));
             x += width;
             if x >= w {
                 break;
             }
-            legend.push_str(&format!("{}:{}, ", truncate(author, 10), n));
         }
         print_if_empty(
             &mut s,
             0,
             author_y + 1,
             &truncate(
-                &format!("authors — {}", legend.trim_end_matches(", ")),
+                &format!("contributors · {}", legend.trim_end_matches(", ")),
                 w as usize,
             ),
             pal.s_faint(),
@@ -193,18 +233,39 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
             'R' => "↗",
             _ => "·",
         };
-        let summary_w = (w as usize).saturating_sub(58);
-        let row = format!(
-            " {} {} {:<9} {:<11} {} +{}/−{}",
-            status_mark,
-            fmt_date(e.time),
-            e.oid.get(..7).unwrap_or("0000000"),
-            truncate(&e.author, 11),
-            truncate(&e.summary, summary_w),
-            e.adds,
-            e.dels,
-        );
-        list_row(&mut s, y, 0, w, &row, base);
+        let short = e.oid.get(..7).unwrap_or("0000000");
+        let row = if w >= 100 {
+            format!(
+                " {} {} {:<7} {:<11} {} +{}/−{}",
+                status_mark,
+                fmt_date(e.time),
+                short,
+                truncate(&e.author, 11),
+                truncate(&e.summary, w.saturating_sub(58) as usize),
+                e.adds,
+                e.dels,
+            )
+        } else if w >= 70 {
+            format!(
+                " {} {} {} {} +{}/−{}",
+                status_mark,
+                fmt_date(e.time),
+                short,
+                truncate(&e.summary, w.saturating_sub(34) as usize),
+                e.adds,
+                e.dels,
+            )
+        } else {
+            format!(
+                " {} {} {} +{}/−{}",
+                status_mark,
+                short,
+                truncate(&e.summary, w.saturating_sub(21) as usize),
+                e.adds,
+                e.dels,
+            )
+        };
+        list_row(&mut s, y, 0, w.saturating_sub(2), &row, base);
     }
     scrollbar(
         &mut s,
@@ -214,20 +275,23 @@ pub fn draw_strata(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
         scroll,
         events.len(),
     );
-    if let Some(e) = events.get(cursor) {
-        let note = if let Some(prev) = &e.prev_path {
-            format!("renamed from {}", prev)
-        } else {
-            format!("{} ago", fmt_age(e.time, app.now))
-        };
-        let y = list_top;
-        s.print_str(
-            w.saturating_sub(note.len() as u16 + 2),
-            y,
-            &note,
-            pal.s_faint(),
-            Some(w),
-        );
+    if w >= 80 {
+        if let Some(e) = events.get(cursor) {
+            let note = if let Some(prev) = &e.prev_path {
+                format!("renamed from {}", prev)
+            } else {
+                format!("{} ago", fmt_age(e.time, app.now))
+            };
+            let y = list_top;
+            print_if_empty(
+                &mut s,
+                w.saturating_sub(note.len() as u16 + 2),
+                y,
+                &note,
+                pal.s_faint(),
+                None,
+            );
+        }
     }
 
     Arc::new(s)

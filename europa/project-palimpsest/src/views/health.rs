@@ -21,7 +21,8 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     };
 
     // We paint into a virtual page, then slice the visible window.
-    let page_w = w;
+    // Keep a blank column between right-set values and the scroll rail.
+    let page_w = w.saturating_sub(2);
     let mut page = Surface::new(page_w, 200);
     let mut y = 0u16;
     let title = " REPOSITORY HEALTH ";
@@ -154,7 +155,7 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
             .max()
             .unwrap_or(1)
             .max(1);
-        let sample_note = if m.sampled {
+        let sample_note = if m.complete_scan {
             "complete scan".to_string()
         } else {
             format!("sampled {} commits, extrapolated", m.sample_size)
@@ -164,27 +165,21 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
         for f in m.hottest.iter().take(8) {
             let path = truncate(&f.path, (page_w / 2).max(16) as usize);
             page.print_str(1, y, &path, pal.s_text(), Some(page_w));
-            let bar_w = (page_w as usize)
-                .saturating_sub(page_w as usize / 2)
-                .max(10) as u16;
+            let est = if f.estimated { "≈" } else { " " };
+            let num = format!("{}{:>6} touches", est, f.touches);
+            let num_x = page_w.saturating_sub(num.len() as u16 + 1);
+            let bx = page_w / 2;
+            let bar_w = num_x.saturating_sub(bx + 2);
             bar(
                 &mut page,
-                page_w / 2,
+                bx,
                 y,
                 bar_w,
                 f.touches as f32 / max_t as f32,
                 pal.s_warning(),
                 pal.s_border(),
             );
-            let est = if f.estimated { "≈" } else { " " };
-            let num = format!("{}{:>6} touches", est, f.touches);
-            page.print_str(
-                page_w.saturating_sub(num.len() as u16 + 1),
-                y,
-                &num,
-                pal.s_muted(),
-                Some(page_w),
-            );
+            page.print_str(num_x, y, &num, pal.s_muted(), Some(page_w));
             if y + 1 < 200 {
                 y += 1;
             }
@@ -202,14 +197,13 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     }
 
     // largest commits
-    y = section(
-        &mut page,
-        y,
-        page_w,
-        "LARGEST COMMITS (by paths touched)",
-        pal,
-    );
-    for c in m.largest.iter().take(6) {
+    let largest_title = if m.complete_scan {
+        "LARGEST COMMITS (by paths touched)".to_string()
+    } else {
+        format!("LARGEST COMMITS (of {} sampled)", m.sample_size)
+    };
+    y = section(&mut page, y, page_w, &largest_title, pal);
+    for c in m.largest.iter().take(5) {
         let left = format!(
             " {} {}",
             c.short,
@@ -236,12 +230,19 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     y += 1;
 
     // branch ages
-    y = section(&mut page, y, page_w, "BRANCH AGES", pal);
+    y = section(
+        &mut page,
+        y,
+        page_w,
+        "BRANCH AGES (* outside indexed history)",
+        pal,
+    );
     for b in m.branches.iter().take(6) {
         let left = format!(
-            " {} {}",
+            " {} {}{}",
             if b.is_remote { "◇" } else { "●" },
-            truncate(&b.name, (page_w / 2).max(16) as usize)
+            truncate(&b.name, (page_w / 2).max(16) as usize),
+            if b.in_window { "" } else { "*" }
         );
         page.print_str(1, y, &left, pal.s_text(), Some(page_w));
         let right = format!(
@@ -265,7 +266,7 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     // activity sparkline
     y = section(&mut page, y, page_w, "ACTIVITY (commits per month)", pal);
     let max_month = m.monthly.iter().map(|(_, c)| *c).max().unwrap_or(1).max(1);
-    let first = m.monthly.len().saturating_sub(w as usize / 2);
+    let first = m.monthly.len().saturating_sub(page_w as usize / 2);
     let vis: Vec<(String, u32)> = m.monthly[first.min(m.monthly.len())..].to_vec();
     if !vis.is_empty() {
         let vals: Vec<u32> = vis.iter().map(|(_, c)| *c).collect();
@@ -273,13 +274,13 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
             &mut page,
             1,
             y,
-            (w as usize / 2).max(10) as u16,
+            (page_w as usize / 2).max(10) as u16,
             &vals,
             max_month,
             pal.s_author(),
         );
         let label = format!("{} … {}", vis[0].0, vis[vis.len() - 1].0);
-        page.print_str(w / 2 + 2, y, &label, pal.s_faint(), Some(w));
+        page.print_str(page_w / 2 + 2, y, &label, pal.s_faint(), Some(page_w));
         y += 1;
     }
     y += 1;
@@ -378,7 +379,11 @@ pub fn report_text(app: &App) -> String {
             f.touches
         ));
     }
-    out.push_str("LARGEST COMMITS\n");
+    if m.complete_scan {
+        out.push_str("LARGEST COMMITS (by paths touched)\n");
+    } else {
+        out.push_str(&format!("LARGEST COMMITS (of {} sampled)\n", m.sample_size));
+    }
     for c in m.largest.iter().take(5) {
         out.push_str(&format!(
             "  {} {:>3} paths  {}\n",
@@ -387,11 +392,14 @@ pub fn report_text(app: &App) -> String {
             truncate(&c.summary, 60)
         ));
     }
-    out.push_str("BRANCH AGES\n");
+    out.push_str("BRANCH AGES (* outside indexed history)\n");
     for b in m.branches.iter().take(6) {
         out.push_str(&format!(
             "  {:<24} {} ({} ago)\n",
-            truncate(&b.name, 24),
+            truncate(
+                &format!("{}{}", b.name, if b.in_window { "" } else { "*" }),
+                24
+            ),
             fmt_date(b.last_commit),
             fmt_age(b.last_commit, app.now)
         ));

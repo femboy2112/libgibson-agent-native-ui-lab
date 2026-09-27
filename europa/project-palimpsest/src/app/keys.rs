@@ -19,6 +19,23 @@ pub fn handle_key(app: &mut App, key: KeyEvent) -> bool {
             true
         }
         InputMode::Search => handle_search_key(app, key),
+        InputMode::LensSearch => handle_lens_search_key(app, key),
+        InputMode::ZoomPreset => {
+            app.mode = InputMode::Normal;
+            if let KeyCode::Char(c @ '0'..='5') = key.code {
+                let n = (c as u8 - b'0') as usize;
+                app.zoom_preset(n);
+                app.set_status(format!(
+                    "lens preset {} — {}",
+                    n,
+                    crate::app::ZOOM_PRESETS[n].0
+                ));
+            } else if key.code != KeyCode::Esc {
+                app.set_error("zoom preset: press z followed by 0–5");
+            }
+            app.mark();
+            true
+        }
         InputMode::Command => handle_command_key(app, key),
         InputMode::FileBrowser => handle_browser_key(app, key),
         InputMode::Normal => handle_normal_key(app, key),
@@ -62,6 +79,113 @@ fn handle_search_key(app: &mut App, key: KeyEvent) -> bool {
     true
 }
 
+/// Search the loaded diff. History search is deliberately a separate mode:
+/// its hits refer to commits, while these hits retain a file and hunk anchor.
+fn handle_lens_search_key(app: &mut App, key: KeyEvent) -> bool {
+    match key.code {
+        KeyCode::Esc => {
+            app.lens.query.clear();
+            app.lens.matches.clear();
+            app.mode = InputMode::Normal;
+            app.set_status("diff search cleared");
+        }
+        KeyCode::Enter => {
+            app.mode = InputMode::Normal;
+            if app.lens.matches.is_empty() {
+                app.set_status(format!("no diff hits for `{}`", app.lens.query));
+            } else {
+                app.lens.match_cursor = 0;
+                jump_lens_match(app);
+                app.set_status(format!(
+                    "{} diff hits for `{}` — m/M cycles",
+                    app.lens.matches.len(),
+                    app.lens.query
+                ));
+            }
+        }
+        KeyCode::Backspace => {
+            app.lens.query.pop();
+            refresh_lens_matches(app);
+        }
+        KeyCode::Char(c) => {
+            app.lens.query.push(c);
+            refresh_lens_matches(app);
+        }
+        _ => {}
+    }
+    app.mark();
+    true
+}
+
+fn refresh_lens_matches(app: &mut App) {
+    app.lens.matches = app
+        .lens
+        .diff
+        .as_ref()
+        .map(|d| crate::app::lens::find_matches(d, &app.lens.query, 200))
+        .unwrap_or_default();
+    app.lens.match_cursor = 0;
+}
+
+fn jump_lens_match(app: &mut App) {
+    if let Some(&(file, hunk)) = app.lens.matches.get(app.lens.match_cursor) {
+        focus_lens_location(
+            app,
+            file,
+            if hunk == usize::MAX { None } else { Some(hunk) },
+        );
+    }
+}
+
+fn cycle_lens_match(app: &mut App, forward: bool) {
+    let count = app.lens.matches.len();
+    if count == 0 {
+        app.set_status("no diff hits — press / to search this diff");
+        return;
+    }
+    app.lens.match_cursor = if forward {
+        (app.lens.match_cursor + 1) % count
+    } else {
+        (app.lens.match_cursor + count - 1) % count
+    };
+    jump_lens_match(app);
+    app.set_status(format!("diff hit {}/{}", app.lens.match_cursor + 1, count));
+    app.mark();
+}
+
+/// Keep the file and its hunk at the same position in the flattened source
+/// stream, including when the file ledger is hidden by a narrow viewport.
+fn focus_lens_location(app: &mut App, file: usize, hunk: Option<usize>) {
+    let Some(diff) = app.lens.diff.as_ref() else {
+        return;
+    };
+    let Some(f) = diff.files.get(file) else {
+        return;
+    };
+    let hi = hunk.unwrap_or(0).min(f.hunks.len().saturating_sub(1));
+    let target = crate::app::lens::flatten(diff, 4096)
+        .iter()
+        .position(|line| {
+            line.file_idx == file
+                && line.line_idx.is_none()
+                && (hunk.is_none() || (line.hunk_idx == hi && line.text.starts_with("  @@")))
+        })
+        .unwrap_or(0);
+    app.lens.file_cursor = file;
+    app.lens.hunk_cursor = hi;
+    app.lens.hunk_scroll = target.saturating_sub(1);
+    let main_h = crate::views::layout_policy(app.width, app.height)
+        .main_h
+        .saturating_sub(1) as usize;
+    if file < app.lens.file_scroll {
+        app.lens.file_scroll = file;
+    } else if file >= app.lens.file_scroll + main_h.max(1) {
+        app.lens.file_scroll = file + 1 - main_h.max(1);
+    }
+    app.lens.focus_files = false;
+    app.mark();
+}
+
 fn handle_command_key(app: &mut App, key: KeyEvent) -> bool {
     match key.code {
         KeyCode::Esc => {
@@ -93,15 +217,12 @@ fn handle_browser_key(app: &mut App, key: KeyEvent) -> bool {
         app.close_overlay();
         return true;
     };
-    // Keyed selection: remember the path under the cursor across filtering.
-    let key_path = b
-        .entries
-        .get(b.cursor)
-        .map(|e| e.path.clone())
-        .or_else(|| key_path_of(b));
+    // The cursor indexes the filtered list, not the unfiltered tree. Preserve
+    // the visible path before editing the filter, even after prior filtering.
+    let key_path = key_path_of(b);
 
     match key.code {
-        KeyCode::Esc | KeyCode::Char('q') => app.close_overlay(),
+        KeyCode::Esc => app.close_overlay(),
         // In a filter overlay every printable character (including j/k)
         // belongs to the query; navigation is arrows-only.
         KeyCode::Down => {
@@ -222,14 +343,21 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             return true;
         }
         KeyCode::Char('/') => {
-            app.mode = InputMode::Search;
-            app.search.clear();
-            app.set_status("");
+            if app.view == View::Lens {
+                app.mode = InputMode::LensSearch;
+                app.lens.query.clear();
+                app.lens.matches.clear();
+                app.lens.match_cursor = 0;
+            } else {
+                app.mode = InputMode::Search;
+                app.search.clear();
+                app.set_status("");
+            }
             app.mark();
             return true;
         }
-        KeyCode::Char('n') => return cycle_hit(app, true),
-        KeyCode::Char('N') => return cycle_hit(app, false),
+        KeyCode::Char('n') if app.view == View::Atlas => return cycle_hit(app, true),
+        KeyCode::Char('N') if app.view == View::Atlas => return cycle_hit(app, false),
         KeyCode::Char('g') => {
             if let Some(first) = app.hist.rows.first().map(|_| 0u32) {
                 app.select(first);
@@ -240,6 +368,11 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             if let Some(last) = app.hist.len().checked_sub(1).map(|i| i as u32) {
                 app.select(last);
             }
+            return true;
+        }
+        KeyCode::Char('z') if app.view == View::Atlas || app.view == View::Strata => {
+            app.mode = InputMode::ZoomPreset;
+            app.mark();
             return true;
         }
         _ => {}
@@ -420,6 +553,8 @@ fn strata_key(app: &mut App, key: KeyEvent) -> bool {
                 .map(|e| (e.oid.clone(), e.summary.clone()));
             if let Some((oid, summary)) = hit {
                 if app.select_oid(&oid) {
+                    app.ensure_lens();
+                    app.view = View::Lens;
                     app.set_status(format!("selected {} — {}", &oid[..7], summary));
                 } else {
                     app.set_error("commit is outside the indexed window");
@@ -457,6 +592,13 @@ fn follow_scroll_strata(app: &mut App) {
     } else if app.strata.cursor >= app.strata.scroll + half * 2 {
         app.strata.scroll = app.strata.cursor.saturating_sub(half * 2) + 1;
     }
+    if let Some(e) = app.strata.events.get(app.strata.cursor) {
+        let cam = app.camera;
+        let t = e.time;
+        if t < cam.t_left(app.width) || t > cam.t_right(app.width) {
+            app.animate_camera_to(t, cam.px_per_day);
+        }
+    }
 }
 
 fn lens_key(app: &mut App, key: KeyEvent) -> bool {
@@ -468,9 +610,9 @@ fn lens_key(app: &mut App, key: KeyEvent) -> bool {
         KeyCode::Tab => tab_focus(app),
         KeyCode::Down | KeyCode::Char('j') => {
             if app.lens.focus_files {
-                app.lens.file_cursor = (app.lens.file_cursor + 1).min(files.saturating_sub(1));
-                app.lens.hunk_cursor = 0;
-                app.lens.hunk_scroll = 0;
+                let next = (app.lens.file_cursor + 1).min(files.saturating_sub(1));
+                focus_lens_location(app, next, None);
+                app.lens.focus_files = true;
             } else {
                 app.lens.hunk_scroll = app.lens.hunk_scroll.saturating_add(3);
             }
@@ -479,9 +621,9 @@ fn lens_key(app: &mut App, key: KeyEvent) -> bool {
         }
         KeyCode::Up | KeyCode::Char('k') => {
             if app.lens.focus_files {
-                app.lens.file_cursor = app.lens.file_cursor.saturating_sub(1);
-                app.lens.hunk_cursor = 0;
-                app.lens.hunk_scroll = 0;
+                let next = app.lens.file_cursor.saturating_sub(1);
+                focus_lens_location(app, next, None);
+                app.lens.focus_files = true;
             } else {
                 app.lens.hunk_scroll = app.lens.hunk_scroll.saturating_sub(3);
             }
@@ -492,10 +634,23 @@ fn lens_key(app: &mut App, key: KeyEvent) -> bool {
             // next hunk of the focused file
             if let Some(f) = diff.files.get(app.lens.file_cursor) {
                 let hunks = f.hunks.len();
-                app.lens.hunk_cursor = (app.lens.hunk_cursor + 1).min(hunks.saturating_sub(1));
-                app.lens.hunk_scroll = 0;
-                app.mark();
+                let next = (app.lens.hunk_cursor + 1).min(hunks.saturating_sub(1));
+                let file = app.lens.file_cursor;
+                focus_lens_location(app, file, Some(next));
             }
+            true
+        }
+        KeyCode::Char('N') => {
+            let file = app.lens.file_cursor;
+            focus_lens_location(app, file, Some(app.lens.hunk_cursor.saturating_sub(1)));
+            true
+        }
+        KeyCode::Char('m') => {
+            cycle_lens_match(app, true);
+            true
+        }
+        KeyCode::Char('M') => {
+            cycle_lens_match(app, false);
             true
         }
         KeyCode::Char('p') => {
@@ -536,8 +691,8 @@ fn lens_key(app: &mut App, key: KeyEvent) -> bool {
         KeyCode::Enter => {
             if app.lens.focus_files {
                 app.lens.focus_files = false;
-                app.lens.hunk_cursor = 0;
-                app.lens.hunk_scroll = 0;
+                let file = app.lens.file_cursor;
+                focus_lens_location(app, file, Some(0));
                 app.mark();
             }
             true

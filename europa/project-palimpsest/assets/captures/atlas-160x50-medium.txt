@@ -1,23 +1,29 @@
-# Regenerate: ./target/release/palimpsest --demo=medium --dump --width=160 --height=50  | python3 scripts/flatten_dump.py 160 50
- PALIMPSEST ─ palimpsest-fixtur…            ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ HISTORY ATLAS
-───── palimpsest artifact ─────
-◈ 877c6dd   refactor: rename src/core.rs to src/foundation.rs
-Grace Hopper <grace@palimpsest.dev>  2024-02-26  lane 0
-1 files  +4 −0
-branch tips: main
-refactor: rename src/core.rs to src/foundation.rs
-oid 877c6dd3fba993a6237bcbc1c726e6749bdcb828
- PALIMPSEST ─ palimpsest-fixtur…            ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ HISTORY ATLAS
-┬2023-12-28 ┬2024-01-04  ┬2024-01-11 ┬2024-01-18  ┬2024-01-25 ┬2024-02-01  ┬2024-02-08 ┬2024-02-15  ┬2024-02-22 ┬2┌─  SELECTION  ──────────────────────────────┐
-       ○─○○○─○○○○○○─○──○●──●─●─●──●─●─●─●─●──●●─●◉◉◉◉●●●●─●●─●●●●─●●●●●●─●●●●─●●●●●●●●●●●●●●●●●●●●●●●●●●●●●◈┤ main│877c6dd   refactor: rename src/core.rs to   │
+# Regenerate: ./target/release/palimpsest --demo=medium --view=atlas --dump --frame-only --width=160 --height=50 | python3 scripts/flatten_dump.py 160 50
+ PALIMPSEST ─ palimpsest-fixtur… ◈ 877c6dd  refactor: rename src/core.rs…                152c · 6b · 3t │ HISTORY ATLAS
+┬2023-12-28 ┬2024-01-04  ┬2024-01-11 ┬2024-01-18  ┬2024-01-25 ┬2024-02-01  ┬2024-02-08 ┬2024-02-15  ┬2024-02-22   ┌─  SELECTION  ──────────────────────────────┐
+       ○─○○○─○○○○○○─○──○●──●─●─●──●─●─●─●─●──●●─●◉◉◉◉●●●●─●●─●●●●─●●●●●●─●●●●─●●●●●●●●●●●●●●●●●●●●●●●●●●●●●◈      │877c6dd   refactor: rename src/core.rs to   │
              │  │││                             │││                                                        ┊      │src/foundation.rs                           │
-             │  ││─○──○─●─●─●──●●──●─●─●──●─●─●─●│─feature/strand-4                                        ┊      │Grace Hopper · 2024-02-26 (0s ago)          │
+             │  ││─○──○─●─●─●──●●──●─●─●──●─●─●─●│─┤ feature/strand-4                                      ┊      │Grace Hopper · 2024-02-26 (1d ago)          │
              │  ││                              ││                                                         ┊      │1 file  +4 / −0                             │
-             │  │──○─○──●●──●─●─●──●─●─●─●─●─●─●│─feature/strand-3                                         ┊      │tips main                                   │
+             │  │──○─○──●●──●─●─●──●─●─●─●─●─●─●│─┤ feature/strand-3                                       ┊      │tips main                                   │
              │  │                               │                                                          ┊      │refactor: rename src/core.rs to             │
-             │  ───○─○─●─●──●─●─●─●──●─●─●─●─●─●│ feature/strand-2                                         ┊      │src/foundation.rs                           │
+             │  ───○─○─●─●──●─●─●─●──●─●─●─●─●─●│┤ feature/strand-2                                        ┊      │src/foundation.rs                           │
              │                                  │                                                          ┊      │                                            │
-             ─────○──○─○─●─●─●─●──●─●─●─●──●─●─●─ feature/strand-1                                         ┊      │                                            │
+             ─────○──○─○─●─●─●─●──●─●─●─●──●─●─●─┤ feature/strand-1                                        ┊      │                                            │
+                                                                                                           ┊      │                                            │
+                                                                                                           ┊      │                                            │
+                                                                                                           ┊      │                                            │
+ COMMIT PRESSURE  /  viewport density · peak 4 per column                                                  ┊      │                                            │
+                                                                                                           ◈      │                                            │
+                                             █                                                             ┊      │                                            │
+                                             █                                                             ┊      │                                            │
+                   █ █ ███  █  ██ █  █ █   █ █ █                                                           ┊      │                                            │
+                   █ █ ███  █  ██ █  █ █   █ █ █                                                           ┊      │                                            │
+       ▇ ▇   ▇    ▇▇ ▇ ▇▇▇ ▇▇▇▇▇▇ ▇▇▇▇▇▇▇▇▇▇ ▇▇▇▇▇▇▇▇ ▇    ▇    ▇     ▇     ▇ ▇  ▇    ▇                 ▇▇ ▇      │                                            │
+       ▆ ▆   ▆    ▆▆ ▆ ▆▆▆ ▆▆▆▆▆▆ ▆▆▆▆▆▆▆▆▆▆ ▆▆▆▆▆▆▆▆ ▆    ▆    ▆     ▆     ▆ ▆  ▆    ▆                 ▆▆ ▆      │                                            │
+       ▅ ▅▅▅ ▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅ ▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅ ▅▅ ▅▅▅▅ ▅▅▅▅▅▅ ▅▅▅▅ ▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅      │                                            │
+       ▄ ▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄ ▄▄▄▄ ▄▄▄▄▄▄ ▄▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄      │                                            │
+       ▃ ▃▃▃ ▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃ ▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃ ▃▃ ▃▃▃▃ ▃▃▃▃▃▃ ▃▃▃▃ ▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃      │                                            │
                                                                                                            ┊      │                                            │
                                                                                                            ┊      │                                            │
                                                                                                            ┊      │                                            │
@@ -39,13 +45,7 @@ oid 877c6dd3fba993a6237bcbc1c726e6749bdcb828
                                                                                                            ┊      │                                            │
                                                                                                            ┊      │                                            │
                                                                                                            ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
-                                                                                                           ┊      │                                            │
+❰················································································································❱│                                            │
+ 152 commits in view lens 64d @ 1.79px/d                                                                          └────────────────────────────────────────────┘
+152 commits, 6 branches, 3 tags, span 56d
+

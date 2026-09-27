@@ -1,41 +1,41 @@
-# Regenerate: ./target/release/palimpsest --demo=medium --dump --width=120 --height=40 --view=health | python3 scripts/flatten_dump.py 120 40
- PALIMPSEST ─ palimpsest-fixtur…      ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ REPOSITORY HEALTH
-───── palimpsest artifact ─────
-◈ 877c6dd   refactor: rename src/core.rs to src/foundation.rs
-Grace Hopper <grace@palimpsest.dev>  2024-02-26  lane 0
-1 files  +4 −0
-branch tips: main
-refactor: rename src/core.rs to src/foundation.rs
-oid 877c6dd3fba993a6237bcbc1c726e6749bdcb828
- PALIMPSEST ─ palimpsest-fixtur…      ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ REPOSITORY HEALTH
-──── REPOSITORY HEALTH ──────────────────────────────────────────────────────────────────────────────                  ▓
- OVERVIEW  ────────────────────────────────────────────────────────────────────────────────────────────────────────────▓
- commits indexed                                                                                     152 of 152 scanned▓
- window truncated                                                                                                    no▓
- history span                                                                                                   56 days▓
- merges                                                                                                          4 (3%)▓
- tags                                                                                                                 3▓
- distinct authors                                                                                                     4▓
+# Regenerate: ./target/release/palimpsest --demo=medium --view=health --dump --frame-only --width=120 --height=40 | python3 scripts/flatten_dump.py 120 40
+ PALIMPSEST ─ palimpsest-fixtur… ◈ 877c6dd  refactor: rename src/core.rs…         152c · 6b · 3t │ REPOSITORY HEALTH
+──── REPOSITORY HEALTH ────────────────────────────────────────────────────────────────────────────                    ▓
+ OVERVIEW  ─────────────────────────────────────────────────────────────────────────────────────────────────────────── ▓
+ commits indexed                                                                                   152 of 152 scanned  ▓
+ window truncated                                                                                                  no  ▓
+ history span                                                                                                 56 days  ▓
+ merges                                                                                                        4 (3%)  ▓
+ tags                                                                                                               3  ▓
+ distinct authors                                                                                                   4  ▓
                                                                                                                        ▓
- AUTHOR DISTRIBUTION  ─────────────────────────────────────────────────────────────────────────────────────────────────▓
- Grace Hopper                           ████████████████████████████████████████████████████████████         45   29.6%▓
- Edsger Dijkstra                        █████████████████████████████████████████████████                    37   24.3%▓
- Ada Lovelace                           ███████████████████████████████████████████████                      35   23.0%▓
- Alan Turing                            ███████████████████████████████████████████████                      35   23.0%▓
+ AUTHOR DISTRIBUTION  ──────────────────────────────────────────────────────────────────────────────────────────────── ▓
+ Grace Hopper                          ███████████████████████████████████████████████████████████         45   29.6%  ▓
+ Edsger Dijkstra                       █████████████████████████████████████████████████                   37   24.3%  ▓
+ Ada Lovelace                          ██████████████████████████████████████████████                      35   23.0%  ▓
+ Alan Turing                           ██████████████████████████████████████████████                      35   23.0%  ▓
                                                                                                                        ▓
- HOTTEST FILES (churn)  ───────────────────────────────────────────────────────────────────────────────────────────────▓
+ HOTTEST FILES (churn)  ────────────────────────────────────────────────────────────────────────────────────────────── ▓
  complete scan                                                                                                         ▓
- src/hot/module_0.rs                                        ████████████████████████████████████████████     13 touches▓
- src/hot/module_2.rs                                        ████████████████████████████████████████████     13 touches▓
- src/hot/module_1.rs                                        ████████████████████████████████████████████     12 touches▓
- src/hot/module_3.rs                                        ████████████████████████████████████████████     11 touches▓
- src/core.rs                                                █████████                                         2 touches▓
- src/modules/10.rs                                          █████████                                         2 touches▓
- src/modules/11.rs                                          █████████                                         2 touches▓
- src/modules/12.rs                                          █████████                                         2 touches▓
+ src/hot/module_0.rs                                       █████████████████████████████████████████       13 touches  ▓
+ src/hot/module_2.rs                                       █████████████████████████████████████████       13 touches  ▓
+ src/hot/module_1.rs                                       ██████████████████████████████████████          12 touches  ▓
+ src/hot/module_3.rs                                       ███████████████████████████████████             11 touches  ▓
+ src/core.rs                                               ██████                                           2 touches  ▓
+ src/modules/10.rs                                         ██████                                           2 touches  ▓
+ src/modules/11.rs                                         ██████                                           2 touches  ▓
+ src/modules/12.rs                                         ██████                                           2 touches  ▓
                                                                                                                        ▓
- concentration (top-10 share)                                                                        37% of file events▓
+ concentration (top-10 share)                                                                      37% of file events  ▓
                                                                                                                        ▓
- LARGEST COMMITS (by paths touched)  ──────────────────────────────────────────────────────────────────────────────────▓
-                                                                                                                       ▓
- BRANCH AGES  ─────────────────────────────────────────────────────────────────────────────────────────────────────────▓
+ LARGEST COMMITS (by paths touched)  ───────────────────────────────────────────────────────────────────────────────── ▓
+  0cf37ed  merge: braid strand-1 into main                                        14 paths · Ada Lovelace · 1mo ago    ░
+  379610d  merge: braid strand-4 into main                                      14 paths · Edsger Dijk… · 1mo ago      ░
+  4a2118a  merge: braid strand-2 into main                                        14 paths · Grace Hopper · 1mo ago    ░
+  837e568  merge: braid strand-3 into main                                         14 paths · Alan Turing · 1mo ago    ░
+  bc5ce09  genesis: establish the workbench                                        3 paths · Ada Lovelace · 1mo ago    ░
+                                                                                                                       ░
+ BRANCH AGES (* outside indexed history)  ──────────────────────────────────────────────────────────────────────────── ░
+  ● exp/never-merges*                                                                             2024-02-28 (0s ago)  ░
+152 commits, 6 branches, 3 tags, span 56d
+

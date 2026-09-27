@@ -3,10 +3,10 @@
 //! Each source line carries its origin: an age glyph, the introducing
 //! commit's short oid, and the author's lane color (the same braid colors as
 //! the atlas — authorship stays legible across views). Selecting a line
-//! "unfolds" it into a fiber panel: the introducing commit, then every later
-//! hunk that overlapped this line position, each one a station you can jump
-//! to. The transformation makes the line appear to extend backward into the
-//! topology instead of opening a new screen.
+//! "unfolds" it into a fiber panel: the introducing commit, then later edits
+//! within one numbered row of its position, each a nearby station you can
+//! jump to. These stations are positional context, not additional authors of
+//! the selected text. The fiber stays in the same screen.
 
 use std::sync::Arc;
 
@@ -19,7 +19,7 @@ use crate::views::widgets::*;
 
 pub fn draw_prov(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
     let mut s = Surface::new(w, h);
-    let Some(blame) = app.prov.blame.clone() else {
+    let Some(blame) = &app.prov.blame else {
         s.print_str(
             1,
             1,
@@ -43,16 +43,18 @@ pub fn draw_prov(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
     strip(&mut s, 0, &header, pal.s_bar_accent());
 
     let narrow = w < 100;
-    let gutter_w: u16 = if narrow { 14 } else { 22 };
+    let gutter_w: u16 = if narrow { 16 } else { 27 };
     let text_x = gutter_w;
-    let text_w = w.saturating_sub(gutter_w);
+    let text_w = w.saturating_sub(gutter_w + 2);
 
     let unfold_h = if app.prov.unfolded {
         (h / 3).clamp(4, 12)
     } else {
         0
     };
-    let body_h = h.saturating_sub(1 + unfold_h);
+    // Reserve a separator and the bottom hint instead of painting either on
+    // top of the last visible source line.
+    let body_h = h.saturating_sub(2 + unfold_h);
 
     let lines = &blame.lines;
     let cursor = app.prov.line_cursor;
@@ -117,7 +119,7 @@ pub fn draw_prov(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
 
     // ---- the unfolded fiber panel --------------------------------------------
     if unfold_h > 0 {
-        let top = 1 + body_h;
+        let top = 2 + body_h;
         // separator: the fold line
         for x in 0..w {
             s.set_cell(
@@ -145,7 +147,7 @@ pub fn draw_prov(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
             Some(w),
         );
 
-        // later commits whose hunks overlapped this line's position
+        // Later commits with changed rows near this numbered position.
         // (cached in prov.fiber at unfold time — never recomputed per frame)
         let mut shown = 0usize;
         for e in app.prov.fiber.iter() {
@@ -172,7 +174,7 @@ pub fn draw_prov(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
             s.print_str(
                 0,
                 top + 1,
-                "   · no later hunks overlapped this line within the scan bound",
+                "   · no later nearby edits within the indexed history",
                 pal.s_faint(),
                 Some(w),
             );
@@ -211,9 +213,10 @@ fn age_glyph_of(t: i64, now: i64) -> &'static str {
     }
 }
 
-/// Unfold the currently-selected line's fiber: every commit in the file's
-/// recovered history (newer than the introducing commit) whose hunks overlap
-/// the line's position. Computed once per unfold and cached in `prov.fiber`.
+/// Unfold the selected line: its blame origin plus later nearby changed rows
+/// (within one numbered line). A hunk's context lines are never evidence of
+/// edits. Stations are positional context, not claims of shared line identity.
+/// The bounded computation is cached in `prov.fiber`.
 pub fn unfold_fiber(app: &mut App) {
     app.prov.fiber.clear();
     let Some(b) = app.prov.blame.clone() else {
@@ -222,13 +225,20 @@ pub fn unfold_fiber(app: &mut App) {
     let Some(cl) = b.lines.get(app.prov.line_cursor) else {
         return;
     };
+    let selected_idx = app.hist.idx_of(&b.oid);
     let events = crate::git::filelog::file_events(&app.repo, &app.hist, &b.path, 3000);
     let mut fiber = Vec::new();
     for e in events {
         if e.time <= cl.time || e.oid == cl.oid {
             continue;
         }
-        if hunk_overlaps(&app.repo, &e.oid, &b.path, cl.line_no) {
+        // A provenance snapshot must not claim edits made after its commit.
+        if let (Some(selected), Some(event)) = (selected_idx, app.hist.idx_of(&e.oid)) {
+            if event < selected {
+                continue;
+            }
+        }
+        if changed_near_line(&app.repo, &e.oid, &b.path, cl.line_no) {
             fiber.push(e);
         }
         if fiber.len() >= 32 {
@@ -240,9 +250,10 @@ pub fn unfold_fiber(app: &mut App) {
     app.mark();
 }
 
-/// Did this commit's diff hunks (of `path`) overlap line `line_no` in the new
-/// file? Hunk new ranges are precomputed in the diff model — no header parsing.
-fn hunk_overlaps(repo: &crate::git::repo::Repo, oid: &str, path: &str, line_no: u32) -> bool {
+/// Look at changed diff lines themselves, never the surrounding hunk context.
+/// Added rows use new-file numbers; removed rows use old-file numbers. This is
+/// explicitly nearby positional context, not a trace of the same line text.
+fn changed_near_line(repo: &crate::git::repo::Repo, oid: &str, path: &str, line_no: u32) -> bool {
     let diff = match crate::git::diff::commit_diff(repo, oid, 400) {
         Ok(d) => d,
         Err(_) => return false,
@@ -251,10 +262,15 @@ fn hunk_overlaps(repo: &crate::git::repo::Repo, oid: &str, path: &str, line_no: 
         if f.path() != path && f.old_path != path {
             continue;
         }
-        for h in &f.hunks {
-            if line_no + 1 >= h.new_start && line_no < h.new_start.saturating_add(h.new_len) {
-                return true;
-            }
+        if f.hunks.iter().flat_map(|h| h.lines.iter()).any(|line| {
+            let changed_no = match line.kind {
+                crate::git::diff::LineKind::Add => line.new_no,
+                crate::git::diff::LineKind::Del => line.old_no,
+                crate::git::diff::LineKind::Context => None,
+            };
+            changed_no.is_some_and(|n| line_no.abs_diff(n) <= 1)
+        }) {
+            return true;
         }
     }
     false

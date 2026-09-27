@@ -16,7 +16,7 @@ pub struct AuthorStat {
 pub struct FileChurn {
     pub path: String,
     pub touches: u32,
-    /// True when extrapolated from a sample (see `sampled`).
+    /// True when extrapolated from a partial sample.
     pub estimated: bool,
 }
 
@@ -34,6 +34,8 @@ pub struct BranchAge {
     pub last_commit: i64,
     pub commits: u32,
     pub is_remote: bool,
+    /// This tip may be on a branch unreachable from the indexed HEAD walk.
+    pub in_window: bool,
 }
 
 pub struct Metrics {
@@ -50,10 +52,10 @@ pub struct Metrics {
     pub span_days: i64,
     /// Monthly activity (month key "YYYY-MM" asc, count).
     pub monthly: Vec<(String, u32)>,
-    /// Share of sampled file events belonging to the top 5% of files.
+    /// Share of sampled file events belonging to the ten hottest files.
     pub concentration: f32,
-    /// Whether churn stats were extrapolated from a sample.
-    pub sampled: bool,
+    /// Whether every indexed commit was examined for file statistics.
+    pub complete_scan: bool,
     pub sample_size: usize,
 }
 
@@ -91,41 +93,34 @@ pub fn compute(repo: &Repo, history: &History, branches: &[BranchInfo], scanned:
     }
     let monthly: Vec<(String, u32)> = monthly_map.into_iter().collect();
 
-    // Largest commits by changed-path count (tier A, lazily resolved —
-    // bounded to the eagerly-resolved prefix plus on-demand resolution).
-    let mut sized: Vec<&super::history::CommitRow> =
-        rows.iter().filter(|r| r.files.is_some()).collect();
-    sized.sort_by_key(|r| std::cmp::Reverse(r.files.unwrap_or(0)));
-    let largest: Vec<LargestCommit> = sized
-        .iter()
-        .take(8)
-        .map(|r| LargestCommit {
-            oid: r.oid.clone(),
-            short: r.short.clone(),
-            summary: r.summary.clone(),
-            files: r.files.unwrap_or(0),
-            author: r.author.clone(),
-            time: r.time,
-        })
-        .collect();
-
-    // Branch ages: last-commit time of each tip within the loaded window.
+    // Branch ages include tips unreachable from HEAD or beyond --limit.
+    // Missing branch objects are skipped, never assigned a made-up age.
     let mut branch_ages: Vec<BranchAge> = Vec::new();
     for b in branches {
-        let Some(idx) = history.idx_of(&b.oid) else {
-            continue;
+        let idx = history.idx_of(&b.oid);
+        let timestamp = if let Some(idx) = idx {
+            rows[idx as usize].time
+        } else {
+            let Ok(oid) = git2::Oid::from_str(&b.oid) else {
+                continue;
+            };
+            let Ok(commit) = repo.inner().find_commit(oid) else {
+                continue;
+            };
+            commit.time().seconds()
         };
         branch_ages.push(BranchAge {
             name: b.name.clone(),
-            last_commit: rows[idx as usize].time,
+            last_commit: timestamp,
             commits: 0,
             is_remote: b.is_remote,
+            in_window: idx.is_some(),
         });
     }
     branch_ages.sort_by_key(|b| std::cmp::Reverse(b.last_commit));
 
     // Per-file churn: sampled across the loaded set (tier-A enumerations).
-    let (hottest, concentration, sampled, sample_size) = churn_sample(repo, history);
+    let (hottest, concentration, complete_scan, sample_size, largest) = churn_sample(repo, history);
 
     let span_days = ((history.t_max - history.t_min) / 86_400).max(0);
     Metrics {
@@ -142,29 +137,43 @@ pub fn compute(repo: &Repo, history: &History, branches: &[BranchInfo], scanned:
         span_days,
         monthly,
         concentration,
-        sampled,
+        complete_scan,
         sample_size,
     }
 }
 
 /// Evenly sample `CHURN_SAMPLE` commits across the loaded window and count
 /// per-path deltas. The step is derived from the loaded size; results are
-/// extrapolated back to full-window estimates.
-fn churn_sample(repo: &Repo, history: &History) -> (Vec<FileChurn>, f32, bool, usize) {
+/// extrapolated back to full-window estimates. The same bounded walk yields
+/// actual changed-path counts for the largest-commit sample.
+fn churn_sample(
+    repo: &Repo,
+    history: &History,
+) -> (Vec<FileChurn>, f32, bool, usize, Vec<LargestCommit>) {
     let n = history.rows.len();
     if n == 0 {
-        return (Vec::new(), 0.0, false, 0);
+        return (Vec::new(), 0.0, false, 0, Vec::new());
     }
     let step = ((n as f32 / CHURN_SAMPLE as f32).ceil() as usize).max(1);
-    let sampled_count = (n / step).max(1);
-    let sampled = step <= 1;
+    let complete_scan = step == 1;
 
     let mut churn: HashMap<String, u32> = HashMap::new();
     let mut total_touches = 0u32;
+    let mut sampled_count = 0usize;
+    let mut largest = Vec::new();
     let mut i = 0usize;
     while i < n {
         let row = &history.rows[i];
+        sampled_count += 1;
         if let Ok(files) = super::history::History::files_of(repo, &row.oid) {
+            largest.push(LargestCommit {
+                oid: row.oid.clone(),
+                short: row.short.clone(),
+                summary: row.summary.clone(),
+                files: files.len() as u32,
+                author: row.author.clone(),
+                time: row.time,
+            });
             for f in files {
                 *churn.entry(f).or_insert(0) += 1;
                 total_touches += 1;
@@ -172,37 +181,39 @@ fn churn_sample(repo: &Repo, history: &History) -> (Vec<FileChurn>, f32, bool, u
         }
         i += step;
     }
+    largest.sort_by(|a, b| b.files.cmp(&a.files).then(a.oid.cmp(&b.oid)));
+    largest.truncate(8);
 
-    let mut hottest: Vec<FileChurn> = churn
+    let mut raw_churn: Vec<(String, u32)> = churn.into_iter().collect();
+    raw_churn.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+    // Scaling cancels in a share: calculate against sampled event counts.
+    let concentration = if total_touches == 0 {
+        0.0
+    } else {
+        raw_churn.iter().take(10).map(|(_, n)| *n).sum::<u32>() as f32 / total_touches as f32
+    };
+    let hottest: Vec<FileChurn> = raw_churn
         .into_iter()
+        .take(10)
         .map(|(path, touches)| FileChurn {
             path,
-            touches: if sampled {
+            touches: if complete_scan {
                 touches
             } else {
-                touches * (n as u32 / sampled_count.max(1) as u32).max(1)
+                ((touches as u64 * n as u64 + sampled_count as u64 / 2) / sampled_count as u64)
+                    as u32
             },
-            estimated: !sampled,
+            estimated: !complete_scan,
         })
         .collect();
-    hottest.sort_by(|a, b| b.touches.cmp(&a.touches).then(a.path.cmp(&b.path)));
-    hottest.truncate(10);
 
-    // Concentration: share of touches in the top decile of touched files.
-    let mut concentration = 0.0f32;
-    if total_touches > 0 {
-        let all: Vec<u32> = {
-            let mut v: Vec<u32> = Vec::new();
-            // Recompute from hottest + rest is not retained; approximate with
-            // the top-10 share of total touches.
-            let top: u32 = hottest.iter().take(10).map(|f| f.touches).sum();
-            v.push(top.min(total_touches));
-            v
-        };
-        concentration = all[0] as f32 / total_touches as f32;
-    }
-
-    (hottest, concentration, sampled, sampled_count)
+    (
+        hottest,
+        concentration,
+        complete_scan,
+        sampled_count,
+        largest,
+    )
 }
 
 fn month_key(ts: i64) -> String {

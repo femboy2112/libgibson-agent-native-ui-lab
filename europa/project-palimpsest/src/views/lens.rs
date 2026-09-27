@@ -8,19 +8,19 @@
 
 use std::sync::Arc;
 
-use gibson::cell::{Cell, Color, Glyph, Style};
+use gibson::cell::{Cell, Glyph};
 use gibson::surface::Surface;
 
-use crate::app::lens::{find_matches, flatten};
+use crate::app::lens::flatten;
 use crate::app::App;
 use crate::git::diff::LineKind;
 use crate::theme::{glyphs, truncate, Palette};
 use crate::views::widgets::*;
 
 /// The full lens surface for the current commit diff.
-pub fn draw_lens(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
+pub fn draw_lens(app: &App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
     let mut s = Surface::new(w, h);
-    let Some(diff) = app.lens.diff.clone() else {
+    let Some(diff) = &app.lens.diff else {
         s.print_str(
             1,
             1,
@@ -41,12 +41,12 @@ pub fn draw_lens(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
 
     // ---- file ledger pane -------------------------------------------------------
     if wide {
-        draw_file_pane(&mut s, app, &diff, files_w, h, pal);
+        draw_file_pane(&mut s, app, diff, files_w, h, pal);
     }
 
     // ---- hunk pane ----------------------------------------------------------------
     let hx = files_w;
-    draw_hunk_pane(&mut s, app, &diff, hx, hunk_w, h, pal);
+    draw_hunk_pane(&mut s, app, diff, hx, hunk_w, h, pal);
 
     Arc::new(s)
 }
@@ -80,18 +80,13 @@ fn draw_file_pane(
         Some(w),
     );
 
-    let inner_w = w.saturating_sub(2);
+    let inner_w = w.saturating_sub(3);
     let list_h = h.saturating_sub(1);
     let scroll = app.lens.file_scroll;
     let cursor = app.lens.file_cursor;
-    let files: Vec<&crate::git::diff::FileDiff> = {
-        let mut v: Vec<_> = diff.files.iter().collect();
-        if !app.lens.query.is_empty() {
-            let n = app.lens.query.to_lowercase();
-            v.retain(|f| f.path().to_lowercase().contains(&n));
-        }
-        v
-    };
+    // A diff query searches paths and hunks, but it never reorders the file
+    // ledger. File focus therefore remains stable as hits are cycled.
+    let files = &diff.files;
 
     for vi in 0..list_h as usize {
         let idx = scroll + vi;
@@ -107,9 +102,9 @@ fn draw_file_pane(
             pal.s_text()
         };
         let status_style = match f.status {
-            'A' => Style::new().fg(Color::Ansi256(71)),
-            'D' => Style::new().fg(Color::Ansi256(167)),
-            'R' => Style::new().fg(Color::Ansi256(140)),
+            'A' => pal.s_added(),
+            'D' => pal.s_removed(),
+            'R' => pal.s_merge(),
             _ => pal.s_muted(),
         };
         let mark = match f.status {
@@ -118,8 +113,12 @@ fn draw_file_pane(
             'R' => "↗",
             _ => "·",
         };
-        let path_disp = truncate(f.path(), (inner_w as usize).saturating_sub(10));
         let counts = format!("+{:<3}−{:<3}", f.adds, f.dels);
+        let cx = inner_w.saturating_sub(counts.len() as u16);
+        // Path begins at column six. Reserve one blank cell before the
+        // right-set counts (and another before the binary marker).
+        let path_w = cx.saturating_sub(if f.binary { 11 } else { 7 });
+        let path_disp = truncate(f.path(), path_w as usize);
         let line = format!(" {} {:<2} {}", mark, "", path_disp);
         s.print_str(
             0,
@@ -138,7 +137,6 @@ fn draw_file_pane(
             ),
         );
         // counts right-aligned
-        let cx = inner_w.saturating_sub(counts.len() as u16);
         s.print_str(
             cx,
             y,
@@ -162,7 +160,7 @@ fn draw_file_pane(
 
 fn draw_hunk_pane(
     s: &mut Surface,
-    app: &mut App,
+    app: &App,
     diff: &crate::git::diff::CommitDiff,
     x0: u16,
     w: u16,
@@ -192,35 +190,10 @@ fn draw_hunk_pane(
     );
     let y = 1u16;
 
-    // flatten with the cursor's hunk first when navigating hunks
+    // One bounded linear view of the commit, addressed by stable file/hunk
+    // coordinates rather than by the position of a transient filter result.
     let max_lines = (h as usize).saturating_sub(1);
     let all = flatten(diff, 4096);
-
-    // diff search: filter scroll to matches
-    if !app.lens.query.is_empty() {
-        app.lens.matches = find_matches(diff, &app.lens.query, 200);
-    } else {
-        app.lens.matches.clear();
-    }
-
-    // scroll to keep the hunk cursor visible
-    let hunk_of = |line_idx: usize| -> Option<usize> { all.get(line_idx).map(|l| l.hunk_idx) };
-    let _ = hunk_of;
-
-    // find display index of the hunk cursor's first line for the focused file
-    if app.lens.hunk_cursor > 0 || app.lens.hunk_scroll > 0 {
-        let target = all
-            .iter()
-            .position(|l| {
-                l.file_idx == app.lens.file_cursor
-                    && l.line_idx.is_none()
-                    && l.hunk_idx == app.lens.hunk_cursor
-            })
-            .unwrap_or(0);
-        if target < app.lens.hunk_scroll || target >= app.lens.hunk_scroll + max_lines {
-            app.lens.hunk_scroll = target.saturating_sub(2);
-        }
-    }
 
     let scroll = app.lens.hunk_scroll.min(all.len().saturating_sub(1));
     for (vi, dl) in all.iter().skip(scroll).take(max_lines).enumerate() {
@@ -230,17 +203,35 @@ fn draw_hunk_pane(
         }
         let y = y as u16;
         if dl.is_meta() {
-            let style = if dl.text.starts_with("──") {
+            let focused_hunk = dl.file_idx == app.lens.file_cursor
+                && dl.hunk_idx == app.lens.hunk_cursor
+                && dl.text.starts_with("  @@");
+            let style = if focused_hunk {
+                pal.s_selection()
+            } else if dl.text.starts_with("──") {
                 pal.s_accent()
             } else {
                 pal.s_border()
             };
-            s.print_str(x0, y, &truncate(&dl.text, w as usize), style, Some(w));
+            let text = if focused_hunk {
+                format!("◈ {}", dl.text.trim_start())
+            } else {
+                dl.text.clone()
+            };
+            s.print_str(
+                x0,
+                y,
+                &truncate(&text, w.saturating_sub(2) as usize),
+                style,
+                Some(w.saturating_sub(2)),
+            );
             continue;
         }
-        let gutter_w = 9;
+        // Explicit inter-column space keeps `5` and `pub fn` from reading as
+        // one token, including in mono and at narrow widths.
+        let gutter_w = 11;
         let body_x = x0 + gutter_w;
-        let body_w = w.saturating_sub(gutter_w);
+        let body_w = w.saturating_sub(gutter_w + 2);
 
         // gutter: sign + old/new line numbers, exactly `gutter_w` wide
         let old_s = dl
@@ -251,7 +242,7 @@ fn draw_hunk_pane(
             .new_no
             .map(|n| format!("{:>4}", n))
             .unwrap_or_else(|| "    ".to_string());
-        let gutter = format!("{}{}{}", sign_of(dl.kind), old_s, new_s);
+        let gutter = format!("{}{}{}  ", sign_of(dl.kind), old_s, new_s);
         let g_style = match dl.kind {
             LineKind::Add => pal.s_added(),
             LineKind::Del => pal.s_removed(),
@@ -260,7 +251,7 @@ fn draw_hunk_pane(
         s.print_str(x0, y, &gutter, g_style, Some(gutter_w));
 
         // body with syntax-lite emphasis and intraline emphasis
-        paint_line(s, body_x, y, body_w, dl, pal);
+        paint_line(s, body_x, y, body_w, dl, pal, &app.lens.query);
     }
     scrollbar(
         s,
@@ -275,13 +266,17 @@ fn draw_hunk_pane(
     if h >= 3 {
         let hint = if app.lens.query.is_empty() {
             format!(
-                " {} hunks · n/p next/prev hunk · / search · o old/new",
+                " {} hunks · n/N hunk · / search · m/M match · p provenance",
                 f.hunks.len()
             )
         } else {
             format!(
-                " match {}/{} for `{}` · Enter jump · Esc clear",
-                app.lens.match_cursor + 1,
+                " match {}/{} for `{}` · m/M next/prev · / refine",
+                if app.lens.matches.is_empty() {
+                    0
+                } else {
+                    app.lens.match_cursor + 1
+                },
                 app.lens.matches.len(),
                 app.lens.query
             )
@@ -315,9 +310,22 @@ fn paint_line(
     w: u16,
     dl: &crate::app::lens::DisplayLine,
     pal: &Palette,
+    query: &str,
 ) {
-    let chars: Vec<char> = dl.text.chars().collect();
+    // Only the visible width is tokenized. A single enormous source line
+    // should cost O(viewport), not O(file line length), on every frame.
+    let chars: Vec<char> = dl.text.chars().take(w as usize).collect();
+    let kinds = syntax_kinds(&chars);
     let (start, len) = dl.emph.unwrap_or((0, 0));
+    let search_ranges = if query.is_empty() {
+        Vec::new()
+    } else {
+        let hay = dl.text.to_lowercase();
+        let needle = query.to_lowercase();
+        hay.match_indices(&needle)
+            .map(|(at, _)| (hay[..at].chars().count(), needle.chars().count()))
+            .collect::<Vec<_>>()
+    };
 
     for (i, &ch) in chars.iter().enumerate() {
         if i as u16 >= w {
@@ -333,13 +341,16 @@ fn paint_line(
             style = style.underline();
         }
         // syntax-lite on all lines
-        if let Some(k) = syntax_kind_at(&chars, i, dl.text.as_str()) {
+        if let Some(k) = kinds[i] {
             style = match k {
                 SyntaxKind::Comment => style.dim(),
-                SyntaxKind::String => Style::new().fg(Color::Ansi256(150)).overlay(style),
+                SyntaxKind::String => pal.s_accent().overlay(style),
                 SyntaxKind::Keyword => style.bold(),
-                SyntaxKind::Number => Style::new().fg(Color::Ansi256(179)).overlay(style),
+                SyntaxKind::Number => pal.s_tag().overlay(style),
             };
+        }
+        if search_ranges.iter().any(|&(at, n)| i >= at && i < at + n) {
+            style = style.reverse().bold();
         }
         let gx = x + i as u16;
         if gx < s.width {
@@ -353,7 +364,7 @@ fn paint_line(
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum SyntaxKind {
     Comment,
     String,
@@ -369,66 +380,79 @@ const KEYWORDS: &[&str] = &[
     "static", "void", "int", "new", "null", "nil",
 ];
 
-/// Classify the character at position `i` in `chars` by a tiny scanner.
-/// Deliberately shallow: whole-line and trailing comments, strings on this
-/// line only, a keyword list, leading-digit numbers.
-fn syntax_kind_at(chars: &[char], i: usize, _line: &str) -> Option<SyntaxKind> {
-    let text: String = chars.iter().collect();
-    let trimmed = text.trim_start();
-    let lead_ws = chars.len() - trimmed.len();
-
-    // whole-line comments (// # --)
-    let line_comment =
-        trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with("--");
-    if line_comment && i >= lead_ws {
-        return Some(SyntaxKind::Comment);
+/// A single linear pass over the visible line. A `//` inside a quoted string
+/// stays a string, and keywords are classified once per word.
+fn syntax_kinds(chars: &[char]) -> Vec<Option<SyntaxKind>> {
+    let mut kinds = vec![None; chars.len()];
+    let is_word = |c: char| c.is_alphanumeric() || c == '_';
+    let lead = chars
+        .iter()
+        .position(|c| !c.is_whitespace())
+        .unwrap_or(chars.len());
+    let whole_comment = lead < chars.len()
+        && (chars[lead] == '#'
+            || (lead + 1 < chars.len()
+                && matches!((chars[lead], chars[lead + 1]), ('/', '/') | ('-', '-'))));
+    if whole_comment {
+        kinds[lead..].fill(Some(SyntaxKind::Comment));
+        return kinds;
     }
-    // trailing // comment
-    if let Some(pos) = trimmed.find("//") {
-        if i >= lead_ws + pos {
-            return Some(SyntaxKind::Comment);
-        }
-    }
-    // strings: toggle across unescaped quotes up to i
-    let mut in_str = false;
-    let mut str_start = 0usize;
-    let mut prev_esc = false;
-    for (j, &c) in chars.iter().enumerate() {
-        if j > i {
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '/' && chars.get(i + 1) == Some(&'/') {
+            kinds[i..].fill(Some(SyntaxKind::Comment));
             break;
         }
-        if c == '"' && !prev_esc {
-            in_str = !in_str;
-            str_start = j;
+        if chars[i] == '"' {
+            let start = i;
+            i += 1;
+            while i < chars.len() {
+                if chars[i] == '\\' && i + 1 < chars.len() {
+                    i += 2;
+                } else if chars[i] == '"' {
+                    i += 1;
+                    break;
+                } else {
+                    i += 1;
+                }
+            }
+            kinds[start..i].fill(Some(SyntaxKind::String));
+            continue;
         }
-        prev_esc = c == '\\' && !prev_esc;
+        if is_word(chars[i]) {
+            let start = i;
+            while i < chars.len() && is_word(chars[i]) {
+                i += 1;
+            }
+            let word: String = chars[start..i].iter().collect();
+            let kind = if KEYWORDS.contains(&word.as_str()) {
+                Some(SyntaxKind::Keyword)
+            } else if chars[start].is_ascii_digit() {
+                Some(SyntaxKind::Number)
+            } else {
+                None
+            };
+            kinds[start..i].fill(kind);
+            continue;
+        }
+        i += 1;
     }
-    if in_str && i > str_start {
-        return Some(SyntaxKind::String);
+    kinds
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn syntax_scanner_does_not_misread_urls_as_comments() {
+        let chars: Vec<char> = "let url = \"https://example.test\"; // note"
+            .chars()
+            .collect();
+        let kinds = syntax_kinds(&chars);
+        assert_eq!(kinds[0], Some(SyntaxKind::Keyword));
+        let inner_slash = chars.iter().position(|&c| c == '/').unwrap();
+        assert_eq!(kinds[inner_slash], Some(SyntaxKind::String));
+        assert_eq!(*kinds.last().unwrap(), Some(SyntaxKind::Comment));
     }
-    // keyword: the word containing i
-    let is_word = |c: char| c.is_alphanumeric() || c == '_';
-    if !is_word(chars[i]) {
-        return None;
-    }
-    let a = (0..=i)
-        .rev()
-        .find(|&j| j == 0 || !is_word(chars[j - 1]))
-        .unwrap_or(0);
-    let b = (i..chars.len())
-        .find(|&j| !is_word(chars[j]))
-        .unwrap_or(chars.len());
-    let word: String = chars[a..b].iter().collect();
-    if KEYWORDS.contains(&word.as_str()) {
-        return Some(SyntaxKind::Keyword);
-    }
-    if word
-        .chars()
-        .next()
-        .map(|c| c.is_ascii_digit())
-        .unwrap_or(false)
-    {
-        return Some(SyntaxKind::Number);
-    }
-    None
 }

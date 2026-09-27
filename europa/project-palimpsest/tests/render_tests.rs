@@ -119,6 +119,24 @@ fn selected_commit_pin_and_dossier_present() {
 }
 
 #[test]
+fn strata_event_and_ruler_share_the_atlas_camera() {
+    let mut app = app_for("medium");
+    app.ensure_strata("src/hot/module_0.rs");
+    let t = app.strata.events[0].time;
+    app.camera.t_center = t;
+    let pal = app.palette;
+    let s = palimpsest::views::strata::draw_strata(&mut app, 120, 30, &pal);
+    let x = app.camera.x_of(t, 120) as u16;
+    assert_eq!(s.get(x, 2).unwrap().glyph.grapheme, "◈");
+
+    app.camera.t_center = t + 2 * 86_400;
+    let s2 = palimpsest::views::strata::draw_strata(&mut app, 120, 30, &pal);
+    let shifted_x = app.camera.x_of(t, 120) as u16;
+    assert_ne!(x, shifted_x, "the file event moves on the shared time axis");
+    assert_eq!(s2.get(shifted_x, 2).unwrap().glyph.grapheme, "◈");
+}
+
+#[test]
 fn diff_lens_renders_hunks_with_line_numbers() {
     let mut app = app_for("medium");
     app.ensure_lens();
@@ -167,12 +185,43 @@ fn strata_renders_worldline_and_ledger() {
 fn health_renders_editorial_report() {
     let mut app = app_for("medium");
     app.ensure_metrics();
+    let m = app.metrics.as_ref().unwrap();
+    assert!(
+        m.complete_scan,
+        "medium fixture should have complete file metrics"
+    );
+    assert_eq!(m.sample_size, m.commits);
+    assert!(
+        !m.largest.is_empty(),
+        "largest commits must be available before lazy tier-A stats"
+    );
+    let largest_oid = m.largest[0].short.clone();
+    assert!(m
+        .largest
+        .windows(2)
+        .all(|pair| pair[0].files >= pair[1].files));
+    assert!((0.0..=1.0).contains(&m.concentration));
+    assert_eq!(m.branches.len(), app.branches.len());
+    assert!(m
+        .branches
+        .iter()
+        .any(|b| b.name == "exp/never-merges" && !b.in_window));
+    assert!(app.now >= m.branches.iter().map(|b| b.last_commit).max().unwrap());
+    assert!(
+        palimpsest::views::health::report_text(&app).contains("exp/never-merges*"),
+        "report includes the disconnected branch with an explicit index marker"
+    );
     app.view = View::Health;
     let (_, rows) = render_frame(&mut app, 120, 40);
     let text = frame_text(&rows);
     assert!(text.contains("REPOSITORY HEALTH"));
     assert!(text.contains("AUTHOR DISTRIBUTION"));
     assert!(text.contains("HOTTEST FILES"));
+    assert!(text.contains("LARGEST COMMITS"));
+    assert!(
+        text.contains(&largest_oid),
+        "first sampled largest commit missing from rendered report"
+    );
     assert!(text.contains("BRANCH AGES"));
 }
 
@@ -188,6 +237,31 @@ fn mono_mode_emits_no_color_escapes() {
     );
     assert!(!raw.contains("38;5;"), "mono must not emit 256-color codes");
     assert!(!raw.contains("38;2;"), "mono must not emit truecolor codes");
+}
+
+#[test]
+fn mono_diff_and_provenance_preserve_source_without_color() {
+    let mut app = app_for("tiny");
+    app.palette = Palette::mono();
+    app.ensure_lens();
+    let path = app.lens.diff.as_ref().unwrap().files[0].path().to_string();
+    for view in [View::Lens, View::Strata, View::Provenance] {
+        match view {
+            View::Strata => app.ensure_strata(&path),
+            View::Provenance => app.ensure_prov(&path),
+            _ => {}
+        }
+        app.view = view;
+        let (raw, rows) = render_frame(&mut app, 80, 24);
+        assert!(
+            !raw.contains("38;5;") && !raw.contains("38;2;"),
+            "{view:?} emitted color in mono"
+        );
+        assert!(
+            frame_text(&rows).contains(&path),
+            "{view:?} lost file identity"
+        );
+    }
 }
 
 #[test]

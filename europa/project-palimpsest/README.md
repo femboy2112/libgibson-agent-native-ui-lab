@@ -7,14 +7,18 @@ dependencies, no private APIs, no library modifications).
 
 > "Git history became a place."
 
-```
- PALIMPSEST ─ palimpsest-fixtur…            ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ HISTORY ATLAS
-┬2023-12-28 ┬2024-01-04  ┬2024-01-11 ┬2024-01-18 ┬2024-01-25 ┬2024-02-01 ┬2024-02-08 ┬2024-02-15 ┬2024-02-22 ┬2
-       ○─○○○─○○○○○○─○──○●──●─●─●──●─●─●─●─●──●●─●◉◉◉◉●●●●─●●─●●●●─●●●●●●─●●●●─●●●●●●●●●●●●●●●●●●●●●●●●●●●●◈┤ main
-             │  ││─○──○─●─●─●──●●──●─●─●──●─●─●─●│─feature/strand-4
-             │  │──○─○──●●──●─●─●──●─●─●─●─●─●─●│─feature/strand-3
-             │  ───○─○─●─●──●─●─●─●──●─●─●─●─●─●│ feature/strand-2
-             ─────○──○─○─●─●─●─●──●─●─●─●──●─●─●─ feature/strand-1
+```text
+ PALIMPSEST ─ palimpsest-fixtur… ◈ 877c6dd  refactor: rename src/core.rs…             152c · 6b · 3t │ HISTORY ATLAS
+   ┬2023-12-28 ┬2024-01-04  ┬2024-01-11 ┬2024-01-18  ┬2024-01-25 ┬2024-02-01  ┬2024-02-08 ┬2024-02-15  ┬2024-02-22
+          ○─○○○─○○○○○○─○──○●──●─●─●──●─●─●─●─●──●●─●◉◉◉◉●●●●─●●─●●●●─●●●●●●─●●●●─●●●●●●●●●●●●●●●●●●●●●●●●●●●●●◈◆v0.3.0
+                │  │││                             │││                                                        ┊
+                │  ││─○──○─●─●─●──●●──●─●─●──●─●─●─●│─┤ feature/strand-4                                      ┊
+  ⋮
+ COMMIT PRESSURE  /  viewport density · peak 4 per column                                                     ┊
+                                                                                                              ◈
+                                                █                                                             ┊
+                                                █                                                             ┊
+                      █ █ ███  █  ██ █  █ █   █ █ █                                                           ┊
 ```
 
 ## Mission
@@ -35,8 +39,8 @@ It demands, in one terminal interface: a zoomable temporal topology canvas
 that "unfold backward" into history, rename-following file strata, an
 editorial metrics report, a modal command palette, filtered lists with stable
 keyed selection, and a responsive ladder down to ~40 columns — all against a
-library that ships **no virtualization, no list/table widget, no responsive
-breakpoints** (see issues [#38](https://github.com/femboy2112/libgibson/issues/38),
+lower-level Node path that ships **no virtualization, list/table widget, or
+responsive breakpoints** (see issues [#38](https://github.com/femboy2112/libgibson/issues/38),
 [#41](https://github.com/femboy2112/libgibson/issues/41),
 [#42](https://github.com/femboy2112/libgibson/issues/42)).
 Every one of those gaps had to be closed by bounded application policy — the
@@ -89,7 +93,9 @@ src/
 Bounded by policy everywhere: the commit index is capped (`--limit`, default
 5000), visible-window extraction is O(window), tier-A stats resolve ≤24
 commits/frame, tier-B line stats are computed on selection and LRU-cached
-(512), churn is sampled and marked `≈` when extrapolated.
+(512). Repository health scans up to 400 evenly spaced commits for file
+churn and changed-path counts; partial samples are labeled, and extrapolated
+churn is marked `≈`.
 
 ## Modes and views
 
@@ -112,12 +118,21 @@ Overlays: `?` help · `f` file browser (filterable, keyed focus restoration) ·
 J / K       jump one lane           , / .       pan the camera through time
 + / -       zoom the time-lens      z0..z5      lens presets: eon → day
 Enter       zoom in: commit → lens  Esc / q     back out one level (q quits in atlas)
-f           browse files            /           search history (n/N cycles hits)
+f           browse files            /           search history in atlas, diff in lens
 c           commit dossier to scrollback         E           export diff to scrollback
 R           commit health report to scrollback   u           unfold provenance fiber
 Tab         cycle lens pane focus   g / G       newest / oldest commit
 r           recenter camera         Ctrl-C      quit
 ```
+
+In the atlas, `n/N` cycles history hits. In the diff lens, `n/N` moves
+between hunks, `m/M` cycles diff-search hits, `p` opens the selected file's
+provenance, and `s` opens its strata. In strata, `j/k` follows file events on
+the same time axis as the atlas; Enter opens that event's commit diff. The
+file browser treats every printable character, including `q`, as a filter;
+Esc closes it. In provenance, `u` expands the line's blame origin and shows
+later edits within one numbered row as **nearby positional context**; those
+edits are not additional authors of the selected line.
 
 ## Build and run
 
@@ -142,8 +157,8 @@ app on piped output otherwise renders nothing (see
 ## Deterministic / headless commands
 
 ```sh
-# one-frame capture; pipe through the flattener for the visible screen
-./target/release/palimpsest --demo --dump --width=120 --height=40 \
+# clean live-frame capture for visual review
+./target/release/palimpsest --demo --dump --frame-only --width=120 --height=40 \
     | python3 scripts/flatten_dump.py 120 40
 
 --view=atlas|strata|lens|provenance|health   initial view
@@ -154,13 +169,15 @@ app on piped output otherwise renders nothing (see
 --profile                  load/render statistics to stderr
 ```
 
-`--dump` also demonstrates the scrollback contract end-to-end: frame →
-`───── palimpsest artifact ─────` insertion → live-region repaint.
+Plain `--dump` demonstrates the scrollback contract end-to-end: frame →
+`───── palimpsest artifact ─────` insertion → live-region repaint. Add
+`--frame-only` for the full live viewport with no inserted artifact; the
+checked-in visual captures use that option.
 
 ## Tests
 
 ```sh
-cargo test                 # 80 tests: 31 lib unit, 3 bin unit, 46 integration, 3 doc-tests
+cargo test                 # 88 tests: 33 lib unit, 3 bin unit, 49 integration, 3 doc-tests
 cargo test --release
 python3 scripts/pty_smoke.py                    # real PTY: frames, keys, resize, scrollback, clean quit
 python3 scripts/pty_smoke.py --profile=medium
@@ -174,7 +191,7 @@ replayed through a terminal model and the visible grid is checked:
   truncation notices, empty/detached repositories
 - `tests/interaction_tests.rs` — key-driven behavior: keyed selection
   stability under filtering, browser focus restoration, lane jumps, palette
-  commands, fiber unfold + origin jump
+  commands, diff-scoped search and hunk keys, fiber unfold + origin jump
 - `tests/model_tests.rs` — fixture determinism (byte-identical rebuilds),
   rename chains, blame mapping, window bounds, camera round-trips
 - `tests/wire_probe.rs` — differential-frame composition: scripted sessions
@@ -186,17 +203,22 @@ replayed through a terminal model and the visible grid is checked:
   survives through **shape alone** (○ ● ◆ ◉ ◈ ◎, rail/jog/pin glyphs); no
   color codes are emitted at all
 - `--ansi16` — palette and `ColorDepth::Ansi16` quantization together
-- color (default) — ANSI-256 palette; terminal capability detection via the
-  session, depth set explicitly in dump modes
+- color (default) — ANSI-256 palette, including when run in a TrueColor
+  terminal; this project does not emit RGB colors
 - Box-drawing vocabulary is single-width everywhere (unit-tested), so
   ambiguous-width terminals keep the braids aligned
 
 ## Known limitations (accepted, by design)
 
-- Search covers summary/author/oid; file paths are reached through the
-  browser/`--file` instead
-- Hottest-files churn is **sampled** across the loaded window and marked `≈`
-  when extrapolated — no manufactured certainty
+- Atlas search covers summary/author/oid; file paths are reached through the
+  browser/`--file`. Diff search covers paths and hunk content with at most
+  one hit per hunk (200-hit cap)
+- File churn is **sampled** across the loaded window and marked `≈` when
+  extrapolated; the largest-commits ranking then covers only the sampled
+  commits. Complete scans are labeled accordingly
+- The topology indexes HEAD ancestry within `--limit`. Health still shows
+  branch tips outside that walk with `*` and computes ages relative to the
+  newest known branch tip; those out-of-index commits are not plotted
 - `--demo=large` builds ~90k loose objects in-process on first run (minutes,
   syscall-bound on slow filesystems); deterministic, so it is cached and
   reused thereafter
@@ -205,16 +227,16 @@ replayed through a terminal model and the visible grid is checked:
 - The interactive path targets Linux terminals (raw mode, CSI); no
   Windows/macOS validation
 
-## Known project-local bugs
+## Project-local boundaries
 
-- Tag labels share the inter-lane row with merge jogs; occupied cells are
-  skipped (label text can interleave with rail glyphs — visible as e.g.
-  `◆v0.3.0` pierced by a jog)
-- Lens hunk auto-scroll only recenters when `hunk_cursor > 0`; stepping into a
-  file from its top can land mid-hunk without recentering
+- The atlas omits a label if it cannot place its complete text within twelve
+  columns of the tip without covering graph topology. Tags remain visible in
+  the dossier; names are also accessible through Git refs
+- The diff lens flattens at most 4,096 display rows per commit, and file
+  history is bounded by the indexed commit window. Extremely large diffs may
+  contain hunks beyond that display bound; export still uses its own bounded
+  diff policy
 - `-h` is bound to `--help`, so `--height` has no short flag
-- The dump artifact demo always emits one dossier after the frame (capture
-  evidence by design, but it makes `--dump` non-minimal)
 
 ## LibGibson issues discovered from this project
 
@@ -228,11 +250,12 @@ Filed by this attempt (see `EXPERIMENT_REPORT.md` for full evidence):
 - [#46](https://github.com/femboy2112/libgibson/issues/46) — interactive
   `Context` succeeds on non-TTY stdout and then silently renders nothing
 - [#48](https://github.com/femboy2112/libgibson/issues/48) — consolidated
-  ergonomics & architecture report (silent no-op render, rendered-output
-  testing, the Node/Surface seam, raster overflow, clip-rect drawing,
-  canonical loop, packaging)
+  ergonomics report; see its correction comment for released README guidance
+  on `use gibson` and `run_once`, and the distinction between no-root and
+  non-TTY behavior
 
-Pre-existing campaign issues this implementation validated by paying the cost:
+Pre-existing campaign issues this implementation encountered in the lower
+`Node`/`FocusRing` path:
 [#38](https://github.com/femboy2112/libgibson/issues/38) (windowing),
 [#39](https://github.com/femboy2112/libgibson/issues/39) (scroll-to-item),
 [#40](https://github.com/femboy2112/libgibson/issues/40) (focus membership;
@@ -249,13 +272,16 @@ renderer corruption was traced to this project's own test terminal model
 
 | Fixture | Commits | Lanes | Index load | Frame render | First-frame bytes |
 |---|---|---|---|---|---|
-| tiny | 24 | 3 | 0–1 ms | ~525 µs | ~7.2 KB |
-| medium | 152 | 5 | 3 ms | ~506 µs | ~7.4 KB |
-| large | 2,890 | 9 | 49 ms | ~453 µs | ~7.5 KB |
+| tiny | 24 | 3 | 0 ms | 391 µs | 9,096 B |
+| medium | 152 | 5 | 2 ms | 397 µs | 9,593 B |
+| large | 2,890 | 9 | 36 ms | 346 µs | 8,364 B |
+| local checkout | 14 | 1 | 0 ms | 342 µs | 6,817 B |
 
 Render cost is O(visible window), not O(history): the large fixture renders
-its atlas as fast as the tiny one. Artifacts insert above the live region for
-~7.7–7.9 KB per commit. Full numbers and methodology: `EXPERIMENT_REPORT.md`.
+its atlas in the same sub-millisecond range as the tiny one. Measurements
+are single warm-fixture `--dump --frame-only --profile` runs at 120×40 on
+this Linux environment; initial full-frame bytes include the new activity
+section. Full numbers and methodology: `EXPERIMENT_REPORT.md`.
 
 ## Captures
 
@@ -263,8 +289,11 @@ its atlas as fast as the tiny one. Artifacts insert above the live region for
 through a terminal model), all byte-reproducible:
 
 ```sh
-./target/release/palimpsest --demo --dump --width=160 --height=50 \
+./target/release/palimpsest --demo --dump --frame-only --width=160 --height=50 \
     | python3 scripts/flatten_dump.py 160 50
 ```
 
 Regenerate any capture with the flags named in each file's header line.
+`provenance-120x40-large.txt` uses a 107-line, multi-author hot module to
+show the provenance fiber at realistic scroll depth; the tiny capture shows
+the rename path in a seven-line file.

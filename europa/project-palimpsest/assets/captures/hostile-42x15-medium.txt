@@ -1,16 +1,16 @@
-# Regenerate: ./target/release/palimpsest --demo=medium --dump --width=42 --height=15  | python3 scripts/flatten_dump.py 42 15
- PALIMPSEST │ ATLAS │ ◈ 877c6dd  refactor…
-───── palimpsest artifact ─────
-◈ 877c6dd   refactor: rename src/core.rs
-to src/foundation.rs
-Grace Hopper <grace@palimpsest.dev>
-2024-02-26  lane 0
-1 files  +4 −0
-branch tips: main
-refactor: rename src/core.rs to
-src/foundation.rs
-oid
-877c6dd3fba993a6237bcbc1c726e6749bdcb828
+# Regenerate: ./target/release/palimpsest --demo=medium --view=atlas --dump --frame-only --width=42 --height=15 | python3 scripts/flatten_dump.py 42 15
  PALIMPSEST │ ATLAS │ ◈ 877c6dd  refactor…
 ○─○─○─○──○●─●◉◉◉◉●●●●─●●─●●●●─●●●●●●─●●●●─
 ─○─○──○─○─●─●│─
+─○─○─○─○─●─●│─
+─○─○─○─○─●─●│
+○─○─○──○─●─●─
+
+
+
+
+ 70 commits in view lens 24d @ 1.79px/d
+┌─  SELECTION  ──────────────────────────┐
+│877c6dd   refactor: rename src/core.rs  │
+└────────────────────────────────────────┘
+

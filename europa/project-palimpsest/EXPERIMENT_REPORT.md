@@ -17,7 +17,8 @@ scrubbing, metrics, and **finalized artifacts committed into native terminal
 scrollback while the live app keeps running underneath** — the deliberate
 stress of LibGibson's immutable-history/live-region architecture. Target
 reaction: *"How the hell is this all one terminal interface?"* — on a library
-that ships no virtualization, no list widget, and no responsive machinery.
+whose lower-level `Node` path leaves list windowing and responsive policy to
+applications. This project does not evaluate the experimental `gibson::ui` path.
 
 ## LibGibson surface exercised
 
@@ -67,8 +68,8 @@ Concrete, measured:
 - **Headless capture is a first-class test harness.** `Context::headless` +
   `take_output` let the test suite assert on *actual wire bytes*, and a small
   terminal model (cursor addressing, SGR, `CSI K`/`CSI L`) turns those bytes
-  into the visible screen. All 80 tests assert what a user would see. This is
-  the single best API decision in v0.2.0 for consumers.
+  into the visible screen. The 88-test suite includes rendered-output checks.
+  This is the single best API decision in v0.2.0 for consumers.
 - **The differential renderer is byte-honest.** A scripted-session probe
   replays multi-frame sessions (atlas → lens → atlas → health → report →
   atlas) and snapshots the screen after every frame: headers compose cleanly,
@@ -79,9 +80,9 @@ Concrete, measured:
 - **Insertion above the live region genuinely keeps the app interactive.**
   The PTY smoke commits a health report into native scrollback and the live
   region continues rendering and accepting keys without a flicker.
-- **Render cost is O(visible window), not O(history).** 2,890 commits index
-  in 49 ms and render a frame in ~453 µs — the same frame cost as a 24-commit
-  repository (see performance table). The engine's diff accounting
+- **Atlas render cost is bounded by the visible window.** The measured
+  fixture runs cover 24, 152, and 2,890 indexed commits while initial frames
+  remain sub-millisecond (see performance table). The engine's diff accounting
   (`RenderStats`) made this measurable without instrumentation of our own.
 - **The cell model's wide-glyph invariants held everywhere.** Box-drawing
   braids across five views never split a glyph at a viewport edge; the
@@ -116,8 +117,9 @@ Concrete, measured:
 - The absence of built-in virtualization (#38), list/table widgets (#41),
   scroll-to-item viewports (#39), and responsive breakpoints (#42) forced
   ~five reimplementations of windowing/selection/scroll-keep-visible across
-  the five views. This is the measured pain those issues predict; this
-  project is existence proof that the boilerplate is real and repeated.
+  the five views in the **lower-level Node path this application uses**. This
+  is the measured pain those issues predict for that path; the experimental
+  `gibson::ui` runtime is outside this experiment.
 - `FocusRing` cannot shrink or reshape (#40), so per-view pane focus cannot
   live in the ring; this app tracks focus itself and uses the ring only for
   modal capture/restore.
@@ -126,8 +128,8 @@ Concrete, measured:
   this application's *defining* feature class (committing diffs/ledgers)
   had to be width-bounded by policy.
 - Interactive `Context` on non-TTY stdout silently renders nothing (filed as
-  #46) — the exact "black screen" failure class that killed the prior
-  attempt this project replaced.
+  #46). This is distinct from the rootless-render observation in #48. The
+  application checks `ctx.session.is_tty` and exits with a useful error.
 
 ### Probable LibGibson defects
 
@@ -144,7 +146,12 @@ Concrete, measured:
 
 Consolidated ergonomics & architecture analysis (silent failure modes, the
 declarative/imperative seam, rendered-output testing):
-[#48](https://github.com/femboy2112/libgibson/issues/48).
+[#48](https://github.com/femboy2112/libgibson/issues/48). Its initial text
+overstated missing onboarding guidance: the released v0.2.0 README already
+documents the `libgibson` package / `use gibson` import and a `run_once` loop.
+A clarifying comment on the issue corrects those points and separates
+non-TTY behavior from rootless rendering; this report does not adopt the
+original overclaims.
 
 Filed by this attempt against `femboy2112/libgibson`:
 
@@ -154,33 +161,47 @@ Filed by this attempt against `femboy2112/libgibson`:
 | 45 | No safe preformatted pathway for `commit_text` / `insert_text_before_live` | [#45](https://github.com/femboy2112/libgibson/issues/45) | WordWrap is hard-coded; aligned tables wider than the terminal are re-flowed (columns destroyed) while the NoWrap node path silently truncates (data loss) | Artifacts bounded to terminal width; multi-line RichText for structure |
 | 46 | Interactive `Context` succeeds on non-TTY stdout and silently renders nothing | [#46](https://github.com/femboy2112/libgibson/issues/46) | `Context::new` succeeds off-TTY; `render()` suppresses all frames and `poll_event` returns `Ok(None)` forever — consumers appear hung on a blank screen | Manual `ctx.session.is_tty` guard with actionable error (exit 2) |
 
-Pre-existing campaign issues (filed by the parallel Palimpsest attempt) that
-this implementation **validated by paying the cost**: #38, #39, #40, #41, #42
-(see "Friction encountered"). A candidate FocusRing-membership issue was
-deliberately *not* filed — #40 already covers the mechanism.
+Pre-existing campaign issues whose lower-level API cost this implementation
+encountered: #38, #39, #40, #41, #42 (see "Friction encountered"). A
+candidate FocusRing-membership issue was deliberately *not* filed — #40
+already covers the mechanism.
 
 ## Performance / scale observations
 
-Measured with `--profile` on the shipped `--release` binary (Linux, this
-development machine), one dump render per fixture after index load:
+Measured with `--profile` on the `--release` binary (Linux, this development
+machine), one `--dump --frame-only --width=120 --height=40` render per cached
+fixture after index load (single-run timings; build/setup excluded):
 
-| Fixture | Commits | Lanes | Index load | Tier-A stats/frame | Last frame | Frame bytes | Insertion bytes (2 artifacts) |
-|---|---|---|---|---|---|---|---|
-| tiny | 24 | 3 | 0–1 ms | ≤24 | ~525 µs | ~7.2 KB | ~7.5 KB |
-| medium | 152 | 5 | 3 ms | ≤24 | ~506 µs | ~7.4 KB | ~7.7 KB |
-| large | 2,890 | 9 | 49 ms | ≤24 | ~453 µs | ~7.5 KB | ~7.9 KB |
+| Fixture | Commits | Lanes | Index load | Atlas frame | First-frame bytes |
+|---|---:|---:|---:|---:|---:|
+| tiny | 24 | 3 | 0 ms | 391 µs | 9,096 B |
+| medium | 152 | 5 | 2 ms | 397 µs | 9,593 B |
+| large | 2,890 | 9 | 36 ms | 346 µs | 8,364 B |
+| local checkout | 14 | 1 | 0 ms | 342 µs | 6,817 B |
 
-- Index→render decoupling: the 2,890-commit repository renders at the same
-  frame cost as 24 commits because window extraction is a binary search over
-  a time-sorted key plus O(visible commits) painting.
+- Index→atlas decoupling: window extraction uses a binary search over a
+  time-sorted key plus O(visible commits) painting. Frame time may vary with
+  terminal dimensions, scene complexity, and repository shape.
 - Tier-A (changed-path counts) resolves lazily within a per-frame budget of
-  24 delta enumerations; tier-B (line counts) is per-selected-commit with a
-  512-entry LRU. No unbounded retention anywhere: `--limit` caps the index
-  (default 5,000) and the truncation is flagged honestly in the UI.
+  24 delta enumerations. The health report separately samples at most 400
+  commits to compute churn and actual changed-path counts for the largest
+  sampled commits; it labels partial samples. Tier-B (line counts) is
+  per-selected-commit with a 512-entry LRU. `--limit` caps the index
+  (default 5,000) and the truncation is flagged in the UI.
 - First fixture builds: tiny ~0.1–1 s, medium ~0.7 s, large ~3–4 min
   (syscall-bound loose-object writes; one-time, cached deterministically).
 - The `--limit=200` truncation path was exercised on the large fixture: 200
   rows loaded, honest truncation flag, UI notice rendered.
+- A non-fixture smoke opened the local Palimpsest checkout read-only; its
+  14 indexed commits rendered under the same 120×40 capture path.
+- Provenance's blame origin identifies the actual author of a line. Its
+  optional unfolded stations display later changed rows within one numbered
+  line as **positional context**, never as proof that those commits modified
+  the selected text. An append-only regression guards against hunk context
+  falsely attributing a first line to a later commit.
+- History indexes HEAD ancestry; health resolves branch-tip ages outside
+  that walk separately, marks those tips `*`, and bases relative ages on the
+  newest known tip. Unreachable branch commits do not appear in the braid.
 
 ## Capability & fallback observations
 

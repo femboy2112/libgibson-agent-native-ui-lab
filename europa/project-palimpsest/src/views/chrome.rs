@@ -56,17 +56,17 @@ pub fn header_node(app: &App, w: u16, pal: &Palette) -> Node {
     let right_w = crate::theme::width_of(&right) as u16;
     // budget: left + sel + 4 (separator) + right == w when pad == 0
     let sel_budget = (w as usize)
-        .saturating_sub(left.len() + right_w as usize + 4)
+        .saturating_sub(left.len() + right_w as usize + 5)
         .max(4);
     let sel_text = truncate(&sel, sel_budget);
     let pad = (w as usize)
-        .saturating_sub(left.len() + crate::theme::width_of(&sel_text) + right_w as usize + 4)
+        .saturating_sub(left.len() + 1 + crate::theme::width_of(&sel_text) + right_w as usize + 4)
         .min(12);
     let text = format!(
-        "{}{}{}{}{}",
+        "{} {}{}{}{}",
         left,
-        " ".repeat(pad),
         sel_text,
+        " ".repeat(pad),
         " ".repeat(4),
         right
     );
@@ -93,6 +93,29 @@ pub fn cmdline_node(app: &App, w: u16, pal: &Palette) -> Node {
             )
             .width(w as f32)
         }
+        InputMode::LensSearch => {
+            let text = format!(
+                "DIFF ⌕ {}▌  {} matches · Enter jump · Esc cancel",
+                app.lens.query,
+                app.lens.matches.len()
+            );
+            Node::text(
+                pad_to(&truncate(&text, w as usize), w as usize),
+                pal.s_accent(),
+            )
+            .width(w as f32)
+        }
+        InputMode::ZoomPreset => Node::text(
+            pad_to(
+                &truncate(
+                    "ZOOM 0 eon · 1 year · 2 quarter · 3 month · 4 week · 5 day · Esc cancel",
+                    w as usize,
+                ),
+                w as usize,
+            ),
+            pal.s_accent(),
+        )
+        .width(w as f32),
         InputMode::Command => {
             let text = format!(": {}▌  — goto <rev> · file <path> · author <n> · zoom <0-5> · export · report · help · quit", app.status);
             Node::text(
@@ -144,9 +167,9 @@ pub fn hintline_node(app: &App, w: u16, pal: &Palette) -> Node {
         }
         crate::app::View::Lens => {
             if w >= 100 {
-                " Tab pane · j/k scroll · n/p hunk · / search · p provenance · s strata · E export · Esc atlas"
+                " Tab pane · j/k scroll · n/N hunk · / diff search · m/M match · p provenance · s strata · Esc atlas"
             } else {
-                " j/k · n/p hunk · Esc back"
+                " j/k · n/N hunk · / diff search · Esc back"
             }
         }
         crate::app::View::Provenance => {

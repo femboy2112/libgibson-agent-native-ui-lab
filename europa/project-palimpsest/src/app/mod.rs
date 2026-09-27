@@ -76,6 +76,8 @@ impl View {
 pub enum InputMode {
     Normal,
     Search,
+    LensSearch,
+    ZoomPreset,
     Command,
     HelpOverlay,
     FileBrowser,
@@ -244,7 +246,20 @@ impl App {
         let tags = repo.tags()?;
 
         let (hist, scanned) = History::load(&repo, limit)?;
-        let now = hist.rows.first().map(|r| r.time).unwrap_or(0);
+        // Detached branch tips may be newer than HEAD. Relative ages use the
+        // newest known timestamp so no branch is described as "0s ago" when
+        // it actually postdates the current branch by days.
+        let newest_branch = branches
+            .iter()
+            .filter_map(|b| {
+                git2::Oid::from_str(&b.oid)
+                    .ok()
+                    .and_then(|oid| repo.inner().find_commit(oid).ok())
+                    .map(|commit| commit.time().seconds())
+            })
+            .max()
+            .unwrap_or(0);
+        let now = hist.t_max.max(newest_branch);
         let span_days = ((hist.t_max - hist.t_min) / 86_400).max(1) as f32;
         let camera = Camera {
             px_per_day: (100.0 / span_days).clamp(0.004, 40.0),

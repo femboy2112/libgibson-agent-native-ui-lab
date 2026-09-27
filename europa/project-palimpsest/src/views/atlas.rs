@@ -122,6 +122,8 @@ pub fn draw_atlas(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> 
     }
 
     // ---- nodes -----------------------------------------------------------------
+    let mut tip_labels = Vec::new();
+    let mut tag_labels = Vec::new();
     for &i in &win {
         let row = &app.hist.rows[i as usize];
         let x = cam.x_of(row.time, w);
@@ -164,33 +166,29 @@ pub fn draw_atlas(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> 
                     }
                 });
             if let Some(label) = &tip_label {
-                print_if_empty(
-                    &mut s,
-                    x as u16 + 1,
-                    y as u16,
-                    label,
+                tip_labels.push((
+                    x + 1,
+                    y,
+                    label.clone(),
                     pal.s_lane(row.lane as usize).bold(),
-                    None,
-                );
+                ));
             }
             if let Some(tag) = row.tags.first() {
                 let label = format!("{}{}", glyphs::TAG, tag);
                 // tags sit on the node row when the row is free (no tip label),
                 // otherwise on the inter-lane row below
                 if tip_label.is_none() {
-                    print_if_empty(&mut s, x as u16 + 1, y as u16, &label, pal.s_tag(), None);
+                    tag_labels.push((x + 1, y, label, pal.s_tag()));
                 } else if lane_h == 2 {
-                    print_if_empty(
-                        &mut s,
-                        x as u16 + 1,
-                        (y + 1) as u16,
-                        &label,
-                        pal.s_tag(),
-                        None,
-                    );
+                    tag_labels.push((x + 1, y + 1, label, pal.s_tag()));
                 }
             }
         }
+    }
+    // Complete labels are drawn after all topology, or omitted if their row
+    // is occupied. Per-character vacancy checks used to produce pierced tags.
+    for (x, y, label, style) in tip_labels.into_iter().chain(tag_labels) {
+        print_label_if_clear(&mut s, x, y, &label, style);
     }
 
     // ---- hidden-lanes notice ----------------------------------------------------
@@ -201,6 +199,14 @@ pub fn draw_atlas(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> 
         if lanes_top < s.height {
             print_if_empty(&mut s, x, lanes_top, &note, pal.s_faint(), None);
         }
+    }
+
+    // A time-aligned activity cross-section uses the whitespace beneath
+    // shallow branch topologies. Every column is a count of visible commits,
+    // so the contour changes with the same pan/zoom as the braids and ruler.
+    let section_top = lanes_top + app.hist.lanes.min(lanes_visible) * lane_h + 2;
+    if section_top + 7 < lanes_bottom && w >= 70 {
+        draw_activity_section(&mut s, app, &win, section_top, lanes_bottom, pal);
     }
 
     // ---- density minimap (the scrub instrument) ---------------------------------
@@ -232,6 +238,71 @@ pub fn draw_atlas(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> 
     Arc::new(s)
 }
 
+/// Visible commit density in camera coordinates (distinct from the full-span
+/// one-row minimap). Deliberately O(visible commits + viewport columns).
+fn draw_activity_section(
+    s: &mut Surface,
+    app: &App,
+    win: &[u32],
+    top: u16,
+    bottom: u16,
+    pal: &Palette,
+) {
+    let w = s.width;
+    let mut counts = vec![0u32; w as usize];
+    for &i in win {
+        let x = app.camera.x_of(app.hist.rows[i as usize].time, w);
+        if (0..w as i32).contains(&x) {
+            counts[x as usize] += 1;
+        }
+    }
+    let peak = counts.iter().copied().max().unwrap_or(0).max(1);
+    let chart_h = bottom.saturating_sub(top + 2).min(9);
+    let title = format!(" COMMIT PRESSURE  /  viewport density · peak {peak} per column");
+    s.print_str(
+        0,
+        top,
+        &truncate(&title, w as usize),
+        pal.s_muted(),
+        Some(w),
+    );
+    let y_bottom = top + chart_h + 1;
+    for (x, &count) in counts.iter().enumerate() {
+        if count == 0 {
+            continue;
+        }
+        let height = ((count as f32 / peak as f32) * chart_h as f32).ceil() as u16;
+        for dy in 0..height {
+            let style = if count == peak {
+                pal.s_accent()
+            } else {
+                pal.s_muted()
+            };
+            s.set_cell(
+                x as u16,
+                y_bottom - dy,
+                gibson::cell::Cell::new(
+                    gibson::cell::Glyph::new(glyphs::DENSITY[(dy as usize + 2).min(7)]),
+                    style,
+                ),
+            );
+        }
+    }
+    if let Some(selected) = app.sel_row() {
+        let x = app.camera.x_of(selected.time, w);
+        if (0..w as i32).contains(&x) {
+            s.set_cell(
+                x as u16,
+                y_bottom.saturating_sub(chart_h),
+                gibson::cell::Cell::new(
+                    gibson::cell::Glyph::new(glyphs::NODE_SELECTED),
+                    pal.s_selection(),
+                ),
+            );
+        }
+    }
+}
+
 fn put_if_space(s: &mut Surface, x: i32, y: i32, ch: &str, style: Style) {
     if x < 0 || y < 0 {
         return;
@@ -246,6 +317,24 @@ fn put_if_space(s: &mut Surface, x: i32, y: i32, ch: &str, style: Style) {
             y as u16,
             gibson::cell::Cell::new(gibson::cell::Glyph::new(ch), style),
         );
+    }
+}
+
+fn print_label_if_clear(s: &mut Surface, x: i32, y: i32, text: &str, style: Style) {
+    let len = crate::theme::width_of(text) as i32;
+    if x < 0 || y < 0 || x + len > s.width as i32 || y >= s.height as i32 {
+        return;
+    }
+    // Tip cells can have one or two departing rail segments. Seek a nearby
+    // clear run without moving the label so far that its owner is ambiguous.
+    for start in x..=(x + 12).min(s.width as i32 - len) {
+        if (start..start + len).all(|px| {
+            s.get(px as u16, y as u16)
+                .is_some_and(|c| c.glyph.grapheme.as_str() == " " || c.glyph.is_empty())
+        }) {
+            s.print_str(start as u16, y as u16, text, style, Some(len as u16));
+            break;
+        }
     }
 }
 
@@ -307,7 +396,9 @@ fn draw_ruler(s: &mut Surface, cam: crate::app::Camera, w: u16, pal: &Palette) {
     let px = cam.px_per_day as f64;
     let mut step = *steps_days.last().unwrap();
     for &sd in &steps_days {
-        if px * sd as f64 >= 7.0 {
+        // A tick must leave enough space for its complete date label.
+        let label_cells = if sd >= 90 { 9.0 } else { 12.0 };
+        if px * sd as f64 >= label_cells {
             step = sd;
             break;
         }
@@ -325,15 +416,17 @@ fn draw_ruler(s: &mut Surface, cam: crate::app::Camera, w: u16, pal: &Palette) {
             } else {
                 fmt_date(t)
             };
-            s.set_cell(
-                x as u16,
-                0,
-                gibson::cell::Cell::new(
-                    gibson::cell::Glyph::new(glyphs::RULER_TICK),
-                    pal.s_border(),
-                ),
-            );
-            if x + 1 < w as i32 {
+            // A lone tick without its date suggests a missing event. Paint
+            // both only when the complete label fits the viewport.
+            if x + 1 + label.len() as i32 <= w as i32 {
+                s.set_cell(
+                    x as u16,
+                    0,
+                    gibson::cell::Cell::new(
+                        gibson::cell::Glyph::new(glyphs::RULER_TICK),
+                        pal.s_border(),
+                    ),
+                );
                 print_if_empty(s, (x + 1) as u16, 0, &label, pal.s_muted(), None);
             }
         }

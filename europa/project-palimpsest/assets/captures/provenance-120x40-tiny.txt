@@ -1,21 +1,13 @@
-# Regenerate: ./target/release/palimpsest --demo=tiny --dump --width=120 --height=40 --view=provenance --file=src/foundation.rs | python3 scripts/flatten_dump.py 120 40
- PALIMPSEST ─ palimpsest-fixtur…            ◈ ee64d4c  refactor: rename src/core.rs…    24c · 4b · 3t │ PROVENANCE
-───── palimpsest artifact ─────
-◈ ee64d4c   refactor: rename src/core.rs to src/foundation.rs
-Grace Hopper <grace@palimpsest.dev>  2023-11-24  lane 0
-1 files  +4 −0
-branch tips: main
-refactor: rename src/core.rs to src/foundation.rs
-oid ee64d4c62e9393661b78266808d9d6450bb6f9bc
- PALIMPSEST ─ palimpsest-fixtur…            ◈ ee64d4c  refactor: rename src/core.rs…    24c · 4b · 3t │ PROVENANCE
+# Regenerate: ./target/release/palimpsest --demo=tiny --view=provenance --file=src/foundation.rs --dump --frame-only --width=120 --height=40 | python3 scripts/flatten_dump.py 120 40
+ PALIMPSEST ─ palimpsest-fixtur… ◈ ee64d4c  refactor: rename src/core.rs…                24c · 4b · 3t │ PROVENANCE
  ◈ ee64d4c · FIBERS · src/foundation.rs · 7 lines
-◈    1 db79c3b Ada Lovpub fn anchor(a: i64, b: i64) -> i64 {
-◈    2 db79c3b Ada Lov    a.min(b)
-◈    3 db79c3b Ada Lov}
-◆    4 ee64d4c Grace H
-◆    5 ee64d4c Grace Hpub fn span(a: i64, b: i64) -> i64 {
-◆    6 ee64d4c Grace H    (a - b).abs()
-◆    7 ee64d4c Grace H}
+◈    1 db79c3b Ada Lovel…  pub fn anchor(a: i64, b: i64) -> i64 {
+◈    2 db79c3b Ada Lovel…      a.min(b)
+◈    3 db79c3b Ada Lovel…  }
+◆    4 ee64d4c Grace Hop…
+◆    5 ee64d4c Grace Hop…  pub fn span(a: i64, b: i64) -> i64 {
+◆    6 ee64d4c Grace Hop…      (a - b).abs()
+◆    7 ee64d4c Grace Hop…  }
 
 
 
@@ -38,4 +30,12 @@ oid ee64d4c62e9393661b78266808d9d6450bb6f9bc
 
 
 
+
+
+
+
+
+
+ ┆ j/k line · u unfold fiber · Enter jump · c commit summary · Esc back
+24 commits, 4 branches, 3 tags, span 9d
 

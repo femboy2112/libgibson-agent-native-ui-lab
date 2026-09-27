@@ -7,6 +7,7 @@ pub struct Args {
     pub repo: Option<PathBuf>,
     pub demo: Option<DemoProfile>,
     pub dump: bool,
+    pub frame_only: bool,
     pub width: u16,
     pub height: u16,
     pub mono: bool,
@@ -33,6 +34,7 @@ impl Default for Args {
             repo: None,
             demo: None,
             dump: false,
+            frame_only: false,
             width: 120,
             height: 40,
             mono: false,
@@ -50,8 +52,12 @@ impl Default for Args {
 
 impl Args {
     pub fn parse() -> Self {
+        Self::parse_from(std::env::args().skip(1))
+    }
+
+    fn parse_from(argv: impl IntoIterator<Item = String>) -> Self {
         let mut a = Self::default();
-        let argv: Vec<String> = std::env::args().skip(1).collect();
+        let argv: Vec<String> = argv.into_iter().collect();
         let mut i = 0;
         while i < argv.len() {
             let raw = argv[i].as_str();
@@ -61,8 +67,8 @@ impl Args {
             };
             // values: inline (`--key=v`) or the next argv (`--key v`)
             let next = |i: &mut usize| -> Option<String> {
-                if let Some(v) = inline_val {
-                    return Some(v);
+                if let Some(v) = &inline_val {
+                    return Some(v.clone());
                 }
                 *i += 1;
                 argv.get(*i).cloned()
@@ -74,14 +80,27 @@ impl Args {
                     }
                 }
                 "--demo" | "-d" => {
-                    let v = next(&mut i);
-                    a.demo = Some(match v.as_deref() {
+                    // The profile is optional. Do not swallow `--dump` (or
+                    // another option) when --demo stands alone.
+                    let v = if let Some(v) = inline_val.as_deref() {
+                        Some(v)
+                    } else if argv
+                        .get(i + 1)
+                        .is_some_and(|v| matches!(v.as_str(), "tiny" | "medium" | "large" | "big"))
+                    {
+                        i += 1;
+                        argv.get(i).map(String::as_str)
+                    } else {
+                        None
+                    };
+                    a.demo = Some(match v {
                         Some("tiny") => DemoProfile::Tiny,
                         Some("large") | Some("big") => DemoProfile::Large,
                         _ => DemoProfile::Medium,
                     });
                 }
                 "--dump" => a.dump = true,
+                "--frame-only" => a.frame_only = true,
                 "--width" | "-w" => {
                     if let Some(v) = next(&mut i) {
                         a.width = v.parse().unwrap_or(120);
@@ -146,6 +165,7 @@ fn print_help() {
     println!("  --repo, -r <PATH>         explicit repository path");
     println!("  --demo[=tiny|medium|large] build + open a deterministic synthetic repository");
     println!("  --dump                    render one frame headlessly and exit (test/capture)");
+    println!("  --frame-only              with --dump, capture the live frame without artifact insertion");
     println!("  --width=<COLS>  -w        dump width  (default 120)");
     println!("  --height=<ROWS>           dump height (default 40)");
     println!("  --mono, -m                monochrome: shape-only grammar");
@@ -161,4 +181,36 @@ fn print_help() {
     println!();
     println!("In-app keys: ? help · 1..5 views · j/k step · ,. pan · +- zoom");
     println!("             Enter lens · / search · : command · c commit dossier · q quit");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bare_demo_keeps_following_dump_and_size_options() {
+        let args = Args::parse_from(
+            [
+                "--demo",
+                "--dump",
+                "--frame-only",
+                "--width=120",
+                "--height=40",
+            ]
+            .into_iter()
+            .map(str::to_string),
+        );
+        assert!(args.demo == Some(DemoProfile::Medium));
+        assert!(args.dump);
+        assert!(args.frame_only);
+        assert_eq!((args.width, args.height), (120, 40));
+
+        let args = Args::parse_from(
+            ["--demo", "large", "--dump"]
+                .into_iter()
+                .map(str::to_string),
+        );
+        assert!(args.demo == Some(DemoProfile::Large));
+        assert!(args.dump);
+    }
 }
