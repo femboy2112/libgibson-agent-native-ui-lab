@@ -58,3 +58,11 @@ research consumers, not production domain tools. See the
 
 Final local suite: 61 integration tests. Frozen dependency/helper/IR integrity is
 checked with `python3 scripts/verify_freeze.py` locally and in public CI.
+
+## v0.2.0 Europa-shot holdout on this branch
+
+[Project Synesthesia](europa/project-synesthesia/) is a separate playable
+terminal music workstation consuming the released LibGibson v0.2.0 tag. Its
+[experiment report](europa/project-synesthesia/EXPERIMENT_REPORT.md) records
+the new measurements and claim limits. The older root experiments and their
+frozen dependency remain historical evidence.
