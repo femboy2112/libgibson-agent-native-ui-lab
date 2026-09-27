@@ -1,0 +1,41 @@
+# Regenerate: ./target/release/palimpsest --demo=medium --dump --width=120 --height=40 --view=lens | python3 scripts/flatten_dump.py 120 40
+ PALIMPSEST ─ palimpsest-fixtur…            ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ DIFF LENS
+───── palimpsest artifact ─────
+◈ 877c6dd   refactor: rename src/core.rs to src/foundation.rs
+Grace Hopper <grace@palimpsest.dev>  2024-02-26  lane 0
+1 files  +4 −0
+branch tips: main
+refactor: rename src/core.rs to src/foundation.rs
+oid 877c6dd3fba993a6237bcbc1c726e6749bdcb828
+ PALIMPSEST ─ palimpsest-fixtur…            ◈ 877c6dd  refactor: rename src/core.rs…    152c · 6b · 3t │ DIFF LENS
+  FILES                +4 −0    │ ◈ 877c6dd  src/foundation.rs
+ ↗    src/foundation.+4  −0     │── src/foundation.rs ──
+                                │  @@ -1,3 +1,7 @@
+                                │    1   1pub fn anchor(a: i64, b: i64) -> i64 {
+                                │    2   2    a.min(b)
+                                │    3   3}
+                                │+       4
+                                │+       5pub fn span(a: i64, b: i64) -> i64 {
+                                │+       6    (a - b).abs()
+                                │+       7}
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
+                                │
