@@ -1,0 +1,41 @@
+# Regenerate: ./target/release/palimpsest --demo=large --view=provenance --file=src/hot/module_0.rs --dump --frame-only --width=120 --height=40 | python3 scripts/flatten_dump.py 120 40
+ PALIMPSEST ─ palimpsest-fixtur… ◈ c586732  refactor: rename src/core.rs…              2890c · 10b · 3t │ PROVENANCE
+ ◈ c586732 · FIBERS · src/hot/module_0.rs · 107 lines
+·    1 c11a936 Grace Hop…  // hot module 0: evolves constantly                                                         ▓
+·    2 c11a936 Grace Hop…  pub fn stage_0() -> i32 {                                                                   ▓
+·    3 c11a936 Grace Hop…      0 * 7                                                                                   ▓
+·    4 c11a936 Grace Hop…  }                                                                                           ▓
+·    5 c8bfe22 Alan Turi…  pub fn extra_8() -> i32 { 0 }                                                               ▓
+·    6 bc7bf73 Grace Hop…  pub fn extra_16() -> i32 { 0 }                                                              ▓
+·    7 7aab469 Grace Hop…  pub const STAGE_24: i32 = 24;                                                               ▓
+·    8 e6da40b Grace Hop…  pub const STAGE_32: i32 = 32;                                                               ▓
+·    9 180adc7 Ada Lovel…  pub fn extra_40() -> i32 { 0 }                                                              ▓
+·   10 bc0fddb Grace Hop…  pub fn extra_64() -> i32 { 0 }                                                              ▓
+·   11 cae4be1 Alan Turi…  pub fn extra_80() -> i32 { 0 }                                                              ▓
+·   12 487f75b Grace Hop…  pub const STAGE_88: i32 = 88;                                                               ░
+·   13 769879f Alan Turi…  pub const STAGE_96: i32 = 96;                                                               ░
+·   14 f8a3126 Alan Turi…  pub const STAGE_104: i32 = 104;                                                             ░
+·   15 1265394 Ada Lovel…  pub const STAGE_112: i32 = 112;                                                             ░
+·   16 d2696b4 Alan Turi…  pub fn extra_120() -> i32 { 0 }                                                             ░
+·   17 ef0a5fe Grace Hop…  pub const STAGE_136: i32 = 136;                                                             ░
+·   18 9338809 Grace Hop…  pub const STAGE_152: i32 = 152;                                                             ░
+◇   19 2545dba Alan Turi…  pub const STAGE_184: i32 = 184;                                                             ░
+◇   20 6652455 Alan Turi…  pub const STAGE_192: i32 = 192;                                                             ░
+◇   21 ec3359a Alan Turi…  pub const STAGE_208: i32 = 208;                                                             ░
+◇   22 5c36f37 Ada Lovel…  pub fn extra_216() -> i32 { 0 }                                                             ░
+◇   23 cc3a230 Ada Lovel…  pub const STAGE_248: i32 = 248;                                                             ░
+◇   24 bd7c287 Ada Lovel…  pub const STAGE_256: i32 = 256;                                                             ░
+◇   25 3ff8be7 Ada Lovel…  pub fn extra_264() -> i32 { 0 }                                                             ░
+◇   26 e24fe77 Ada Lovel…  pub const STAGE_288: i32 = 288;                                                             ░
+◇   27 6d2991a Alan Turi…  pub const STAGE_312: i32 = 312;                                                             ░
+◇   28 0be545b Grace Hop…  pub fn extra_336() -> i32 { 0 }                                                             ░
+◇   29 6ae7354 Alan Turi…  pub fn extra_344() -> i32 { 0 }                                                             ░
+◇   30 f45904f Grace Hop…  pub fn extra_352() -> i32 { 0 }                                                             ░
+◇   31 b2b9c2c Alan Turi…  pub const STAGE_376: i32 = 376;                                                             ░
+◇   32 2902e01 Grace Hop…  pub const STAGE_400: i32 = 400;                                                             ░
+◇   33 b994198 Alan Turi…  pub const STAGE_424: i32 = 424;                                                             ░
+◇   34 b5d210c Ada Lovel…  pub const STAGE_440: i32 = 440;                                                             ░
+◇   35 2d65c62 Grace Hop…  pub fn extra_456() -> i32 { 0 }                                                             ░
+ ┆ j/k line · u unfold fiber · Enter jump · c commit summary · Esc back
+2890 commits, 10 branches, 3 tags, span 920d
+

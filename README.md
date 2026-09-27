@@ -64,3 +64,5 @@ checked with `python3 scripts/verify_freeze.py` locally and in public CI.
 Project Galileo:
   europa/project-galileo/
 
+Project Palimpsest:
+  europa/project-palimpsest/

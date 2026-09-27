@@ -1,0 +1,21 @@
+# Regenerate: ./target/release/palimpsest --demo=medium --view=strata --file=src/hot/module_0.rs --dump --frame-only --width=60 --height=20 | python3 scripts/flatten_dump.py 60 20
+ PALIMPSEST ◈ 877c6dd  refactor: rename src/…    FILE STRATA
+          ┬2024-01-18  ┬2024-01-25 ┬2024-02-01  ┬2024-02-08
+ src/hot/module_0.rs ─ 13 events, 2024-01-01 to 2024-02-25
+━━━━━━━━━━━│━━━━━━━━━━━━━━━│━━━━━━━━━━━━│━━━━━━━│━━│━━│━━━│━
+····························································
+ first touch 1mo ago · latest touch 2d ago
+
+
+
+ 13 events · newest first · renames followed
+ · f0332e8  perf(hot): tighten loop 88 +1/−0               ▓
+ · fa46046  chore: dependencies 80 +1/−0                   ▓
+ · 19a6728  chore: dependencies 68 +1/−0                   ▓
+ · be74a5f  perf(hot): tighten loop 64 +1/−0               ▓
+ · 59a66a5  feat: extend stage 60 +1/−0                    ▓
+ · 55327f5  fix(core): repair invariant 56 +1/−0           ░
+ · 6bb6965  chore: dependencies 52 +1/−0                   ░
+ · a04ca48  feat: extend stage 44 +1/−0                    ░
+152 commits, 6 branches, 3 tags, span 56d
+
