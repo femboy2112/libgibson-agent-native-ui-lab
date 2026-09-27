@@ -21,7 +21,7 @@ use crate::render::surface_view::SurfaceViewRenderer;
 use crate::render::system_view::SystemViewRenderer;
 use crate::render::tomography_view::{RadarBand, TomographyViewRenderer};
 use crate::render::trajectory_view::TrajectoryViewRenderer;
-use crate::sim::jovian::JovianModel;
+use crate::sim::jovian::{JovianModel, TargetBody};
 use crate::sim::telemetry::{AlertSeverity, TelemetryState};
 use crate::sim::trajectory::TrajectoryLab;
 use crate::ui::command::{Command, CommandParser, ViewTarget, ZoomAction};
@@ -33,6 +33,42 @@ pub enum ActiveView {
     Surface = 3,
     Tomography = 4,
     MissionControl = 5,
+}
+
+const SCALE_REVEAL_SECONDS: f32 = 0.65;
+
+/// A bounded visual handoff. The next acquisition expands from the same
+/// physical focus on the previous surface; navigation state changes at once.
+struct ScaleReveal {
+    from: ActiveView,
+    to: ActiveView,
+    elapsed_secs: f32,
+}
+
+/// Discover occupied text runs from the two composed scientific surfaces.
+/// Keep the complete row span around their labels intact during a scale
+/// handoff, independent of where a responsive inspector is positioned.
+fn text_span(a: &Surface, b: &Surface, y: u16, width: u16) -> Option<(u16, u16)> {
+    let mut first = width;
+    let mut last = 0;
+    for x in 0..width {
+        let has_text = [a, b].iter().any(|surface| {
+            surface.get(x, y).is_some_and(|cell| {
+                cell.glyph
+                    .grapheme
+                    .chars()
+                    .any(|ch| ch.is_ascii_alphanumeric())
+            })
+        });
+        if has_text {
+            first = first.min(x);
+            last = x;
+        }
+    }
+    (first < width).then_some((
+        first.saturating_sub(1),
+        last.saturating_add(1).min(width.saturating_sub(1)),
+    ))
 }
 
 #[derive(Debug, Clone)]
@@ -73,6 +109,7 @@ pub struct DashboardState {
     pub status_feedback: String,
     pub current_skin_name: &'static str,
     pub mono_mode: bool,
+    scale_reveal: Option<ScaleReveal>,
 }
 
 impl DashboardState {
@@ -108,6 +145,7 @@ impl DashboardState {
             status_feedback: "SYS: NOMINAL // ALL SYSTEMS GO".to_string(),
             current_skin_name: "BLACK_ICE",
             mono_mode: mono,
+            scale_reveal: None,
         }
     }
 
@@ -134,6 +172,12 @@ impl DashboardState {
         }
 
         self.scale_coordinator.update(dt_seconds);
+        if let Some(reveal) = &mut self.scale_reveal {
+            reveal.elapsed_secs += dt_seconds.max(0.0);
+            if reveal.elapsed_secs >= SCALE_REVEAL_SECONDS {
+                self.scale_reveal = None;
+            }
+        }
         if self.scale_coordinator.is_transitioning
             && self.scale_coordinator.transition_progress >= 1.0
         {
@@ -146,15 +190,33 @@ impl DashboardState {
             };
         }
 
-        // Keep surface & tomography feature synchronized
-        let surf_feat = self.surface_renderer.selected_feature();
+        self.sync_surface_target();
+    }
+
+    /// Preserve the identity and depth of the selected survey site when
+    /// descending into the radargram, including deterministic demo captures.
+    pub fn sync_surface_target(&mut self) {
+        let feat = self.surface_renderer.selected_feature();
         self.tomography_renderer
-            .set_feature(surf_feat.name, surf_feat.ice_thickness_km);
+            .set_feature(feat.name, feat.ice_thickness_km);
+    }
+
+    pub(crate) fn set_scale_reveal(&mut self, from: ActiveView, to: ActiveView, elapsed_secs: f32) {
+        self.scale_reveal = Some(ScaleReveal {
+            from,
+            to,
+            elapsed_secs,
+        });
+    }
+
+    pub(crate) fn clear_scale_reveal(&mut self) {
+        self.scale_reveal = None;
     }
 
     pub fn execute_command(&mut self, cmd: Command) {
         match cmd {
             Command::SetView(target) => {
+                self.scale_reveal = None;
                 self.active_view = match target {
                     ViewTarget::System => ActiveView::System,
                     ViewTarget::Trajectory => ActiveView::Trajectory,
@@ -173,87 +235,90 @@ impl DashboardState {
                 self.log_console(format!("VIEW SWITCH: {:?}", self.active_view));
             }
             Command::Zoom(action) => {
+                let from_view = self.active_view;
                 match action {
-                    ZoomAction::In => {
-                        match self.active_view {
-                            ActiveView::System => {
-                                if self.system_renderer.camera_distance_scale >= 2.6 {
+                    ZoomAction::In => match self.active_view {
+                        ActiveView::System => {
+                            if self.system_renderer.camera_distance_scale >= 2.6 {
+                                if self.system_renderer.selected_target_idx == 2 {
                                     self.active_view = ActiveView::Trajectory;
                                     self.scale_coordinator.snap_to_view(PrimaryView::Trajectory);
                                     self.trajectory_renderer.zoom = 0.8;
                                     self.log_console("DESCENDING SCALE: JOVIAN SYSTEM -> EUROPA ORBIT [10,000 km]".to_string());
                                 } else {
-                                    self.system_renderer.adjust_zoom(1.3);
-                                    self.scale_coordinator.zoom_level =
-                                        (self.scale_coordinator.zoom_level + 0.2).min(0.9);
-                                    self.log_console(format!(
-                                        "SYSTEM ZOOM: {:.2}x",
-                                        self.system_renderer.camera_distance_scale
-                                    ));
+                                    self.log_console("SELECT EUROPA [N/P] TO ENTER THE EUROPA-ONLY ENCOUNTER LAB".to_string());
                                 }
-                            }
-                            ActiveView::Trajectory => {
-                                if self.trajectory_renderer.zoom >= 2.6 {
-                                    self.active_view = ActiveView::Surface;
-                                    self.scale_coordinator.snap_to_view(PrimaryView::Surface);
-                                    self.surface_renderer.zoom = 0.8;
-                                    self.log_console("DESCENDING SCALE: EUROPA ORBIT -> REGIONAL SURFACE SURVEY [500 km]".to_string());
-                                } else {
-                                    self.trajectory_renderer.adjust_zoom(1.3);
-                                    self.scale_coordinator.zoom_level =
-                                        (self.scale_coordinator.zoom_level + 0.2).min(1.9);
-                                    self.log_console(format!(
-                                        "TRAJECTORY ZOOM: {:.2}x",
-                                        self.trajectory_renderer.zoom
-                                    ));
-                                }
-                            }
-                            ActiveView::Surface => {
-                                if self.surface_renderer.zoom >= 2.2 {
-                                    self.active_view = ActiveView::Tomography;
-                                    self.scale_coordinator.snap_to_view(PrimaryView::Tomography);
-                                    self.tomography_renderer.zoom = 0.8;
-                                    self.log_console("DESCENDING SCALE: SURFACE SURVEY -> ICE SHELL TOMOGRAPHY [30 km]".to_string());
-                                } else {
-                                    self.surface_renderer.adjust_zoom(1.3);
-                                    self.scale_coordinator.zoom_level =
-                                        (self.scale_coordinator.zoom_level + 0.2).min(2.9);
-                                    self.log_console(format!(
-                                        "SURFACE ZOOM: {:.2}x",
-                                        self.surface_renderer.zoom
-                                    ));
-                                }
-                            }
-                            ActiveView::Tomography => {
-                                if self.tomography_renderer.zoom >= 2.5
-                                    && self.tomography_renderer.band == RadarBand::Hf9MHz
-                                {
-                                    self.tomography_renderer.band = RadarBand::Vhf60MHz;
-                                    self.tomography_renderer.zoom = 1.0;
-                                    self.scale_coordinator.zoom_level = 3.8;
-                                    self.log_console(
-                                        "SWITCHING RADAR: 9 MHz HF -> HIGH-RES 60 MHz VHF SOUNDER"
-                                            .to_string(),
-                                    );
-                                } else {
-                                    self.tomography_renderer.adjust_zoom(1.3);
-                                    self.scale_coordinator.zoom_level =
-                                        (self.scale_coordinator.zoom_level + 0.2).min(4.0);
-                                    self.log_console(format!(
-                                        "TOMOGRAPHY ZOOM: {:.2}x",
-                                        self.tomography_renderer.zoom
-                                    ));
-                                }
-                            }
-                            ActiveView::MissionControl => {
-                                self.active_view = ActiveView::System;
-                                self.scale_coordinator.snap_to_view(PrimaryView::System);
-                                self.log_console(
-                                    "VIEW SWITCH: MISSION CONTROL -> JOVIAN SYSTEM".to_string(),
-                                );
+                            } else {
+                                self.system_renderer.adjust_zoom(1.3);
+                                self.scale_coordinator.zoom_level =
+                                    (self.scale_coordinator.zoom_level + 0.2).min(0.9);
+                                self.log_console(format!(
+                                    "SYSTEM ZOOM: {:.2}x",
+                                    self.system_renderer.camera_distance_scale
+                                ));
                             }
                         }
-                    }
+                        ActiveView::Trajectory => {
+                            if self.trajectory_renderer.zoom >= 2.6 {
+                                self.active_view = ActiveView::Surface;
+                                self.scale_coordinator.snap_to_view(PrimaryView::Surface);
+                                self.surface_renderer.zoom = 0.8;
+                                self.log_console("DESCENDING SCALE: EUROPA ORBIT -> REGIONAL SURFACE SURVEY [500 km]".to_string());
+                            } else {
+                                self.trajectory_renderer.adjust_zoom(1.3);
+                                self.scale_coordinator.zoom_level =
+                                    (self.scale_coordinator.zoom_level + 0.2).min(1.9);
+                                self.log_console(format!(
+                                    "TRAJECTORY ZOOM: {:.2}x",
+                                    self.trajectory_renderer.zoom
+                                ));
+                            }
+                        }
+                        ActiveView::Surface => {
+                            if self.surface_renderer.zoom >= 2.2 {
+                                self.active_view = ActiveView::Tomography;
+                                self.scale_coordinator.snap_to_view(PrimaryView::Tomography);
+                                self.tomography_renderer.zoom = 0.8;
+                                self.log_console("DESCENDING SCALE: SURFACE SURVEY -> ICE SHELL TOMOGRAPHY [30 km]".to_string());
+                            } else {
+                                self.surface_renderer.adjust_zoom(1.3);
+                                self.scale_coordinator.zoom_level =
+                                    (self.scale_coordinator.zoom_level + 0.2).min(2.9);
+                                self.log_console(format!(
+                                    "SURFACE ZOOM: {:.2}x",
+                                    self.surface_renderer.zoom
+                                ));
+                            }
+                        }
+                        ActiveView::Tomography => {
+                            if self.tomography_renderer.zoom >= 2.5
+                                && self.tomography_renderer.band == RadarBand::Hf9MHz
+                            {
+                                self.tomography_renderer.set_band(RadarBand::Vhf60MHz);
+                                self.tomography_renderer.zoom = 1.0;
+                                self.scale_coordinator.zoom_level = 3.8;
+                                self.log_console(
+                                    "SWITCHING RADAR: 9 MHz HF -> HIGH-RES 60 MHz VHF SOUNDER"
+                                        .to_string(),
+                                );
+                            } else {
+                                self.tomography_renderer.adjust_zoom(1.3);
+                                self.scale_coordinator.zoom_level =
+                                    (self.scale_coordinator.zoom_level + 0.2).min(4.0);
+                                self.log_console(format!(
+                                    "TOMOGRAPHY ZOOM: {:.2}x",
+                                    self.tomography_renderer.zoom
+                                ));
+                            }
+                        }
+                        ActiveView::MissionControl => {
+                            self.active_view = ActiveView::System;
+                            self.scale_coordinator.snap_to_view(PrimaryView::System);
+                            self.log_console(
+                                "VIEW SWITCH: MISSION CONTROL -> JOVIAN SYSTEM".to_string(),
+                            );
+                        }
+                    },
                     ZoomAction::Out => {
                         match self.active_view {
                             ActiveView::System => {
@@ -299,7 +364,7 @@ impl DashboardState {
                             }
                             ActiveView::Tomography => {
                                 if self.tomography_renderer.band == RadarBand::Vhf60MHz {
-                                    self.tomography_renderer.band = RadarBand::Hf9MHz;
+                                    self.tomography_renderer.set_band(RadarBand::Hf9MHz);
                                     self.tomography_renderer.zoom = 2.0;
                                     self.scale_coordinator.zoom_level = 3.2;
                                     self.log_console(
@@ -360,15 +425,28 @@ impl DashboardState {
                         self.log_console(format!("ZOOM SET: {:.2}", val));
                     }
                 }
+                if matches!(
+                    (from_view, self.active_view),
+                    (ActiveView::System, ActiveView::Trajectory)
+                        | (ActiveView::Trajectory, ActiveView::System)
+                        | (ActiveView::Trajectory, ActiveView::Surface)
+                        | (ActiveView::Surface, ActiveView::Trajectory)
+                        | (ActiveView::Surface, ActiveView::Tomography)
+                        | (ActiveView::Tomography, ActiveView::Surface)
+                ) {
+                    self.set_scale_reveal(from_view, self.active_view, 0.0);
+                }
             }
             Command::SetTarget(target_name) => {
-                match target_name.to_lowercase().as_str() {
-                    "io" => self.system_renderer.selected_target_idx = 1,
-                    "europa" => self.system_renderer.selected_target_idx = 2,
-                    "ganymede" => self.system_renderer.selected_target_idx = 3,
-                    "callisto" => self.system_renderer.selected_target_idx = 4,
-                    _ => self.system_renderer.selected_target_idx = 0,
-                }
+                self.system_renderer.selected_target_idx = match target_name.to_lowercase().as_str()
+                {
+                    "io" => 1,
+                    "europa" => 2,
+                    "ganymede" => 3,
+                    "callisto" => 4,
+                    _ => 0,
+                };
+                self.sync_orbital_target();
                 self.log_console(format!("TRACKING TARGET: {}", target_name.to_uppercase()));
             }
             Command::ExecuteBurn(dv) => {
@@ -390,7 +468,7 @@ impl DashboardState {
                 self.log_console(format!("MANEUVER BURN EXECUTED: ΔV = {:.1} m/s", dv));
             }
             Command::SetRadarBand(band) => {
-                self.tomography_renderer.band = band;
+                self.tomography_renderer.set_band(band);
                 self.log_console(format!("REASON RADAR BAND: {:?}", band));
             }
             Command::AcknowledgeAlert => {
@@ -532,6 +610,16 @@ impl DashboardState {
         self.console_history.push_back(msg);
     }
 
+    fn sync_orbital_target(&mut self) {
+        self.sim.target = match self.system_renderer.selected_target_idx {
+            1 => TargetBody::Io,
+            2 => TargetBody::Europa,
+            3 => TargetBody::Ganymede,
+            4 => TargetBody::Callisto,
+            _ => TargetBody::Jupiter,
+        };
+    }
+
     pub fn handle_action(&mut self, action: DashboardAction) {
         match action {
             DashboardAction::SwitchView(view) => {
@@ -565,6 +653,7 @@ impl DashboardState {
                     self.log_console(format!("SURFACE TARGET: {}", f.name));
                 } else {
                     self.system_renderer.next_target();
+                    self.sync_orbital_target();
                     let t = self.system_renderer.selected_target_name();
                     self.log_console(format!("SYSTEM TARGET: {}", t));
                 }
@@ -576,6 +665,7 @@ impl DashboardState {
                     self.log_console(format!("SURFACE TARGET: {}", f.name));
                 } else {
                     self.system_renderer.prev_target();
+                    self.sync_orbital_target();
                     let t = self.system_renderer.selected_target_name();
                     self.log_console(format!("SYSTEM TARGET: {}", t));
                 }
@@ -636,7 +726,65 @@ impl DashboardState {
 
     /// Render the active visualization surface at the requested dimensions.
     pub fn render_visualization_surface(&self, width: u16, height: u16) -> Arc<Surface> {
-        let surface = match self.active_view {
+        let mut surface = self.render_view_surface(self.active_view, width, height);
+        if let Some(reveal) = &self.scale_reveal {
+            if reveal.to == self.active_view {
+                let previous = self.render_view_surface(reveal.from, width, height);
+                let progress = (reveal.elapsed_secs / SCALE_REVEAL_SECONDS).clamp(0.0, 1.0);
+                let ease = progress * progress * (3.0 - 2.0 * progress);
+                let (ax, ay) = match (reveal.from, reveal.to) {
+                    (ActiveView::Surface, ActiveView::Tomography)
+                    | (ActiveView::Tomography, ActiveView::Surface) => {
+                        self.surface_renderer.selected_feature_cell(width, height)
+                    }
+                    (ActiveView::System, ActiveView::Trajectory)
+                    | (ActiveView::Trajectory, ActiveView::System) => {
+                        let pos = self.sim.europa.position_at(self.sim.mission_time_hours);
+                        let (x, y, _) = self
+                            .system_renderer
+                            .project_3d(pos, width, height.saturating_mul(2))
+                            .unwrap_or((width as i32 / 2, height as i32, 0.0));
+                        (
+                            x.clamp(0, width.saturating_sub(1) as i32) as u16,
+                            (y / 2).clamp(0, height.saturating_sub(1) as i32) as u16,
+                        )
+                    }
+                    _ => (width / 2, height / 2),
+                };
+                // Terminal cells are roughly twice as tall as wide. Measure
+                // distance in raster pixels to reveal a circular world-space
+                // aperture around the selected moon or geological target.
+                let radius =
+                    ease * (((width as f32).powi(2) + (height as f32 * 2.0).powi(2)).sqrt());
+                if progress == 0.0 || (height < 26 && progress < 0.5) {
+                    surface = previous;
+                } else if height >= 26 && progress < 1.0 {
+                    let text_spans: Vec<_> = (0..height)
+                        .map(|y| text_span(&previous, &surface, y, width))
+                        .collect();
+                    for y in 0..height {
+                        for x in 0..width {
+                            let dx = x as f32 - ax as f32;
+                            let dy = (y as f32 - ay as f32) * 2.0;
+                            let textual = text_spans[y as usize]
+                                .is_some_and(|(start, end)| (start..=end).contains(&x));
+                            if (textual && progress < 0.5)
+                                || (!textual && dx * dx + dy * dy > radius * radius)
+                            {
+                                if let Some(cell) = previous.get(x, y) {
+                                    surface.set_cell(x, y, cell.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Arc::new(surface)
+    }
+
+    fn render_view_surface(&self, view: ActiveView, width: u16, height: u16) -> Surface {
+        match view {
             ActiveView::System => {
                 self.system_renderer
                     .render(&self.sim, width, height, self.mono_mode)
@@ -654,8 +802,7 @@ impl DashboardState {
                     .render(width, height, self.mono_mode)
             }
             ActiveView::MissionControl => self.render_mission_control_overview(width, height),
-        };
-        Arc::new(surface)
+        }
     }
 
     /// Renders the Ops Overview scientific telemetry matrix.
@@ -1011,57 +1158,67 @@ impl DashboardState {
         // 1. Header Bar: Title, View Switcher Tabs, Clock, Status Badge
         let mut header_row = row().density(Density::Compact).padding(0);
 
-        if !is_compact {
-            header_row = header_row.child(
-                heading("PROJECT GALILEO")
-                    .tone(Tone::Accent)
-                    .emphasis(Emphasis::Strong),
-            );
+        header_row = header_row.child(
+            heading(if width < 110 {
+                "GALILEO"
+            } else {
+                "PROJECT GALILEO"
+            })
+            .tone(Tone::Accent)
+            .emphasis(Emphasis::Strong),
+        );
+        if width >= 110 {
             header_row =
                 header_row.child(label(" // ").tone(Tone::Neutral).emphasis(Emphasis::Faint));
         }
 
+        let tabs = if width < 110 {
+            ["1:S", "2:T", "3:E", "4:I", "5:O"]
+        } else {
+            ["1:SYS", "2:TRAJ", "3:SURF", "4:TOMO", "5:OPS"]
+        };
+
         // View Selection Buttons
         header_row = header_row
             .child(
-                button("1:SYS")
+                button(tabs[0])
                     .selected(self.active_view == ActiveView::System)
                     .on_press(DashboardAction::SwitchView(ActiveView::System)),
             )
             .child(
-                button("2:TRAJ")
+                button(tabs[1])
                     .selected(self.active_view == ActiveView::Trajectory)
                     .on_press(DashboardAction::SwitchView(ActiveView::Trajectory)),
             )
             .child(
-                button("3:SURF")
+                button(tabs[2])
                     .selected(self.active_view == ActiveView::Surface)
                     .on_press(DashboardAction::SwitchView(ActiveView::Surface)),
             )
             .child(
-                button("4:TOMO")
+                button(tabs[3])
                     .selected(self.active_view == ActiveView::Tomography)
                     .on_press(DashboardAction::SwitchView(ActiveView::Tomography)),
             )
             .child(
-                button("5:OPS")
+                button(tabs[4])
                     .selected(self.active_view == ActiveView::MissionControl)
                     .on_press(DashboardAction::SwitchView(ActiveView::MissionControl)),
             );
 
         header_row = header_row.child(spacer());
 
-        // Physical Scale Indicator Badge
+        // Approximate view span/depth indicator, not an exact map ratio.
         let scale_tag = self.scale_coordinator.physical_scale_label();
         let short_tag = self.scale_coordinator.short_scale_label();
-        if width >= 115 {
+        if width >= 180 {
             header_row = header_row.child(
                 badge(scale_tag)
                     .tone(Tone::Accent)
                     .emphasis(Emphasis::Strong),
             );
             header_row = header_row.child(label(" "));
-        } else if width >= 80 {
+        } else if width >= 100 {
             header_row = header_row.child(
                 badge(format!("SCALE: {}", short_tag))
                     .tone(Tone::Accent)
@@ -1072,11 +1229,11 @@ impl DashboardState {
 
         // Clock & Status Badge
         let (_, lt_sec, _) = self.sim.earth_communication();
-        if width >= 90 {
+        if width >= 160 {
             let clock_str = format!(
                 "MET: +{:03}d {:02}h | DSN LT: {:.1}m",
-                482,
-                14,
+                (self.sim.mission_time_hours.max(0.0) / 24.0) as u32,
+                (self.sim.mission_time_hours.max(0.0) as u32) % 24,
                 lt_sec / 60.0
             );
             header_row =
@@ -1090,13 +1247,13 @@ impl DashboardState {
             .iter()
             .filter(|a| !a.acknowledged)
             .count();
-        if alert_cnt > 0 {
+        if alert_cnt > 0 && width >= 90 {
             header_row = header_row.child(
                 badge(format!("ALERTS: {}", alert_cnt))
                     .tone(Tone::Warning)
                     .emphasis(Emphasis::Strong),
             );
-        } else {
+        } else if width >= 120 {
             header_row = header_row.child(
                 badge("NOMINAL")
                     .tone(Tone::Success)
@@ -1120,10 +1277,7 @@ impl DashboardState {
             rail = rail.child(
                 card("EPS TELEMETRY")
                     .density(Density::Compact)
-                    .child(progress(
-                        format!("BATT: {:.0}%", self.telemetry.battery_soc * 100.0),
-                        p_frac,
-                    ))
+                    .child(progress("BATT", p_frac))
                     .child(text(format!(
                         "RTG: {:.1}W | BUS: {:.1}V",
                         self.telemetry.rtg_power_w, self.telemetry.bus_voltage_v
@@ -1175,7 +1329,11 @@ impl DashboardState {
         console_row = console_row.child(
             text_input(&self.command_input)
                 .key("cmd_input")
-                .placeholder("type command: view <1-5>, zoom, burn, radar, target, skin, help...")
+                .placeholder(if width < 110 {
+                    "type command or help"
+                } else {
+                    "view <1-5>, zoom, burn, radar, target, skin, help..."
+                })
                 .on_edit(DashboardAction::InputChanged)
                 .on_press(DashboardAction::SubmitCommand)
                 .grow(1.0),
@@ -1188,26 +1346,27 @@ impl DashboardState {
         );
 
         // Status Line / Key Hints
-        let hint_line = if is_compact {
-            text(&self.status_feedback)
-                .tone(Tone::Info)
-                .emphasis(Emphasis::Faint)
+        let pause_tag = if self.telemetry.is_paused {
+            "PAUSED"
         } else {
-            let pause_tag = if self.telemetry.is_paused {
-                "PAUSED"
-            } else {
-                "RUN"
-            };
-            let warp_tag = format!("{}x", self.telemetry.warp_rate as u32);
-            text(format!(
-                "[{}] {} | [1-5]:Views [Z/X]:Zoom [Arrows/HJKL]:Nav [Space]:Pause [W]:Warp({}) [[]/[]]:Scrub [B]:Burn [R]:Radar",
-                pause_tag,
-                self.status_feedback,
-                warp_tag
-            ))
-            .tone(Tone::Info)
-            .emphasis(Emphasis::Faint)
+            "RUN"
         };
+        let view_hints = match self.active_view {
+            ActiveView::Trajectory => "H/L scrub · [/] timeline · B burn",
+            ActiveView::Surface => "HJKL spin · N/P feature · G thermal",
+            ActiveView::Tomography => "↑↓ gate · R band · +/- gain",
+            ActiveView::System => "HJKL camera · N/P target · M field",
+            ActiveView::MissionControl => "A acknowledge alerts",
+        };
+        let hint = if is_compact {
+            format!("[{pause_tag}] 1-5 views · Z/X zoom · {view_hints}")
+        } else if width < 110 {
+            format!("[{pause_tag}] 1-5 views · Z/X zoom · {view_hints} · help in CMD")
+        } else {
+            let feedback: String = self.status_feedback.chars().take(49).collect();
+            format!("[{pause_tag}] {feedback} · {view_hints} · Space pause · W warp")
+        };
+        let hint_line = text(hint).tone(Tone::Info).emphasis(Emphasis::Muted);
 
         // Root Screen Assembly
         screen()

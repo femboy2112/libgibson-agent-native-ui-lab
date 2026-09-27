@@ -84,6 +84,7 @@ impl DemoScript {
         } else if cycle_ms < 18_000 {
             // Phase 4: Hero View - Ice Shell Tomography (12 - 18s)
             state.active_view = ActiveView::Tomography;
+            state.surface_renderer.selected_feature_idx = 0; // Conamara survey site
             let zoom_progress = (cycle_ms - 12_000) as f32 / 6_000.0;
             state.scale_coordinator.zoom_level = 2.0 + zoom_progress * 1.0;
             state.scale_coordinator.target_zoom = 3.0;
@@ -113,6 +114,32 @@ impl DemoScript {
             state.active_view = ActiveView::MissionControl;
             state.status_feedback =
                 "DEMO [5/5]: MISSION OPERATIONS TELEMETRY MATRIX & DSN LINK".to_string();
+        }
+
+        state.sync_surface_target();
+        if (12_000..18_000).contains(&cycle_ms) {
+            // The shallow VHF gate must remain inside the 7 km acquisition.
+            state
+                .tomography_renderer
+                .set_band(state.tomography_renderer.band);
+        }
+
+        // Scrubbed frames and live demo playback share the same site-anchored
+        // reveal, so a capture in the first 650 ms of a new scale shows both
+        // scientific representations in one coordinate-linked aperture.
+        let transition = if (4_000..4_650).contains(&cycle_ms) {
+            Some((ActiveView::System, ActiveView::Trajectory, 4_000))
+        } else if (8_000..8_650).contains(&cycle_ms) {
+            Some((ActiveView::Trajectory, ActiveView::Surface, 8_000))
+        } else if (12_000..12_650).contains(&cycle_ms) {
+            Some((ActiveView::Surface, ActiveView::Tomography, 12_000))
+        } else {
+            None
+        };
+        if let Some((from, to, start_ms)) = transition {
+            state.set_scale_reveal(from, to, (cycle_ms - start_ms) as f32 / 1000.0);
+        } else {
+            state.clear_scale_reveal();
         }
     }
 }

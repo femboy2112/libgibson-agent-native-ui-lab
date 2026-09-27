@@ -2,8 +2,8 @@
 //! A REAL-TIME JOVIAN MISSION OPERATIONS / SCIENTIFIC VISUALIZATION ENVIRONMENT
 //!
 //! Consumes released LibGibson v0.2.0 API (`libgibson = { git = "...", tag = "v0.2.0" }`).
-//! Presents a seamless multi-scale physical world across Jovian system, Europa orbit,
-//! Europa surface, and subsurface ice shell tomography.
+//! Links authored views of a procedural Jovian system, Europa encounter,
+//! surface, and illustrative ice-shell radargram.
 
 pub mod demo;
 pub mod profile;
@@ -89,7 +89,7 @@ pub fn parse_args() -> CliOptions {
         } else if arg == "--headless" {
             opts.headless = true;
         } else if let Some(val) = arg.strip_prefix("--fps=") {
-            opts.fps = val.parse::<u32>().unwrap_or(30);
+            opts.fps = val.parse::<u32>().ok().filter(|fps| *fps > 0).unwrap_or(30);
         } else if let Some(val) = arg.strip_prefix("--frames=") {
             opts.max_frames = val.parse::<u64>().ok();
         }
@@ -109,7 +109,7 @@ fn main() -> io::Result<()> {
     let mut state = DashboardState::new(mono_mode);
     if let Some(view) = opts.initial_view {
         state.active_view = view;
-        state.scale_coordinator.set_view(match view {
+        state.scale_coordinator.snap_to_view(match view {
             ActiveView::System => crate::render::scale::PrimaryView::System,
             ActiveView::Trajectory => crate::render::scale::PrimaryView::Trajectory,
             ActiveView::Surface => crate::render::scale::PrimaryView::Surface,
@@ -124,6 +124,7 @@ fn main() -> io::Result<()> {
 
     // 1. Fixed-time capture mode (--at-ms=)
     if let Some(at_ms) = opts.at_ms {
+        let frame_start = Instant::now();
         if opts.demo || opts.initial_view.is_none() {
             demo.apply_at_ms(&mut state, at_ms);
         } else {
@@ -155,7 +156,7 @@ fn main() -> io::Result<()> {
         if opts.profile {
             profiler.record_frame(
                 bytes,
-                Duration::from_millis(1),
+                frame_start.elapsed(),
                 runtime.active_animation_count(),
                 runtime.retained_key_count(),
             );
@@ -207,11 +208,14 @@ fn main() -> io::Result<()> {
             context.render_now()?;
 
             let render_dur = frame_start.elapsed();
-            let bytes = context.rendered_bytes();
+            // Headless output is a cumulative buffer until explicitly drained.
+            // Read each frame exactly once so both memory and profile parsing
+            // stay bounded during long runs.
+            let output = context.take_output();
 
             if opts.profile {
                 profiler.record_frame(
-                    bytes,
+                    output.as_bytes(),
                     render_dur,
                     runtime.active_animation_count(),
                     runtime.retained_key_count(),
@@ -281,8 +285,9 @@ fn main() -> io::Result<()> {
         frame_count += 1;
 
         if opts.profile {
-            profiler.record_frame(
-                context.rendered_bytes(),
+            // Fullscreen contexts write directly to stdout; rendered_bytes()
+            // is always empty. We can measure render timing, not output volume.
+            profiler.record_timing_only(
                 render_duration,
                 runtime.active_animation_count(),
                 runtime.retained_key_count(),
@@ -346,6 +351,26 @@ fn main() -> io::Result<()> {
 
             if alt_handled {
                 continue;
+            }
+
+            // LibGibson uses arrows to traverse focused buttons. In the
+            // visualization those same arrows steer the camera/depth gate;
+            // Tab remains the explicit control-focus navigation key. Preserve
+            // editor cursor arrows when the command input has focus.
+            if runtime.focus() != Some(&Key::from("cmd_input")) {
+                if let Event::Key(k) = &event {
+                    let motion = match k.code {
+                        KeyCode::Up => Some((0.0, 1.0)),
+                        KeyCode::Down => Some((0.0, -1.0)),
+                        KeyCode::Left => Some((-1.0, 0.0)),
+                        KeyCode::Right => Some((1.0, 0.0)),
+                        _ => None,
+                    };
+                    if let Some((dx, dy)) = motion {
+                        state.handle_action(DashboardAction::Rotate(dx, dy));
+                        continue;
+                    }
+                }
             }
 
             // Let UiRuntime handle focus, buttons, and text input edits

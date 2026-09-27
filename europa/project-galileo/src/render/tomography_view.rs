@@ -2,15 +2,16 @@
 //!
 //! HERO SCIENTIFIC VIEW:
 //! Renders a live synthetic radargram (B-scan) and power profile (A-scan)
-//! representing dual-frequency radar sounding (REASON replica: 9 MHz HF / 60 MHz VHF)
-//! through Europa's 0-35 km ice shell and subsurface ocean.
+//! inspired by radar sounding (labeled 9 MHz HF / 60 MHz VHF); these are
+//! procedural images, not a REASON instrument model or measured Europa data.
+//! Ocean imagery is illustrative geology, not a radar detection.
 //!
 //! Visual features:
 //! - Dual-layer subcell RgbRaster radargram (dielectric reflectivity & thermal field)
 //! - Double ridge surface relief and vacuum interface
 //! - Brittle conductive lid (0-4 km) with hyper-saline brine pockets & fault conduits
 //! - Ductile convective layer (4-22 km) with rising thermal diapir plumes
-//! - Basal melting/freezing ice-ocean boundary with acoustic/radar impedance mismatch
+//! - Nominal basal ice boundary with synthetic reflectivity
 //! - Turbulent subsurface ocean (>22 km) with buoyant hydrothermal plumes
 //! - Real-time propagating radar pulse wavefront
 //! - Braille overlays for fracture networks, isotherms, and echo peaks
@@ -26,6 +27,15 @@ pub enum RadarBand {
     Hf9MHz,    // High-penetration deep sounding (0-35 km)
     Vhf60MHz,  // High-resolution shallow sounding (0-7 km)
     SplitBand, // Dual-frequency sounding (0-35 km combined)
+}
+
+impl RadarBand {
+    pub fn max_depth_km(self) -> f32 {
+        match self {
+            Self::Hf9MHz | Self::SplitBand => 35.0,
+            Self::Vhf60MHz => 7.0,
+        }
+    }
 }
 
 pub struct TomographyViewRenderer {
@@ -48,7 +58,7 @@ impl Default for TomographyViewRenderer {
             band: RadarBand::Hf9MHz,
             along_track_km: 0.0,
             pulse_phase: 0.25,
-            feature_name: "AGENOR LINEA - STRIKE-SLIP RIDGE",
+            feature_name: "AGENOR LINEA",
             nominal_ice_thickness_km: 18.6,
             gain_db: 42.0,
             cursor_depth_km: 18.6,
@@ -69,27 +79,25 @@ impl TomographyViewRenderer {
     }
 
     pub fn toggle_band(&mut self) {
-        self.band = match self.band {
+        self.set_band(match self.band {
             RadarBand::Hf9MHz => RadarBand::Vhf60MHz,
             RadarBand::Vhf60MHz => RadarBand::SplitBand,
             RadarBand::SplitBand => RadarBand::Hf9MHz,
-        };
+        });
+    }
+
+    pub fn set_band(&mut self, band: RadarBand) {
+        self.band = band;
+        self.cursor_depth_km = self.cursor_depth_km.min(band.max_depth_km());
     }
 
     pub fn move_depth_cursor(&mut self, delta_km: f32) {
-        let max_depth = match self.band {
-            RadarBand::Hf9MHz | RadarBand::SplitBand => 35.0,
-            RadarBand::Vhf60MHz => 7.0,
-        };
-        self.cursor_depth_km = (self.cursor_depth_km + delta_km).clamp(0.0, max_depth);
+        self.cursor_depth_km =
+            (self.cursor_depth_km + delta_km).clamp(0.0, self.band.max_depth_km());
     }
 
     pub fn set_depth_cursor(&mut self, depth_km: f32) {
-        let max_depth = match self.band {
-            RadarBand::Hf9MHz | RadarBand::SplitBand => 35.0,
-            RadarBand::Vhf60MHz => 7.0,
-        };
-        self.cursor_depth_km = depth_km.clamp(0.0, max_depth);
+        self.cursor_depth_km = depth_km.clamp(0.0, self.band.max_depth_km());
     }
 
     pub fn adjust_gain(&mut self, delta_db: f32) {
@@ -97,10 +105,12 @@ impl TomographyViewRenderer {
     }
 
     pub fn set_feature(&mut self, name: &'static str, thickness_km: f32) {
-        self.feature_name = name;
-        self.nominal_ice_thickness_km = thickness_km;
-        if self.cursor_depth_km > 30.0 || self.cursor_depth_km < 5.0 {
-            self.cursor_depth_km = thickness_km;
+        // A running acquisition must not overwrite an operator-adjusted gate.
+        // Recenter only when the geological target actually changes.
+        if self.feature_name != name || self.nominal_ice_thickness_km != thickness_km {
+            self.feature_name = name;
+            self.nominal_ice_thickness_km = thickness_km;
+            self.set_depth_cursor(thickness_km);
         }
     }
 
@@ -266,10 +276,7 @@ impl TomographyViewRenderer {
 
         let mut braille = BrailleCanvas::new(bscan_width.max(1), height);
 
-        let max_depth_km = match self.band {
-            RadarBand::Hf9MHz | RadarBand::SplitBand => 35.0,
-            RadarBand::Vhf60MHz => 7.0, // High-resolution shallow sounding
-        };
+        let max_depth_km = self.band.max_depth_km();
         let swath_extent_km = 30.0 / self.zoom; // Scaled along-track swath
 
         // 1. Render B-Scan Radargram Raster
@@ -396,18 +403,22 @@ impl TomographyViewRenderer {
         }
 
         // Header telemetry bar inside B-Scan pane
-        let header_str = format!(
-            " REASON/{} [Z: 0-{:.0}km] SWATH: {:.0}km | GAIN: +{:.0}dB | {}",
-            match self.band {
-                RadarBand::Hf9MHz => "HF 9MHz",
-                RadarBand::Vhf60MHz => "VHF 60MHz",
-                RadarBand::SplitBand => "SPLIT DUAL-BAND",
-            },
-            max_depth_km,
-            swath_extent_km,
-            self.gain_db,
-            self.feature_name
-        );
+        let band_label = match self.band {
+            RadarBand::Hf9MHz => "HF 9MHz",
+            RadarBand::Vhf60MHz => "VHF 60MHz",
+            RadarBand::SplitBand => "SPLIT DUAL-BAND",
+        };
+        let header_str = if bscan_width < 70 {
+            format!(
+                " REASON/{band_label} | {} | 0-{:.0}km",
+                self.feature_name, max_depth_km
+            )
+        } else {
+            format!(
+                " REASON/{band_label} | {} | 0-{:.0}km | SWATH:{:.0}km | GAIN:+{:.0}dB",
+                self.feature_name, max_depth_km, swath_extent_km, self.gain_db
+            )
+        };
         bscan_surface.print_str(
             1,
             0,
@@ -473,8 +484,10 @@ impl TomographyViewRenderer {
             None,
         );
 
-        // Compute synthetic A-scan along the center track (x = 0)
-        let row_count = height.saturating_sub(7);
+        // Reserve six rows for gate diagnostics and a separating blank row.
+        // Previously row_count = height - 7 made the diagnostics guard below
+        // impossible to satisfy at any terminal size.
+        let row_count = height.saturating_sub(9);
         for i in 0..row_count {
             let row_y = 2 + i;
             let z_km = (i as f32 / row_count as f32) * max_depth_km;
@@ -493,7 +506,8 @@ impl TomographyViewRenderer {
                 MediumType::BasalInterface => -14.0, // High reflectivity contrast
                 MediumType::SalineOcean => -78.0,
                 MediumType::HydrothermalPlume => -58.0,
-            };
+            } + self.gain_db
+                - 42.0;
 
             // Normalize dB: range -90 dB to 0 dB
             let norm = ((db_val + 90.0) / 90.0).clamp(0.0, 1.0);
@@ -542,7 +556,7 @@ impl TomographyViewRenderer {
 
         // Diagnostics & Live Gate Telemetry Card at bottom right
         let diag_y = height.saturating_sub(6);
-        if diag_y > 2 + row_count && a_w >= 24 {
+        if diag_y > 2 + row_count && a_w >= 22 {
             let gate_sample = self.evaluate_medium(0.0, self.cursor_depth_km);
             let c_km_s = 299_792.47_f32;
             let eps = gate_sample.dielectric_constant;
@@ -560,20 +574,19 @@ impl TomographyViewRenderer {
                 MediumType::BasalInterface => 28.0,
                 MediumType::SalineOcean | MediumType::HydrothermalPlume => 92.0,
             };
-            let ocean_conf = if (self.cursor_depth_km - self.nominal_ice_thickness_km).abs() < 1.0 {
-                98.8
-            } else if self.cursor_depth_km > self.nominal_ice_thickness_km {
-                99.9
-            } else if self.cursor_depth_km > self.nominal_ice_thickness_km - 3.0 {
-                68.0
-            } else {
-                3.5
-            };
+            let basal_offset = self.cursor_depth_km - self.nominal_ice_thickness_km;
 
-            let title_gate = format!(
-                " GATE DEPTH: {:>4.1}km | TAU: {:>5.1}µs",
-                self.cursor_depth_km, two_way_tau_us
-            );
+            let title_gate = if a_w >= 35 {
+                format!(
+                    " GATE: {:>4.1}km | TAU: {:>5.1}µs",
+                    self.cursor_depth_km, two_way_tau_us
+                )
+            } else {
+                format!(
+                    " GATE {:>4.1}km {:>5.1}µs",
+                    self.cursor_depth_km, two_way_tau_us
+                )
+            };
             final_surface.print_str(
                 a_x0,
                 diag_y,
@@ -582,7 +595,11 @@ impl TomographyViewRenderer {
                 None,
             );
 
-            let eps_line = format!(" EPS: εr={:<4.2} | ATTEN: {:>4.1}dB/km", eps, alpha_db_km);
+            let eps_line = if a_w >= 35 {
+                format!(" εr={:<4.2} | MODEL LOSS: {:>4.1}dB/km", eps, alpha_db_km)
+            } else {
+                format!(" εr={:<4.2} LOSS:{:>4.1}", eps, alpha_db_km)
+            };
             final_surface.print_str(
                 a_x0,
                 diag_y + 1,
@@ -591,10 +608,17 @@ impl TomographyViewRenderer {
                 None,
             );
 
-            let temp_line = format!(
-                " TEMP: {:>5.1}K | OCEAN CONF: {:>4.1}%",
-                gate_sample.temperature_k, ocean_conf
-            );
+            let temp_line = if a_w >= 35 {
+                format!(
+                    " MODEL T:{:>5.1}K | ΔBASE:{:>+5.1}km",
+                    gate_sample.temperature_k, basal_offset
+                )
+            } else {
+                format!(
+                    " T:{:>5.1}K BASE:{:>+5.1}k",
+                    gate_sample.temperature_k, basal_offset
+                )
+            };
             final_surface.print_str(
                 a_x0,
                 diag_y + 2,
@@ -603,7 +627,11 @@ impl TomographyViewRenderer {
                 None,
             );
 
-            let hint_line = format!(" [↑/↓] Gate | [R] Band | GAIN: {:>+.0}dB", self.gain_db);
+            let hint_line = if a_w >= 35 {
+                format!(" [↑/↓] Gate [R] Band GAIN:{:.0}dB", self.gain_db)
+            } else {
+                format!(" ↑↓ GATE R BAND +{:.0}dB", self.gain_db)
+            };
             final_surface.print_str(
                 a_x0,
                 diag_y + 3,

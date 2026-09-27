@@ -407,22 +407,29 @@ impl SystemViewRenderer {
                 surface.print_str(j_cx, j_cy, "JUPITER", label_style, None);
             }
 
-            // Moon labels
-            for moon in moons {
-                let pos = moon.position_at(model.mission_time_hours);
-                if let Some((px, py, _)) = self.project_3d(pos, pixel_w, pixel_h) {
-                    let cell_x = (px as u16).saturating_add(2);
-                    let cell_y = (py / 2) as u16;
-                    let name = moon.body.name();
-                    if cell_x + name.len() as u16 + 1 < width && cell_y < height {
-                        let m_style = if mono {
-                            Style::new()
-                        } else {
-                            let (r, g, b) = moon.body.color_rgb();
-                            Style::new().fg(Color::Rgb(r, g, b))
-                        };
-                        surface.print_str(cell_x, cell_y, name, m_style, None);
-                    }
+            // Stable orbital key preserves identities when the plotted moons
+            // are too close for four non-overlapping spatial labels.
+            if width >= 64 && height >= 17 {
+                let key_x = width.saturating_sub(24);
+                let key_style = Style::new().fg(Color::Rgb(115, 170, 210));
+                surface.print_str(key_x, 2, "JOVIAN TRACKS  /  km", key_style.bold(), None);
+                for (i, moon) in moons.into_iter().enumerate() {
+                    let selected = moon.body == model.target;
+                    let line = format!(
+                        "{} {:<9} {:>7.0}",
+                        if selected { '◆' } else { '·' },
+                        moon.body.name(),
+                        moon.semi_major_axis_km
+                    );
+                    let style = if selected {
+                        Style::new().fg(Color::Rgb(255, 215, 60)).bold()
+                    } else if mono {
+                        Style::new()
+                    } else {
+                        let (r, g, b) = moon.body.color_rgb();
+                        Style::new().fg(Color::Rgb(r, g, b))
+                    };
+                    surface.print_str(key_x, 3 + i as u16, &line, style, None);
                 }
             }
 
@@ -452,7 +459,7 @@ impl SystemViewRenderer {
                 let cell_y = (sc_py / 2) as u16;
                 if cell_x + 14 < width && cell_y < height {
                     let sc_style = Style::new().fg(Color::Rgb(70, 245, 200)).bold();
-                    surface.print_str(cell_x, cell_y, "GALILEO", sc_style, None);
+                    surface.print_str(cell_x, cell_y, "SC", sc_style, None);
                 }
             }
         }

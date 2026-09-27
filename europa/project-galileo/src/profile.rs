@@ -21,11 +21,12 @@ pub struct FrameStats {
 
 pub struct Profiler {
     parser: vt100::Parser,
-    prev_screen_chars: Vec<char>,
+    prev_screen_cells: Vec<Option<vt100::Cell>>,
     width: u16,
     height: u16,
     total_frames: u64,
     total_bytes: usize,
+    captured_output: bool,
     total_duration: Duration,
     min_duration: Duration,
     max_duration: Duration,
@@ -37,11 +38,12 @@ impl Profiler {
         let size = (width as usize) * (height as usize);
         Self {
             parser: vt100::Parser::new(height, width, 0),
-            prev_screen_chars: vec![' '; size],
+            prev_screen_cells: vec![None; size],
             width,
             height,
             total_frames: 0,
             total_bytes: 0,
+            captured_output: false,
             total_duration: Duration::ZERO,
             min_duration: Duration::from_secs(999),
             max_duration: Duration::ZERO,
@@ -56,6 +58,7 @@ impl Profiler {
         active_animations: usize,
         retained_keys: usize,
     ) -> FrameStats {
+        self.captured_output = true;
         self.total_frames += 1;
         self.total_bytes += bytes.len();
         self.total_duration += render_time;
@@ -67,28 +70,24 @@ impl Profiler {
         let screen = self.parser.screen();
 
         let mut changed_cells = 0;
-        let mut curr_chars = Vec::with_capacity((self.width as usize) * (self.height as usize));
+        let mut curr_cells = Vec::with_capacity((self.width as usize) * (self.height as usize));
 
         for row in 0..self.height {
             for col in 0..self.width {
-                let cell_char = screen
-                    .cell(row, col)
-                    .map(|c| c.contents().chars().next().unwrap_or(' '))
-                    .unwrap_or(' ');
-                curr_chars.push(cell_char);
+                curr_cells.push(screen.cell(row, col).cloned());
             }
         }
 
-        if !self.prev_screen_chars.is_empty() && self.prev_screen_chars.len() == curr_chars.len() {
-            for (i, &curr) in curr_chars.iter().enumerate() {
-                if self.prev_screen_chars[i] != curr {
+        if self.prev_screen_cells.len() == curr_cells.len() {
+            for (i, curr) in curr_cells.iter().enumerate() {
+                if &self.prev_screen_cells[i] != curr {
                     changed_cells += 1;
                 }
             }
         } else {
-            changed_cells = curr_chars.len();
+            changed_cells = curr_cells.len();
         }
-        self.prev_screen_chars = curr_chars;
+        self.prev_screen_cells = curr_cells;
 
         let stats = FrameStats {
             frame_index: self.total_frames,
@@ -99,6 +98,30 @@ impl Profiler {
             retained_keys,
         };
 
+        self.last_frame_stats = Some(stats.clone());
+        stats
+    }
+
+    /// Fullscreen contexts stream directly to stdout, so only render timing
+    /// and animation state can be measured without intercepting the terminal.
+    pub fn record_timing_only(
+        &mut self,
+        render_time: Duration,
+        active_animations: usize,
+        retained_keys: usize,
+    ) -> FrameStats {
+        self.total_frames += 1;
+        self.total_duration += render_time;
+        self.min_duration = self.min_duration.min(render_time);
+        self.max_duration = self.max_duration.max(render_time);
+        let stats = FrameStats {
+            frame_index: self.total_frames,
+            render_time,
+            frame_bytes: 0,
+            changed_cells: 0,
+            active_animations,
+            retained_keys,
+        };
         self.last_frame_stats = Some(stats.clone());
         stats
     }
@@ -115,14 +138,26 @@ impl Profiler {
             0
         };
 
+        let output_stats = if self.captured_output {
+            format!(
+                "[Avg Bytes: {} B] | [Last Changed Cells: {}/{}] | [Total Data: {:.2} KB]",
+                avg_bytes,
+                self.last_frame_stats
+                    .as_ref()
+                    .map_or(0, |s| s.changed_cells),
+                (self.width as usize) * (self.height as usize),
+                self.total_bytes as f64 / 1024.0,
+            )
+        } else {
+            "[Output Bytes / Changed Cells: n/a (stdout-backed session)]".to_string()
+        };
         format!(
-            "PROFILER REPORT: [Frames: {}] | [Avg Frame Time: {:.2}ms (min: {:.2}ms, max: {:.2}ms)] | [Avg Bytes: {} B] | [Total Data: {:.2} KB]",
+            "PROFILER REPORT: [Frames: {}] | [Avg Frame Time: {:.2}ms (min: {:.2}ms, max: {:.2}ms)] | {}",
             self.total_frames,
             avg_time.as_secs_f64() * 1000.0,
-            self.min_duration.as_secs_f64() * 1000.0,
+            if self.total_frames > 0 { self.min_duration.as_secs_f64() * 1000.0 } else { 0.0 },
             self.max_duration.as_secs_f64() * 1000.0,
-            avg_bytes,
-            self.total_bytes as f64 / 1024.0,
+            output_stats,
         )
     }
 

@@ -6,7 +6,7 @@
 
 use crate::sim::jovian::JovianModel;
 use crate::sim::trajectory::TrajectoryLab;
-use gibson::cell::{Color, Glyph, Style};
+use gibson::cell::{Cell, Color, Glyph, Style};
 use gibson::raster::RgbRaster;
 use gibson::surface::Surface;
 use gibson::BrailleCanvas;
@@ -187,6 +187,13 @@ impl TrajectoryViewRenderer {
 
         // 8. Flight Dynamics HUD Overlay (Top-Left and Top-Right)
         if width >= 50 && height >= 14 {
+            // Own a quiet instrument header so orbital dots and warning
+            // glyphs never collide with the numeric flight readouts.
+            for y in 1..=6 {
+                for x in 0..width {
+                    surface.set_cell(x, y, Cell::space(Style::new().bg(Color::Rgb(3, 5, 12))));
+                }
+            }
             let hud_style = Style::new().fg(Color::Rgb(215, 235, 255)).bold();
             let val_style = Style::new().fg(Color::Rgb(255, 215, 60)).bold();
             let nom_hud = Style::new().fg(Color::Rgb(60, 230, 160)).bold();
@@ -223,6 +230,15 @@ impl TrajectoryViewRenderer {
                 );
                 if node_line.len() as u16 + 2 < width {
                     surface.print_str(2, 4, &node_line, val_style, None);
+                } else {
+                    let compact = format!(
+                        "NODE #{}: ΔV {:.1}m/s [PRO:{:+.1} RAD:{:+.1}]",
+                        node.id,
+                        node.delta_v_total(),
+                        node.dv_prograde,
+                        node.dv_radial
+                    );
+                    surface.print_str(2, 4, &compact, val_style, None);
                 }
             }
 

@@ -1,11 +1,11 @@
-//! Scale coordinator and continuous zoom interpolator.
+//! Scale coordinator and zoom-level interpolator.
 //!
-//! Controls the continuous transition between radically different physical scales:
+//! Coordinates authored views at different illustrative spatial extents:
 //! - Scale 0: Jovian System (Macro orbital view, ~2,000,000 km)
 //! - Scale 1: Europa Orbit (~10,000 km)
 //! - Scale 2: Europa Surface Survey (~500 km swath)
 //! - Scale 3: Ice Shell Cross-Section (~30 km depth section)
-//! - Scale 4: Subsurface Ocean Tomography (~100 km deep sounding)
+//! - Scale 4: Shallow ice survey (VHF display limited to ~7 km depth)
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PrimaryView {
@@ -143,15 +143,15 @@ impl ScaleCoordinator {
 
     pub fn physical_scale_label(&self) -> &'static str {
         if self.zoom_level < 0.5 {
-            "SCALE: 1:2,500,000 km [MACRO JOVIAN]"
+            "SPAN: ~2,500,000 km [MACRO JOVIAN]"
         } else if self.zoom_level < 1.5 {
-            "SCALE: 1:50,000 km [ORBITAL REGIME]"
+            "SPAN: ~50,000 km [ORBITAL REGIME]"
         } else if self.zoom_level < 2.5 {
-            "SCALE: 1:500 km [EUROPA SURFACE]"
+            "SPAN: ~500 km [EUROPA SURFACE]"
         } else if self.zoom_level < 3.5 {
-            "SCALE: 1:25 km [ICE SHELL CROSS-SECTION]"
+            "DEPTH: ~25 km [ICE SHELL CROSS-SECTION]"
         } else {
-            "SCALE: 1:5 km [SUB-ICE OCEAN TOMOGRAPHY]"
+            "DEPTH: ~5 km [SHALLOW ICE SURVEY]"
         }
     }
 

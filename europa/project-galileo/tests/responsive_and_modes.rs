@@ -1,3 +1,4 @@
+use std::process::Command as ProcessCommand;
 use std::time::Duration;
 
 use gibson::capability::ColorDepth;
@@ -528,4 +529,229 @@ fn test_renderer_zoom_surfaces() {
     let t2 = tomo.render(80, 24, false);
     assert_eq!(t2.width, 80);
     assert_eq!(t2.height, 24);
+}
+
+#[test]
+fn test_radar_gate_survives_ticks_and_remains_visible_in_vhf() {
+    let mut state = DashboardState::new(false);
+    state.execute_command(Command::SetGate(1.5));
+    for _ in 0..30 {
+        state.update(1.0 / 30.0);
+    }
+    assert_eq!(state.tomography_renderer.cursor_depth_km, 1.5);
+
+    state.execute_command(Command::SetRadarBand(
+        project_galileo::render::tomography_view::RadarBand::Vhf60MHz,
+    ));
+    state.execute_command(Command::SetGate(35.0));
+    assert_eq!(state.tomography_renderer.cursor_depth_km, 7.0);
+    let radar = state.tomography_renderer.render(80, 24, false);
+    let mut text = String::new();
+    for y in 0..radar.height {
+        for x in 0..radar.width {
+            text.push_str(radar.get(x, y).unwrap().glyph.grapheme.as_str());
+        }
+    }
+    assert!(text.contains("GATE  7.0km"), "VHF gate diagnostics absent");
+    assert!(text.contains("BASE:"), "Basal offset diagnostics absent");
+}
+
+#[test]
+fn test_selected_site_reaches_deterministic_radar_capture() {
+    let mut state = DashboardState::new(false);
+    DemoScript::new().apply_at_ms(&mut state, 13_000);
+    assert_eq!(state.active_view, ActiveView::Tomography);
+    assert_eq!(state.tomography_renderer.feature_name, "CONAMARA CHAOS");
+    assert_eq!(state.tomography_renderer.nominal_ice_thickness_km, 14.2);
+}
+
+#[test]
+fn test_scale_reveal_keeps_previous_scene_then_completes() {
+    let mut state = DashboardState::new(false);
+    state.active_view = ActiveView::Surface;
+    state.surface_renderer.zoom = 2.3;
+    state.execute_command(Command::Zoom(ZoomAction::In));
+    assert_eq!(state.active_view, ActiveView::Tomography);
+    let previous = state.surface_renderer.render(80, 24, false);
+    let opening = state.render_visualization_surface(80, 24);
+    assert!(
+        *opening == previous,
+        "reveal should begin with previous scene"
+    );
+    state.update(0.3);
+    let middle = state.render_visualization_surface(80, 24);
+    assert!(
+        *middle != previous,
+        "mid-scale frame should expose radar data"
+    );
+    state.update(0.4);
+    let final_radar = state.tomography_renderer.render(80, 24, false);
+    assert!(*state.render_visualization_surface(80, 24) == final_radar);
+}
+
+#[test]
+fn test_illustrative_encounter_is_inside_europa_sphere_of_influence() {
+    let model = JovianModel::default();
+    let lab = TrajectoryLab::new(&model);
+    assert!(lab.closest_approach_nominal.altitude_km > 0.0);
+    assert!(lab.closest_approach_nominal.distance_km < 9_700.0);
+    assert!(lab.closest_approach_planned.distance_km.is_finite());
+}
+
+#[test]
+fn test_orbital_target_and_encounter_handoff_agree() {
+    let mut state = DashboardState::new(false);
+    state.execute_command(Command::SetTarget("io".to_string()));
+    assert_eq!(state.system_renderer.selected_target_name(), "IO");
+    assert_eq!(
+        state.sim.target,
+        project_galileo::sim::jovian::TargetBody::Io
+    );
+    state.system_renderer.camera_distance_scale = 2.7;
+    state.execute_command(Command::Zoom(ZoomAction::In));
+    assert_eq!(state.active_view, ActiveView::System);
+    assert!(state.status_feedback.contains("SELECT EUROPA"));
+    state.execute_command(Command::SetTarget("europa".to_string()));
+    state.execute_command(Command::Zoom(ZoomAction::In));
+    assert_eq!(state.active_view, ActiveView::Trajectory);
+}
+
+#[test]
+fn test_demo_transitions_keep_shell_and_instrument_readouts_whole() {
+    let demo = DemoScript::new();
+    for ms in [4_200, 4_400, 4_650, 8_200, 8_400, 12_200, 12_400] {
+        let mut state = DashboardState::new(false);
+        demo.apply_at_ms(&mut state, ms);
+        let (width, height) = (120, 40);
+        let env = UiEnvironment {
+            width,
+            height,
+            color_depth: ColorDepth::TrueColor,
+            motion: MotionPreference::None,
+            ..Default::default()
+        };
+        let mut runtime = UiRuntime::new(state.resolved_skin());
+        let now = Duration::from_millis(ms);
+        let tree = state.view(&runtime.build_cx(env, now));
+        let frame = runtime.frame(&tree, env, now).unwrap();
+        let mut context = Context::headless(RenderMode::Fullscreen, width, height);
+        context.set_root(frame.node);
+        context.render_now().unwrap();
+        let mut parser = vt100::Parser::new(height, width, 0);
+        parser.process(context.rendered_bytes());
+        let screen = parser.screen();
+        let row = |r: u16| -> String {
+            (0..width)
+                .map(|c| {
+                    screen
+                        .cell(r, c)
+                        .map_or(" ", |cell| cell.contents())
+                        .to_string()
+                })
+                .collect()
+        };
+        let body = (0..height).map(row).collect::<Vec<_>>().join("\n");
+        assert!(row(0).contains("ALERTS:"), "top shell absent at {ms}ms");
+        assert!(body.contains("EPS TELEMETRY"), "rail absent at {ms}ms");
+        assert!(body.contains("CMD>"), "command bar absent at {ms}ms");
+        assert!(body.contains("[RUN]"), "status absent at {ms}ms");
+        if ms == 4_200 {
+            assert!(
+                !body.contains("NC: E-"),
+                "fragmented destination text at {ms}ms"
+            );
+        } else if ms == 4_400 {
+            assert!(
+                body.contains("TRAJECTORY LAB // FLYBY DYNAMICS"),
+                "destination HUD incomplete at {ms}ms"
+            );
+        } else if ms == 8_200 {
+            assert!(
+                !body.contains("MORPHOLOGY:") && !body.contains("PAYLOAD STATU"),
+                "surface inspector should await an atomic handoff at {ms}ms"
+            );
+        } else if ms == 8_400 {
+            assert!(
+                body.contains("EUROPA REGIONAL SURVEY") && body.contains("MORPHOLOGY:"),
+                "surface inspector incomplete at {ms}ms"
+            );
+        } else if ms == 12_200 {
+            assert!(
+                body.contains("EUROPA REGIONAL SURVEY") && !body.contains("RADAR A-SCAN ECHO"),
+                "surface inspector should remain whole at {ms}ms"
+            );
+        } else if ms == 12_400 {
+            assert!(
+                body.contains("RADAR A-SCAN ECHO") && body.contains("GATE"),
+                "radar diagnostics should arrive whole at {ms}ms"
+            );
+        }
+    }
+}
+
+#[test]
+fn test_profiler_counts_style_only_changes() {
+    let mut profiler = project_galileo::profile::Profiler::new(4, 1);
+    profiler.record_frame(
+        b"\x1b[1;1H\x1b[38;2;255;0;0mA",
+        Duration::from_millis(1),
+        0,
+        0,
+    );
+    let changed = profiler.record_frame(
+        b"\x1b[1;1H\x1b[38;2;0;255;0mA",
+        Duration::from_millis(1),
+        0,
+        0,
+    );
+    assert_eq!(changed.changed_cells, 1);
+}
+
+#[test]
+fn test_headless_profiler_counts_incremental_output() {
+    let result = ProcessCommand::new(env!("CARGO_BIN_EXE_project-galileo"))
+        .args([
+            "--demo",
+            "--headless",
+            "--frames=40",
+            "--fps=60",
+            "--width=120",
+            "--height=40",
+            "--profile",
+        ])
+        .output()
+        .expect("headless demo executable");
+    assert!(result.status.success());
+    let report = String::from_utf8(result.stderr).expect("profiler output");
+    assert!(report.contains("Frames: 40"), "{report}");
+    let avg_bytes = report
+        .split("Avg Bytes: ")
+        .nth(1)
+        .and_then(|s| s.split(" B").next())
+        .and_then(|s| s.parse::<usize>().ok())
+        .expect("incremental average bytes");
+    assert!(
+        (1..50_000).contains(&avg_bytes),
+        "output should reflect a single 120x40 frame, not the accumulated capture: {report}"
+    );
+}
+
+#[test]
+fn test_compact_scale_handoffs_are_atomic() {
+    let demo = DemoScript::new();
+    for ms in [8_200, 8_400, 12_200, 12_400] {
+        let mut state = DashboardState::new(true);
+        demo.apply_at_ms(&mut state, ms);
+        let drawn = state.render_visualization_surface(80, 18);
+        let expected = match ms {
+            8_200 => {
+                state
+                    .trajectory_renderer
+                    .render(&state.sim, &state.trajectory_lab, 80, 18, true)
+            }
+            8_400 | 12_200 => state.surface_renderer.render(80, 18, true),
+            _ => state.tomography_renderer.render(80, 18, true),
+        };
+        assert!(*drawn == expected, "partial compact scale view at {ms}ms");
+    }
 }

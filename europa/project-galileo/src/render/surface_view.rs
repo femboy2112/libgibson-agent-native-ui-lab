@@ -134,6 +134,34 @@ impl Default for SurfaceViewRenderer {
 }
 
 impl SurfaceViewRenderer {
+    /// Cell containing the selected site in the same projection used by render.
+    pub fn selected_feature_cell(&self, width: u16, height: u16) -> (u16, u16) {
+        let sidebar_x = (width as f32 * 0.65) as u16;
+        let has_inspector = width > sidebar_x + 28 && height >= 16;
+        let cx = if has_inspector {
+            sidebar_x as f32 * 0.5
+        } else {
+            width as f32 * 0.47
+        };
+        let cy = height as f32;
+        let available_r = if has_inspector {
+            (sidebar_x as f32 - cx - 3.0).min(cx - 2.0)
+        } else {
+            (width as f32 * 0.43).min(cx - 2.0)
+        };
+        let radius = available_r.min(height as f32 * 2.0 * 0.43).max(6.0) * self.zoom;
+        let f = self.selected_feature();
+        let (x, y, front) = self.project_lat_lon(f.lat_deg, f.lon_deg, cx, cy, radius);
+        if front {
+            (
+                (x.round() as i32).clamp(0, width.saturating_sub(1) as i32) as u16,
+                ((y / 2.0).round() as i32).clamp(0, height.saturating_sub(1) as i32) as u16,
+            )
+        } else {
+            (cx as u16, height / 2)
+        }
+    }
+
     pub fn update(&mut self, dt_seconds: f32) {
         if self.auto_rotate {
             self.rotation_lon_deg = (self.rotation_lon_deg + dt_seconds * 1.5) % 360.0;
@@ -222,10 +250,22 @@ impl SurfaceViewRenderer {
 
         let mut braille = BrailleCanvas::new(width, height);
 
-        let cx = pixel_w as f32 * 0.44;
+        let sidebar_x = (pixel_w as f32 * 0.65) as u16;
+        let has_inspector = width > sidebar_x + 28 && height >= 16;
+        // Give the selected target an actual observation pane. A disc extending
+        // behind the inspector makes both the geology and its labels illegible.
+        let cx = if has_inspector {
+            sidebar_x as f32 * 0.5
+        } else {
+            pixel_w as f32 * 0.47
+        };
         let cy = pixel_h as f32 * 0.5;
-        let sphere_r =
-            ((pixel_w as f32 * 0.38).min(pixel_h as f32 * 0.44).max(12.0) * self.zoom).max(6.0);
+        let available_r = if has_inspector {
+            (sidebar_x as f32 - cx - 3.0).min(cx - 2.0)
+        } else {
+            (pixel_w as f32 * 0.43).min(cx - 2.0)
+        };
+        let sphere_r = (available_r.min(pixel_h as f32 * 0.43).max(6.0) * self.zoom).max(6.0);
 
         // 1. Render Shaded 3D Sphere of Europa
         let r_int = sphere_r.ceil() as i32;
@@ -317,13 +357,18 @@ impl SurfaceViewRenderer {
 
         // 2. Draw Latitude/Longitude Graticule on Braille Canvas
         if self.show_graticule {
+            // Raster pixels are 1 x 2 per cell; Braille dots are 2 x 4.
+            // Both axes therefore need a factor of two to follow the globe.
+            let dot_cx = cx * 2.0;
+            let dot_cy = cy * 2.0;
+            let dot_r = sphere_r * 2.0;
             // Parallels (Latitudes)
             for lat in [-60, -30, 0, 30, 60] {
                 let mut lat_pts = Vec::with_capacity(72);
                 for lon_step in 0..=72 {
                     let lon = (lon_step as f32 / 72.0) * 360.0;
                     let (sx, sy, front) =
-                        self.project_lat_lon(lat as f32, lon, cx, cy * 0.5, sphere_r * 0.5);
+                        self.project_lat_lon(lat as f32, lon, dot_cx, dot_cy, dot_r);
                     if front {
                         lat_pts.push((sx.round() as i32, sy.round() as i32));
                     } else if !lat_pts.is_empty() {
@@ -340,9 +385,12 @@ impl SurfaceViewRenderer {
                 for lat_step in -18..=18 {
                     let lat = lat_step as f32 * 5.0;
                     let (sx, sy, front) =
-                        self.project_lat_lon(lat, lon as f32, cx, cy * 0.5, sphere_r * 0.5);
+                        self.project_lat_lon(lat, lon as f32, dot_cx, dot_cy, dot_r);
                     if front {
                         lon_pts.push((sx.round() as i32, sy.round() as i32));
+                    } else if !lon_pts.is_empty() {
+                        braille.polyline(&lon_pts);
+                        lon_pts.clear();
                     }
                 }
                 braille.polyline(&lon_pts);
@@ -350,26 +398,49 @@ impl SurfaceViewRenderer {
         }
 
         // 3. Draw Synthetic Aperture Radar (SAR) Ground Track Swath
-        let swath_center_lon = (self.rotation_lon_deg + (self.scan_phase * 60.0) - 30.0) % 360.0;
+        // Scan across the selected geological target so the tomography beneath
+        // this swath remains the same physical sample as the operator descends.
+        let target = self.selected_feature();
+        let swath_center_lon = (target.lon_deg + self.scan_phase * 24.0 - 12.0 + 360.0) % 360.0;
         let mut swath_pts = Vec::with_capacity(32);
         for lat_i in -16..=16 {
-            let lat = lat_i as f32 * 5.0;
-            let lon = swath_center_lon + (lat * 0.25);
+            let lat = (target.lat_deg + lat_i as f32 * 3.0).clamp(-89.0, 89.0);
+            let lon = swath_center_lon + lat_i as f32 * 0.5;
             let (sx, sy, front) = self.project_lat_lon(lat, lon, cx, cy, sphere_r);
             if front {
                 swath_pts.push((sx as i32, sy as i32));
                 // Glowing scan strip on raster
-                raster.disc(sx, sy, 3.2, (40, 220, 255));
+                raster.disc(sx, sy, 1.1, (40, 220, 255));
+            } else if !swath_pts.is_empty() {
+                // Never connect a visible pass through the far side of Europa.
+                for pair in swath_pts.windows(2) {
+                    raster.line(pair[0].0, pair[0].1, pair[1].0, pair[1].1, (40, 220, 255));
+                }
+                swath_pts.clear();
             }
+        }
+        for pair in swath_pts.windows(2) {
+            raster.line(pair[0].0, pair[0].1, pair[1].0, pair[1].1, (40, 220, 255));
         }
 
         // 4. Draw Science Footprints (REASON Radar nadir & MISE imaging slit)
         if self.show_footprints {
-            let (fx, fy, front) = self.project_lat_lon(-15.0, swath_center_lon, cx, cy, sphere_r);
+            let (fx, fy, front) =
+                self.project_lat_lon(target.lat_deg, swath_center_lon, cx, cy, sphere_r);
             if front {
-                // Concentric radar beam pulses
-                raster.disc(fx, fy, 8.0, (15, 80, 110));
-                raster.disc(fx, fy, 4.0, (50, 240, 255));
+                // Outline the sounding footprint; preserve the ice imagery
+                // inside the aperture instead of painting a solid cyan blob.
+                for i in 0..24 {
+                    let a = i as f32 * (2.0 * PI / 24.0);
+                    let b = (i + 1) as f32 * (2.0 * PI / 24.0);
+                    raster.line(
+                        (fx + a.cos() * 5.0) as i32,
+                        (fy + a.sin() * 5.0) as i32,
+                        (fx + b.cos() * 5.0) as i32,
+                        (fy + b.sin() * 5.0) as i32,
+                        (50, 240, 255),
+                    );
+                }
                 raster.disc(fx, fy, 1.5, (255, 255, 255));
             }
         }
@@ -448,8 +519,7 @@ impl SurfaceViewRenderer {
         }
 
         // 8. Scientific Target Inspector Sidebar (Right side, if space permits)
-        let sidebar_x = (pixel_w as f32 * 0.65) as u16;
-        if width > sidebar_x + 28 && height >= 16 {
+        if has_inspector {
             let target = self.selected_feature();
             let title_st = Style::new().fg(Color::Rgb(255, 215, 60)).bold();
             let label_st = Style::new().fg(Color::Rgb(140, 180, 220));
@@ -478,7 +548,33 @@ impl SurfaceViewRenderer {
             surface.print_str(sidebar_x, 5, &coord_str, val_st, None);
 
             surface.print_str(sidebar_x, 7, "MORPHOLOGY:", label_st, None);
-            surface.print_str(sidebar_x, 8, target.feature_type, val_st, None);
+            let mut morphology = target.feature_type.split_whitespace();
+            let mut first = String::new();
+            let mut second = String::new();
+            for word in morphology.by_ref() {
+                if first.len() + word.len() < (width - sidebar_x - 2) as usize {
+                    if !first.is_empty() {
+                        first.push(' ');
+                    }
+                    first.push_str(word);
+                } else {
+                    if !second.is_empty() {
+                        second.push(' ');
+                    }
+                    second.push_str(word);
+                    break;
+                }
+            }
+            for word in morphology {
+                if !second.is_empty() {
+                    second.push(' ');
+                }
+                second.push_str(word);
+            }
+            surface.print_str(sidebar_x, 8, &first, val_st, None);
+            if !second.is_empty() {
+                surface.print_str(sidebar_x, 9, &second, val_st, None);
+            }
 
             let ice_str = format!("ICE SHELL DEPTH: {:.1} km", target.ice_thickness_km);
             surface.print_str(sidebar_x, 10, &ice_str, val_st, None);
@@ -500,14 +596,14 @@ impl SurfaceViewRenderer {
                 surface.print_str(
                     sidebar_x,
                     16,
-                    "REASON RADAR: SOUNDING [60 MHz]",
+                    "REASON: SOUNDING 60 MHz",
                     Style::new().fg(Color::Rgb(60, 230, 255)),
                     None,
                 );
                 surface.print_str(
                     sidebar_x,
                     17,
-                    "MISE SPECTRO: INTEGRATING [3.2 um]",
+                    "MISE: INTEGRATING 3.2 um",
                     Style::new().fg(Color::Rgb(255, 175, 45)),
                     None,
                 );
@@ -517,7 +613,7 @@ impl SurfaceViewRenderer {
                 surface.print_str(
                     sidebar_x,
                     19,
-                    "[H/J/K/L] Spin Globe | [N/P] Target",
+                    "HJKL spin | N/P target",
                     Style::new().dim(),
                     None,
                 );
@@ -534,6 +630,23 @@ impl SurfaceViewRenderer {
                     None,
                 );
             }
+        } else if width >= 50 && height >= 12 {
+            let target = self.selected_feature();
+            let line = format!(
+                "TARGET {} | {:.1}° {} / {:.1}° W | ICE {:.1} km",
+                target.name,
+                target.lat_deg.abs(),
+                if target.lat_deg >= 0.0 { 'N' } else { 'S' },
+                target.lon_deg,
+                target.ice_thickness_km
+            );
+            surface.print_str(
+                1,
+                height.saturating_sub(2),
+                &line,
+                Style::new().fg(Color::Rgb(255, 215, 60)).bold(),
+                None,
+            );
         }
 
         surface

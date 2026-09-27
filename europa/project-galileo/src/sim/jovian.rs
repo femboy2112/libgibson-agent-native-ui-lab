@@ -1,8 +1,8 @@
 //! Deterministic Jovian system orbital simulation.
 //!
 //! Models Jupiter and the Galilean moons (Io, Europa, Ganymede, Callisto)
-//! with Laplace resonance (1:2:4 for Io, Europa, Ganymede) and high-precision
-//! deterministic orbital propagation for spacecraft trajectory planning.
+//! with approximate 1:2:4 periods for Io, Europa, and Ganymede. The spacecraft
+//! uses an illustrative Keplerian ellipse rather than a validated ephemeris.
 
 use std::f32::consts::PI;
 
@@ -167,7 +167,9 @@ impl Moon {
             semi_major_axis_km: 670900.0,
             period_hours: 84.92, // ~3.551 days (2x Io)
             inclination_deg: 0.47,
-            initial_phase_rad: 2.42,
+            // Illustrative epoch chosen so the resonant spacecraft tour has
+            // its first sampled close encounter near MET +255 h.
+            initial_phase_rad: 1.25,
         }
     }
 
@@ -255,7 +257,7 @@ pub struct JovianModel {
 
 impl Default for JovianModel {
     fn default() -> Self {
-        let sc_rp = 670900.0 * 1.05; // Periapsis just outside Europa's orbit (704,445 km)
+        let sc_rp = 670900.0 + 5000.0; // Illustrative Europa encounter corridor
         let sc_ra = 1882700.0 * 0.95; // Apoapsis inside Callisto's orbit (1,788,565 km)
         let sc_a = (sc_rp + sc_ra) / 2.0;
         let sc_e = (sc_ra - sc_rp) / (sc_ra + sc_rp);
@@ -272,7 +274,7 @@ impl Default for JovianModel {
             target: TargetBody::Europa,
             sc_semi_major_axis: sc_a,
             sc_eccentricity: sc_e,
-            sc_inclination_rad: 0.08, // ~4.5 degrees
+            sc_inclination_rad: 0.47_f32.to_radians(), // aligned with Europa's orbital plane
             sc_arg_periapsis_rad: 1.25,
             sc_period_hours: sc_period,
         }

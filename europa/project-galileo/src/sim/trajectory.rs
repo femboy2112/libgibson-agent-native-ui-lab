@@ -127,7 +127,7 @@ impl TrajectoryLab {
                 MissionEvent {
                     time_hours: 88.2,
                     title: "EUROPA FLYBY E14",
-                    description: "Closest approach alt 102.4 km / REASON sounding",
+                    description: "Illustrative Europa encounter / synthetic radar pass",
                     delta_v_ms: None,
                     status: "PLANNED",
                 },
@@ -228,6 +228,18 @@ impl TrajectoryLab {
 
         // Active maneuver node
         let active_node = self.nodes.iter().find(|n| n.is_enabled);
+        let active_burn = active_node.map(|node| {
+            let (burn_pos, burn_vel, _) = model.spacecraft_position_at(node.epoch_hours);
+            let radial = burn_pos.normalized();
+            let prograde = burn_vel.normalized();
+            let normal = radial.cross(prograde).normalized();
+            // Components are expressed in the spacecraft's local orbital
+            // frame at the burn epoch, not in Jovian Cartesian X/Y/Z.
+            let delta_v_kms =
+                (prograde * node.dv_prograde + radial * node.dv_radial + normal * node.dv_normal)
+                    * 0.001;
+            (node.epoch_hours, delta_v_kms)
+        });
 
         for step in 0..=steps {
             let t = start_time + step as f32 * dt;
@@ -249,16 +261,12 @@ impl TrajectoryLab {
             }
 
             // Compute post-burn planned path
-            let (pos_plan, vel_plan) = if let Some(node) = active_node {
-                if t >= node.epoch_hours {
+            let (pos_plan, vel_plan) = if let Some((epoch_hours, dv_kms)) = active_burn {
+                if t >= epoch_hours {
                     // Propagate perturbation after burn epoch
-                    let dt_since_burn = t - node.epoch_hours;
-                    let dv_kms = Vector3::new(
-                        node.dv_prograde * 0.001,
-                        node.dv_normal * 0.001,
-                        node.dv_radial * 0.001,
-                    );
-                    // Approximate linearised orbital perturbation
+                    let dt_since_burn = t - epoch_hours;
+                    // First-order displacement; deliberately not an
+                    // integrated gravitational maneuver solution.
                     let d_pos = dv_kms * (dt_since_burn * 3600.0);
                     let perturbed_pos = pos_nom + d_pos;
                     let perturbed_vel = vel_nom + dv_kms;
