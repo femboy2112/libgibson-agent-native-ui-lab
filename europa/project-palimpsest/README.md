@@ -227,6 +227,10 @@ Filed by this attempt (see `EXPERIMENT_REPORT.md` for full evidence):
   aligned tables; NoWrap node path silently truncates)
 - [#46](https://github.com/femboy2112/libgibson/issues/46) — interactive
   `Context` succeeds on non-TTY stdout and then silently renders nothing
+- [#48](https://github.com/femboy2112/libgibson/issues/48) — consolidated
+  ergonomics & architecture report (silent no-op render, rendered-output
+  testing, the Node/Surface seam, raster overflow, clip-rect drawing,
+  canonical loop, packaging)
 
 Pre-existing campaign issues this implementation validated by paying the cost:
 [#38](https://github.com/femboy2112/libgibson/issues/38) (windowing),

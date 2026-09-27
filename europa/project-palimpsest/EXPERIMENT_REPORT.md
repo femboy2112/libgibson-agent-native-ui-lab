@@ -142,6 +142,10 @@ Concrete, measured:
 
 ## GitHub issues filed
 
+Consolidated ergonomics & architecture analysis (silent failure modes, the
+declarative/imperative seam, rendered-output testing):
+[#48](https://github.com/femboy2112/libgibson/issues/48).
+
 Filed by this attempt against `femboy2112/libgibson`:
 
 | # | Title | Link | Mechanism / impact | Workaround used |
