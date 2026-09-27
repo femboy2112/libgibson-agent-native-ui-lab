@@ -226,6 +226,60 @@ fn health_renders_editorial_report() {
 }
 
 #[test]
+fn health_largest_commit_keeps_summary_and_metadata_in_separate_columns() {
+    let mut app = app_for("medium");
+    app.ensure_metrics();
+    let largest = &mut app.metrics.as_mut().unwrap().largest[0];
+    largest.short = "abcdef0".to_string();
+    largest.summary = "Merge remote-tracking branch 'origin/europa/project-palimpsest-v0.2.0' into integration 日本語続き".to_string();
+    largest.files = 49;
+    largest.author = "Codex 日本".to_string();
+    largest.time = app.now - 29;
+
+    for width in [120, 80, 42, 20] {
+        let pal = app.palette;
+        let surface = palimpsest::views::health::draw_health(&mut app, width, 40, &pal);
+        let rows: Vec<String> = (0..40)
+            .map(|y| {
+                (0..width.saturating_sub(2))
+                    .map(|x| surface.get(x, y).unwrap().glyph.grapheme.as_str())
+                    .collect()
+            })
+            .collect();
+        let row = rows
+            .iter()
+            .find(|row| row.contains("abcdef0"))
+            .unwrap_or_else(|| panic!("largest commit hash absent at {width} columns"));
+        if width >= 42 {
+            let right = "49 paths";
+            let right_start = row
+                .find(right)
+                .unwrap_or_else(|| panic!("metadata absent at {width} columns: {row}"));
+            assert!(
+                row[..right_start].ends_with("  "),
+                "summary runs into metadata at {width} columns: {row}"
+            );
+            assert!(
+                row[..right_start].contains('…'),
+                "long summary not clipped before metadata at {width} columns: {row}"
+            );
+            if width == 42 {
+                assert!(
+                    row.contains("Merge remote"),
+                    "compact metadata must preserve the commit summary: {row}"
+                );
+                assert!(
+                    !row.contains("Codex"),
+                    "narrow metadata should omit the author"
+                );
+            }
+        } else {
+            assert!(!row.contains("49 paths"), "tiny row cannot fit two columns");
+        }
+    }
+}
+
+#[test]
 fn mono_mode_emits_no_color_escapes() {
     let mut app = app_for("tiny");
     app.palette = Palette::mono();

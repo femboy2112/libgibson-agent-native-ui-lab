@@ -68,7 +68,7 @@ Concrete, measured:
 - **Headless capture is a first-class test harness.** `Context::headless` +
   `take_output` let the test suite assert on *actual wire bytes*, and a small
   terminal model (cursor addressing, SGR, `CSI K`/`CSI L`) turns those bytes
-  into the visible screen. The 88-test suite includes rendered-output checks.
+  into the visible screen. The 89-test suite includes rendered-output checks.
   This is the single best API decision in v0.2.0 for consumers.
 - **The differential renderer is byte-honest.** A scripted-session probe
   replays multi-frame sessions (atlas → lens → atlas → health → report →
@@ -87,6 +87,11 @@ Concrete, measured:
 - **The cell model's wide-glyph invariants held everywhere.** Box-drawing
   braids across five views never split a glyph at a viewport edge; the
   glyph-vocabulary unit test pins single-width expectations.
+- **Health row columns are measured in display cells.** A real-repository
+  capture exposed a long commit summary running into its right-aligned path,
+  author, and age metadata. The summary now truncates before a two-cell gap;
+  narrow layouts shorten the metadata or use a single column. A rendered
+  regression covers long Unicode summaries at 120, 80, 42, and 20 columns.
 - **Color-depth quantization is centralized.** Palette code expresses intent
   once (`Color::Ansi256`/16/Reset); `set_color_depth` handles the ladder, and
   the mono mode emits zero color escapes — verified by byte-class tests.

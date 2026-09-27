@@ -177,7 +177,7 @@ checked-in visual captures use that option.
 ## Tests
 
 ```sh
-cargo test                 # 88 tests: 33 lib unit, 3 bin unit, 49 integration, 3 doc-tests
+cargo test                 # 89 tests: 33 lib unit, 3 bin unit, 50 integration, 3 doc-tests
 cargo test --release
 python3 scripts/pty_smoke.py                    # real PTY: frames, keys, resize, scrollback, clean quit
 python3 scripts/pty_smoke.py --profile=medium
@@ -188,7 +188,8 @@ replayed through a terminal model and the visible grid is checked:
 
 - `tests/render_tests.rs` — all six responsive targets, all five views,
   mono/ansi16 escape-class checks, scrollback artifact reaching output,
-  truncation notices, empty/detached repositories
+  truncation notices, empty/detached repositories, largest-commit column
+  separation with long Unicode summaries at wide and narrow widths
 - `tests/interaction_tests.rs` — key-driven behavior: keyed selection
   stability under filtering, browser focus restoration, lane jumps, palette
   commands, diff-scoped search and hunk keys, fiber unfold + origin jump

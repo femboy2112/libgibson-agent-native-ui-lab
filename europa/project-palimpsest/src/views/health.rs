@@ -9,7 +9,7 @@ use std::sync::Arc;
 use gibson::surface::Surface;
 
 use crate::app::App;
-use crate::theme::{fmt_age, fmt_date, glyphs, truncate, Palette};
+use crate::theme::{fmt_age, fmt_date, glyphs, truncate, width_of, Palette};
 use crate::views::widgets::*;
 
 pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface> {
@@ -204,24 +204,46 @@ pub fn draw_health(app: &mut App, w: u16, h: u16, pal: &Palette) -> Arc<Surface>
     };
     y = section(&mut page, y, page_w, &largest_title, pal);
     for c in m.largest.iter().take(5) {
-        let left = format!(
-            " {} {}",
-            c.short,
-            truncate(&c.summary, (page_w as usize).saturating_sub(30))
-        );
-        page.print_str(1, y, &left, pal.s_text(), Some(page_w));
-        let right = format!(
+        let left = format!(" {} {}", c.short, c.summary);
+        let full_right = format!(
             "{} paths · {} · {} ago",
             c.files,
             truncate(&c.author, 12),
             fmt_age(c.time, app.now)
         );
+        let compact_right = format!("{} paths", c.files);
+        // Reserve the actual display width of the metadata, two blank cells,
+        // and at least 16 cells of summary after the short oid. Compact
+        // metadata keeps the summary readable at narrow terminal widths.
+        let min_left = width_of(&format!(" {} ", c.short)) + 16;
+        let right = [&full_right[..], &compact_right[..]]
+            .into_iter()
+            .find(|right| {
+                let right_w = width_of(right);
+                let right_x = (page_w as usize).saturating_sub(right_w + 1);
+                right_w < page_w as usize && right_x >= 1 + min_left + 2
+            });
+        let left_w = if let Some(right) = right {
+            let right_x = page_w as usize - width_of(right) - 1;
+            let left_w = right_x - 1 - 2;
+            page.print_str(
+                right_x as u16,
+                y,
+                right,
+                pal.s_muted(),
+                Some(page_w - right_x as u16),
+            );
+            left_w
+        } else {
+            // Below two-column width, show the oid and summary alone.
+            page_w.saturating_sub(2) as usize
+        };
         page.print_str(
-            page_w.saturating_sub(right.len() as u16 + 1),
+            1,
             y,
-            &right,
-            pal.s_muted(),
-            Some(page_w),
+            &truncate(&left, left_w),
+            pal.s_text(),
+            Some(left_w as u16),
         );
         if y + 1 < 200 {
             y += 1;
