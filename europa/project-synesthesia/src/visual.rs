@@ -123,7 +123,13 @@ pub fn build(
     } else {
         String::new()
     };
-    let header = if width >= 100 {
+    let header = if width < 48 || height < 20 {
+        format!(
+            "SYNESTHESIA  {status}  {:03.0} BPM  {}",
+            engine.bpm,
+            if view.performance { "LIVE" } else { "ARR" },
+        )
+    } else if width >= 100 {
         format!(
             "SYNESTHESIA{input_receipts}   {mode}   {status}   {:03.0} BPM   STEP {:02}   {:02} FPS   SEED {:016X}",
             engine.bpm,
@@ -171,30 +177,36 @@ pub fn build(
             engine.patch.waveform, engine.patch.cutoff_hz, view.audio_status,
         )
     };
-    let footer = if width >= 140 {
+    let footer = if width < 48 || height < 20 {
         format!(
-            "{} T{} S{:02}  | Space play  Enter note  arrows step/track  Tab focus  [ ] BPM  F filter  E ADSR  W wave  M mute  S solo  P mode  Q quit",
+            "{} T{} | Space play  P view  Q quit",
+            focus_name(view.focus),
+            view.selected_track + 1,
+        )
+    } else if width >= 140 {
+        format!(
+            "{} T{} S{:02} | Space play  Enter note  arrows edit  J/K track  Tab focus  [ ] tempo  F filter  E ADSR  W wave  M mute  S solo  P view  Q quit",
             focus_name(view.focus),
             view.selected_track + 1,
             view.selected_step + 1,
         )
     } else if width >= 90 {
         format!(
-            "{} T{} S{:02} | Space play  Enter note  arrows move  Tab focus  F/E/W sound  P concert  Q quit",
+            "{} T{} S{:02} | arrows edit  J/K track  Enter note  Tab focus  F/E/W sound  P view  Q quit",
             focus_name(view.focus),
             view.selected_track + 1,
             view.selected_step + 1,
         )
     } else if width >= 70 {
         format!(
-            "{} T{} S{:02} | Space  Enter  arrows  Tab  F/E/W  P mode  Q quit",
+            "{} T{} S{:02} | J/K track  arrows edit  Enter note  Tab  P mode  Q quit",
             focus_name(view.focus),
             view.selected_track + 1,
             view.selected_step + 1,
         )
     } else {
         format!(
-            "{} T{} S{:02} | SPC ENT arrows TAB P mode Q quit",
+            "{} T{} S{:02} | SPC ENT arrows J/K track TAB P mode Q quit",
             focus_name(view.focus),
             view.selected_track + 1,
             view.selected_step + 1,
@@ -233,7 +245,7 @@ fn signal_surface(
 ) -> Surface {
     let mut canvas = BrailleCanvas::new(width, height);
     let (pw, ph) = (canvas.pixel_width() as i32, canvas.pixel_height() as i32);
-    if pw < 96 || ph < 28 {
+    if pw < 96 || ph < 64 {
         let mut tiny = canvas.to_surface_mode(Style::default(), view.glyph_mode);
         tiny.print_str(
             0,
@@ -245,10 +257,19 @@ fn signal_surface(
         return tiny;
     }
 
-    let compact = ph < 88 || pw < 112;
+    let short = ph < 76;
+    let compact = ph < 120 || pw < 112;
     let seq_label_y = 0;
-    let grid_top = if compact { 7 } else { 10 };
-    let lane_h = if view.performance {
+    let grid_top = if short {
+        4
+    } else if compact {
+        7
+    } else {
+        10
+    };
+    let lane_h = if short {
+        4
+    } else if view.performance {
         if compact {
             4
         } else {
@@ -262,7 +283,7 @@ fn signal_surface(
     let grid_bottom = grid_top + lane_h * TRACK_COUNT as i32;
     // Labels have a real gutter; notes and graph lines no longer run beneath
     // text. The narrow layout abbreviates labels to keep usable note columns.
-    let gutter_cells = if width >= 90 { 21 } else { 12 };
+    let gutter_cells = if width >= 90 { 21 } else { 14 };
     let x_left = gutter_cells * 2;
     let x_right = pw - 3;
     let grid_width = (x_right - x_left).max(STEPS_PER_TRACK as i32);
@@ -280,28 +301,42 @@ fn signal_surface(
         grid_width,
     );
 
-    let graph_top = (grid_bottom + if compact { 5 } else { 12 }).min(ph - 42);
-    draw_routing(&mut canvas, frame, graph_top, x_left, grid_width);
+    let graph_top = if short {
+        grid_bottom + 4
+    } else {
+        (grid_bottom + if compact { 5 } else { 12 }).min(ph - 42)
+    };
+    draw_routing(
+        &mut canvas,
+        engine,
+        frame,
+        graph_top,
+        x_left,
+        grid_width,
+        short || ph >= 96,
+    );
 
     if view.performance {
-        draw_performance_field(&mut canvas, frame, history, graph_top, ph);
+        draw_performance_field(&mut canvas, frame, history, graph_top, ph, x_left);
     } else {
-        draw_spectrogram(
-            &mut canvas,
-            history,
-            graph_top + if compact { 19 } else { 24 },
-            ph * 69 / 100,
-            x_left,
-            grid_width,
-        );
-        draw_spectrum(
-            &mut canvas,
-            frame,
-            graph_top + if compact { 19 } else { 24 },
-            ph * 69 / 100,
-            x_left,
-            grid_width,
-        );
+        if !short {
+            draw_spectrogram(
+                &mut canvas,
+                history,
+                graph_top + if compact { 19 } else { 24 },
+                spectrum_bottom(ph),
+                x_left,
+                grid_width,
+            );
+            draw_spectrum(
+                &mut canvas,
+                frame,
+                graph_top + if compact { 19 } else { 24 },
+                spectrum_bottom(ph),
+                x_left,
+                grid_width,
+            );
+        }
         draw_waveform(
             &mut canvas,
             frame,
@@ -327,7 +362,7 @@ fn signal_surface(
         for y in (graph_top + 5..=ph - 4).step_by(if output_energy > 0.4 { 1 } else { 3 }) {
             canvas.set(bus_x, y);
         }
-        canvas.circle(bus_x, ph * 69 / 100, 1 + (output_energy * 4.0) as i32);
+        canvas.circle(bus_x, spectrum_bottom(ph), 1 + (output_energy * 4.0) as i32);
         canvas.circle(bus_x, ph * 84 / 100, 1 + (output_energy * 4.0) as i32);
     }
 
@@ -432,7 +467,15 @@ fn draw_sequencer(
     }
 }
 
-fn draw_routing(canvas: &mut BrailleCanvas, frame: &Frame, y: i32, left: i32, width: i32) {
+fn draw_routing(
+    canvas: &mut BrailleCanvas,
+    engine: &Engine,
+    frame: &Frame,
+    y: i32,
+    left: i32,
+    width: i32,
+    show_transfer: bool,
+) {
     const N: usize = 7;
     let mut xs = [0_i32; N];
     let mut ys = [0_i32; N];
@@ -458,6 +501,93 @@ fn draw_routing(canvas: &mut BrailleCanvas, frame: &Frame, y: i32, left: i32, wi
             2 + (frame.routing[i].clamp(0.0, 1.0) * 3.0) as i32,
         );
     }
+    if !show_transfer {
+        return;
+    }
+    // The route carries small, deterministic transfer glyphs immediately
+    // below the corresponding stages. They encode the actual editable patch,
+    // so W / E / F / mixer pan change the machine itself, not just its labels.
+    let center = y + 15;
+    let radius = ((width / 6 - 3) / 2).clamp(3, 7);
+    let mut osc = Vec::with_capacity((radius * 2 + 1) as usize);
+    for dx in -radius..=radius {
+        let phase = (dx + radius) as f32 / (2 * radius) as f32;
+        let sample = match engine.patch.waveform {
+            crate::engine::Waveform::Sine => (phase * std::f32::consts::TAU).sin(),
+            crate::engine::Waveform::Triangle => 1.0 - 4.0 * (phase - 0.5).abs(),
+            crate::engine::Waveform::Saw => phase * 2.0 - 1.0,
+            crate::engine::Waveform::Square => {
+                if phase < 0.5 {
+                    1.0
+                } else {
+                    -1.0
+                }
+            }
+        };
+        osc.push((xs[1] + dx, center - (sample * 3.0).round() as i32));
+    }
+    canvas.polyline(&osc);
+
+    let patch = engine.patch;
+    let duration = (patch.attack + patch.decay + patch.release).max(0.001);
+    let attack = (patch.attack / duration * radius as f32).round() as i32;
+    let decay = (patch.decay / duration * radius as f32).round() as i32;
+    let x0 = xs[2] - radius;
+    let x3 = xs[2] + radius;
+    let x1 = (x0 + attack.max(1)).min(x3 - 2);
+    let x2 = (x1 + decay.max(1)).min(x3 - 1);
+    let sustain_y = center + 3 - (patch.sustain.clamp(0.0, 1.0) * 6.0).round() as i32;
+    canvas.polyline(&[
+        (x0, center + 3),
+        (x1, center - 3),
+        (x2, sustain_y),
+        (x3 - 1, sustain_y),
+        (x3, center + 3),
+    ]);
+
+    // A logarithmic horizontal frequency axis spans approximately 40 Hz to
+    // 18 kHz. Resonance raises the response around the cutoff in this glyph.
+    let cutoff =
+        (patch.cutoff_hz.max(40.0).ln() - 40.0_f32.ln()) / (18_000.0_f32.ln() - 40.0_f32.ln());
+    let mut filter = Vec::with_capacity((radius * 2 + 1) as usize);
+    for dx in -radius..=radius {
+        let frequency = (dx + radius) as f32 / (2 * radius) as f32;
+        let response = 1.0 / (1.0 + ((frequency - cutoff) * 16.0).exp());
+        let bump = patch.resonance * (-(frequency - cutoff).powi(2) * 100.0).exp() * 0.35;
+        filter.push((xs[3] + dx, center + 3 - ((response + bump) * 6.0) as i32));
+    }
+    canvas.polyline(&filter);
+
+    let left_rms = frame.samples[0]
+        .iter()
+        .map(|sample| sample * sample)
+        .sum::<f32>();
+    let right_rms = frame.samples[1]
+        .iter()
+        .map(|sample| sample * sample)
+        .sum::<f32>();
+    let balance = if left_rms + right_rms > 1.0e-8 {
+        (right_rms - left_rms) / (right_rms + left_rms)
+    } else {
+        0.0
+    };
+    canvas.line(xs[4] - radius, center, xs[4] + radius, center);
+    canvas.line(xs[4], center - 2, xs[4], center + 2);
+    canvas.circle(xs[4] + (balance * radius as f32).round() as i32, center, 1);
+}
+
+fn spectrum_bottom(ph: i32) -> i32 {
+    ph * if ph < 96 { 74 } else { 78 } / 100
+}
+
+// Fixed perceptual transfer curves; they do not normalize against each frame.
+// The numeric routing readouts remain raw RMS. Both curves map silence to zero.
+fn spectral_display(magnitude: f32) -> f32 {
+    magnitude.max(0.0) / (magnitude.max(0.0) + 0.018)
+}
+
+fn amplitude_display(sample: f32) -> f32 {
+    sample / (sample.abs() + 0.12)
 }
 
 fn draw_spectrogram(
@@ -507,18 +637,17 @@ fn draw_spectrogram(
             if bin >= FFT_BINS {
                 continue;
             }
-            let magnitude = spectrum[bin].clamp(0.0, 1.0);
-            let threshold = 0.007 + band as f32 * 0.0004;
-            if magnitude <= threshold {
+            let magnitude = spectral_display(spectrum[bin]);
+            if magnitude <= 0.07 {
                 continue;
             }
             let y =
                 bottom - ((band as f32 / (bins.len() - 1) as f32) * (bottom - top) as f32) as i32;
             canvas.set(x, y);
-            if magnitude > 0.035 {
+            if magnitude > 0.30 {
                 canvas.set(x, y - 1);
             }
-            if magnitude > 0.12 {
+            if magnitude > 0.63 {
                 canvas.set(x + 1, y);
             }
         }
@@ -537,14 +666,21 @@ fn draw_spectrum(
         return;
     }
     let right = left + width;
+    for fraction in 0..=4 {
+        let guide_x = left + width * fraction / 4;
+        for y in (top..bottom).step_by(6) {
+            canvas.set(guide_x, y);
+        }
+    }
+    canvas.line(left, bottom, right, bottom);
     let bins = 48.min(FFT_BINS - 1);
     let mut points = Vec::with_capacity(bins);
     for i in 1..=bins {
         let ratio = i as f32 / bins as f32;
         let source_bin = (ratio * ratio * (FFT_BINS - 1) as f32) as usize;
-        let magnitude = frame.spectrum[source_bin].clamp(0.0, 1.0);
+        let magnitude = spectral_display(frame.spectrum[source_bin]);
         let x = left + (i as f32 * width as f32 / bins as f32) as i32;
-        let y = bottom - (magnitude * (bottom - top) as f32 * 2.2).round() as i32;
+        let y = bottom - (magnitude * (bottom - top) as f32).round() as i32;
         let y = y.clamp(top, bottom);
         points.push((x.clamp(left, right), y));
         canvas.line(x, bottom, x, y);
@@ -574,17 +710,17 @@ fn draw_waveform(
     let mut previous_r = None;
     for x in left..=right {
         let bucket = ((x - left) as usize * buckets / (span as usize + 1)).min(buckets - 1);
-        let low = frame.waveform.min[bucket];
-        let high = frame.waveform.max[bucket];
-        let y_low = (center as f32 - high.clamp(-1.0, 1.0) * half).round() as i32;
-        let y_high = (center as f32 - low.clamp(-1.0, 1.0) * half).round() as i32;
+        let low = amplitude_display(frame.waveform.min[bucket]);
+        let high = amplitude_display(frame.waveform.max[bucket]);
+        let y_low = (center as f32 - high * half).round() as i32;
+        let y_high = (center as f32 - low * half).round() as i32;
         canvas.line(x, y_low, x, y_high);
 
         let sample_index = bucket * (frame.fft_input.len() / buckets);
-        let l = frame.samples[0][sample_index].clamp(-1.0, 1.0);
-        let r = frame.samples[1][sample_index].clamp(-1.0, 1.0);
-        let yl = (center as f32 - (height as f32 * 0.22) - l * half * 0.45).round() as i32;
-        let yr = (center as f32 + (height as f32 * 0.22) - r * half * 0.45).round() as i32;
+        let l = amplitude_display(frame.samples[0][sample_index]);
+        let r = amplitude_display(frame.samples[1][sample_index]);
+        let yl = (center as f32 - (height as f32 * 0.22) - l * half * 0.72).round() as i32;
+        let yr = (center as f32 + (height as f32 * 0.22) - r * half * 0.72).round() as i32;
         if let Some((px, py)) = previous_l {
             canvas.line(px, py, x, yl);
         }
@@ -629,38 +765,53 @@ fn draw_performance_field(
     history: &SpectrumHistory,
     graph_top: i32,
     ph: i32,
+    left: i32,
 ) {
-    let width = canvas.pixel_width() as i32 - 4;
-    let left = 2;
+    let width = canvas.pixel_width() as i32 - left - 4;
     let top = (graph_top + 20).clamp(0, ph - 8);
     let bottom = (ph - 3).max(top + 1);
     draw_spectrogram(canvas, history, top, bottom, left, width);
+    canvas.line(left, bottom, left + width, bottom);
     // The live spectrum draws a rising harmonic terrain over the time field.
     let bins = 64.min(FFT_BINS - 1);
     let mut contour = Vec::with_capacity(bins);
     for i in 1..=bins {
         let source_bin = (i * i * (FFT_BINS - 1) / (bins * bins)).max(1);
-        let magnitude = frame.spectrum[source_bin].clamp(0.0, 1.0);
+        let magnitude = spectral_display(frame.spectrum[source_bin]);
         let x = left + i as i32 * width / bins as i32;
-        let y = bottom - (magnitude * (bottom - top) as f32 * 1.75) as i32;
+        let y = bottom - (magnitude * (bottom - top) as f32) as i32;
         contour.push((x, y.clamp(top, bottom)));
     }
     canvas.polyline(&contour);
 
-    let wave_y = ph * 3 / 4;
-    let amp = (ph as f32 * 0.12).max(3.0);
-    let mut wave = Vec::with_capacity(frame.fft_input.len());
-    let step = (frame.fft_input.len() / width.max(1) as usize).max(1);
-    for (i, sample) in frame.fft_input.iter().step_by(step).enumerate() {
-        let x = left + i as i32;
-        let y = (wave_y as f32 - sample * amp).round() as i32;
-        if x < width + left {
-            wave.push((x, y));
-        }
+    // Two threads from the actual left/right PCM replace the mono contour.
+    // Pan, mute, filter and waveform edits propagate here through the same
+    // simulation that feeds the rest of the field.
+    let span = (bottom - top).max(1);
+    let wave_y = top + span * 3 / 4;
+    let separation = (span / 14).clamp(2, 9);
+    let amplitude = (span as f32 * 0.18).max(2.0);
+    let mut left_trace = Vec::with_capacity(width as usize);
+    let mut right_trace = Vec::with_capacity(width as usize);
+    for x in 0..width {
+        let sample =
+            (x as usize * frame.samples[0].len() / width as usize).min(frame.samples[0].len() - 1);
+        left_trace.push((
+            left + x,
+            wave_y
+                - separation
+                - (amplitude_display(frame.samples[0][sample]) * amplitude).round() as i32,
+        ));
+        right_trace.push((
+            left + x,
+            wave_y + separation
+                - (amplitude_display(frame.samples[1][sample]) * amplitude).round() as i32,
+        ));
     }
-    canvas.polyline(&wave);
+    canvas.polyline(&left_trace);
+    canvas.polyline(&right_trace);
 
-    let pulse_x = 2 + ((width - 4) as f32 * frame.beat_phase) as i32;
+    let pulse_x = left + ((width - 4) as f32 * frame.beat_phase) as i32;
     let pulse_y = top + ((bottom - top) as f32 * frame.beat_phase * 0.25) as i32;
     canvas.circle(
         pulse_x,
@@ -716,9 +867,11 @@ fn colorize(surface: &mut Surface, canvas: &BrailleCanvas, frame: &Frame, region
                     0.12 + energy * 0.65 + density * 0.2,
                 )
             } else if y < ph * 78 / 100 {
-                let bin = ((cx as f32 / surface.width.max(1) as f32).powi(2)
-                    * (FFT_BINS - 1) as f32) as usize;
-                heat(density * 0.65 + frame.spectrum[bin] * 0.35)
+                let x = ((cx as i32 * 2 - graph_left).max(0) as f32
+                    / (canvas.pixel_width() as i32 - graph_left).max(1) as f32)
+                    .clamp(0.0, 1.0);
+                let bin = (x * x * (FFT_BINS - 1) as f32) as usize;
+                heat(density * 0.34 + spectral_display(frame.spectrum[bin]) * 0.66)
             } else {
                 let energy = frame.routing[6].clamp(0.0, 1.0);
                 mix(
@@ -855,28 +1008,57 @@ fn overlay_labels(
             Some((label_span / 6).max(8).min(surface.width.saturating_sub(x))),
         );
     }
-    if view.performance {
+    if ph < 76 {
         surface.print_str(
             1,
-            ((graph_top + 13) / 4).clamp(1, surface.height.saturating_sub(1) as i32) as u16,
-            "03 / LIVE HARMONICS / STEREO WAVE",
+            (ph * 79 / 100 / 4) as u16,
+            if view.performance {
+                "03 / STEREO"
+            } else {
+                "03 / OUTPUT"
+            },
             bright,
-            None,
+            Some(gutter_cells.saturating_sub(1)),
+        );
+        if !view.performance {
+            surface.print_str(1, surface.height.saturating_sub(1), "04 / MIX", dim, None);
+        }
+    } else if view.performance {
+        surface.print_str(
+            1,
+            ((graph_top + if ph < 96 { 19 } else { 24 }) / 4)
+                .clamp(1, surface.height.saturating_sub(1) as i32) as u16,
+            if gutter_cells < 21 {
+                "03 / FIELD"
+            } else {
+                "03 / HARMONICS"
+            },
+            bright,
+            Some(gutter_cells.saturating_sub(1)),
         );
     } else {
         surface.print_str(
             1,
-            (graph_top + if ph < 88 { 13 } else { 17 }).max(0) as u16 / 4,
-            "03 / FFT HISTORY -> FREQUENCY",
+            ((graph_top + if ph < 96 { 19 } else { 24 }) / 4)
+                .clamp(0, surface.height.saturating_sub(1) as i32) as u16,
+            if gutter_cells < 21 {
+                "03 / FFT"
+            } else {
+                "03 / SPECTRUM"
+            },
             bright,
-            None,
+            Some(gutter_cells.saturating_sub(1)),
         );
         surface.print_str(
             1,
             (ph * 79 / 100 / 4).clamp(0, surface.height.saturating_sub(1) as i32) as u16,
-            "04 / L R  WAVEFORM",
+            if gutter_cells < 21 {
+                "04 / L R"
+            } else {
+                "04 / STEREO"
+            },
             bright,
-            None,
+            Some(gutter_cells.saturating_sub(1)),
         );
         surface.print_str(
             1,
@@ -896,7 +1078,18 @@ fn overlay_modal(surface: &mut Surface, label: &str) {
     if surface.width < 12 || surface.height < 3 {
         return;
     }
-    let label_width = label.chars().count().min(u16::MAX as usize) as u16;
+    let heading = label.split("   ").next().unwrap_or(label);
+    let display = if surface.width < 70 {
+        let concise = heading
+            .replace("VCF EDIT / ", "VCF ")
+            .replace("ADSR EDIT / ", "ENV ");
+        format!("Esc / Enter  {concise}  Tab")
+    } else if surface.width < 140 {
+        format!("{heading}   Tab field · Enter OK · Esc")
+    } else {
+        label.to_owned()
+    };
+    let label_width = display.chars().count().min(u16::MAX as usize) as u16;
     let width = surface
         .width
         .saturating_sub(8)
@@ -918,7 +1111,7 @@ fn overlay_modal(surface: &mut Surface, label: &str) {
     surface.print_str(
         x + 2,
         y + 1,
-        label,
+        &display,
         base.bold(),
         Some(width.saturating_sub(4)),
     );
@@ -937,5 +1130,44 @@ pub fn history_fill(engine: &Engine, at_ms: u64, seed: u64, history: &mut Spectr
         let t = at_ms.saturating_sub(age as u64 * interval);
         let frame = engine.render_at_ms(t, seed);
         history.push(&frame.spectrum);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::engine::Waveform;
+
+    #[test]
+    fn patch_edits_change_route_geometry_with_the_audio_frame_held_constant() {
+        let engine = Engine::default();
+        let frame = engine.render_at_ms(120, 2112);
+        let signature = |patch_engine: &Engine| {
+            let mut canvas = BrailleCanvas::new(120, 40);
+            draw_routing(&mut canvas, patch_engine, &frame, 62, 42, 195, true);
+            (0..40)
+                .flat_map(|y| (0..120).map(move |x| (x, y)))
+                .map(|(x, y)| canvas.mask_at(x, y))
+                .collect::<Vec<_>>()
+        };
+        let original = signature(&engine);
+        let mut edited = engine.clone();
+        edited.patch.waveform = Waveform::Sine;
+        assert_ne!(original, signature(&edited), "OSC shape ignores waveform");
+        edited = engine.clone();
+        edited.patch.attack = 0.5;
+        assert_ne!(original, signature(&edited), "ENV shape ignores attack");
+        edited = engine.clone();
+        edited.patch.cutoff_hz = 120.0;
+        assert_ne!(original, signature(&edited), "VCF shape ignores cutoff");
+    }
+
+    #[test]
+    fn visual_transfer_curves_preserve_silence_and_bound_high_energy() {
+        assert_eq!(spectral_display(0.0), 0.0);
+        assert_eq!(amplitude_display(0.0), 0.0);
+        assert!(spectral_display(0.02) < spectral_display(0.2));
+        assert!(amplitude_display(-0.2) < 0.0);
+        assert!(amplitude_display(100.0) < 1.0);
     }
 }

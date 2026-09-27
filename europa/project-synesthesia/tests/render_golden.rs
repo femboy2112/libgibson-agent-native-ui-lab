@@ -33,7 +33,7 @@ fn fixed_state_render_is_byte_stable_and_has_a_golden() {
     assert!(first.windows(10).any(|window| window == b"KEY 000000"));
     assert!(first.windows(7).any(|window| window == b"096 BPM"));
     assert!(first.windows(6).any(|window| window == b"30 FPS"));
-    assert_eq!(fnv1a(&first), 2_697_176_527_491_160_119);
+    assert_eq!(fnv1a(&first), 9_264_295_070_454_141_553);
 }
 
 #[test]
@@ -59,6 +59,59 @@ fn compact_performance_view_keeps_all_track_labels() {
             assert!(frame.contains(label), "{width}-column frame lost {label}");
         }
     }
+}
+
+#[test]
+fn short_view_preserves_tracks_route_output_and_exit() {
+    let output = Command::new(env!("CARGO_BIN_EXE_synesthesia"))
+        .args([
+            "--demo",
+            "--silent",
+            "--at-ms=3750",
+            "--width=60",
+            "--height=20",
+            "--mono",
+            "--glyphs=ascii",
+            "--dump",
+        ])
+        .output()
+        .expect("render 60x20 constrained layout");
+    assert!(output.status.success());
+    let frame = String::from_utf8(output.stdout).expect("valid UTF-8 frame");
+    for label in [
+        "KICK",
+        "SNAR",
+        "HAT",
+        "BASS",
+        "02 / ROUTE",
+        "03 / OUTPUT",
+        "Q quit",
+    ] {
+        assert!(frame.contains(label), "short frame lost {label}");
+    }
+}
+
+#[test]
+fn too_small_view_keeps_an_exit_instruction() {
+    let output = Command::new(env!("CARGO_BIN_EXE_synesthesia"))
+        .args([
+            "--demo",
+            "--silent",
+            "--performance",
+            "--at-ms=3750",
+            "--width=44",
+            "--height=14",
+            "--mono",
+            "--glyphs=ascii",
+            "--dump",
+        ])
+        .output()
+        .expect("render 44x14 resize fallback");
+    assert!(output.status.success());
+    let frame = String::from_utf8(output.stdout).expect("valid UTF-8 frame");
+    assert!(frame.contains("resize for signal field"));
+    assert!(frame.contains("LIVE"));
+    assert!(frame.contains("Q quit"));
 }
 
 #[test]
