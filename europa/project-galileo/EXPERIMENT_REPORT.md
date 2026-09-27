@@ -44,7 +44,7 @@ The following parts of LibGibson v0.2.0 were materially exercised:
 ## What Worked Surprisingly Well
 
 1. **Subcell Raster Performance**:
-   With the current release build and 120×40 demo, measured frame construction/render averaged **0.66 ms** over 3,600 virtual frames on the AMD EPYC host described below. End-to-end interactive throughput, latency, and refresh rate were not measured.
+   With the published release build and 120×40 demo, measured frame construction/render averaged **0.69 ms** over 3,600 virtual frames on the AMD EPYC host described below. End-to-end interactive throughput, latency, and refresh rate were not measured.
 2. **Surface Integration into Semantic UI**:
    The `gibson::ui::surface(Arc<Surface>)` element embeds application-drawn rasters alongside semantic controls. Galileo computes the available stage size from `BuildCx.environment`, then hands the sized buffer to the layout engine.
 3. **Color Degradation Fidelity**:
@@ -82,12 +82,12 @@ The following issues were filed on `femboy2112/libgibson`:
 
 ## Performance & Scale Observations
 
-Measured on Linux x86_64 (AMD EPYC 9V74, Rust 1.98.1 release build) with `--demo --headless --frames=3600 --fps=60 --width=120 --height=40 --profile`:
+Measured from published code commit `9802eb4` (Git tree `a5c664f`) on Linux x86_64 (AMD EPYC 9V74, Rust 1.98.1 release build) with `--demo --headless --frames=3600 --fps=60 --width=120 --height=40 --profile`. Subsequent documentation-only edits do not change this binary:
 
 | Metric | Measured Value | Note |
 |---|---|---|
-| **Headless frame construction/render** | 0.66 ms mean, 0.38 ms min, 2.68 ms max | Excludes profiling/parser work and terminal display |
-| **Total wall time** | 2.73 s for 3,600 frames | Fast headless virtual-time playback, no real-time frame pacing |
+| **Headless frame construction/render** | 0.69 ms mean, 0.38 ms min, 3.25 ms max | Excludes profiling/parser work and terminal display |
+| **Total wall time** | 2.86 s for 3,600 frames | Fast headless virtual-time playback, no real-time frame pacing |
 | **Incremental ANSI output** | 5,686 bytes/frame mean, 19.52 MiB total | TrueColor 120×40 frames; output drained every frame |
 | **Observed max RSS** | 8,448 KiB at 3,600 frames; 8,576 KiB at 18,000 | Unprofiled headless `resource.getrusage(RUSAGE_CHILDREN).ru_maxrss`; two workload samples, not a proved bound |
 | **Integration suite** | 23 tests passing | Five views × required sizes; four color depths; deterministic captures, transitions, coupling, DSN units, styling, incremental profile bytes |

@@ -207,9 +207,9 @@ cargo fmt --check
 
 Observed in this environment (Linux x86_64, AMD EPYC 9V74, Rust 1.98.1 optimized release), with the 3,600-frame headless command above, TrueColor $120\times40$:
 
-- **Mean frame construction/render time:** 0.66 ms, min 0.38 ms, max 2.68 ms. This timer ends before profiler parsing and does not measure display refresh or operator input latency.
+- **Mean frame construction/render time:** 0.69 ms, min 0.38 ms, max 3.25 ms. This timer ends before profiler parsing and does not measure display refresh or operator input latency.
 - **Mean incremental terminal output:** 5,686 bytes/frame; 19.52 MiB over the run. The context buffer is drained after every frame, including when `--profile` is off. `--fps=60` advances the demo clock at 60 virtual frames/s; headless execution does not sleep or establish interactive 60 FPS delivery.
-- **Observed process wall time:** 2.73 s for 3,600 headless frames including profiling; results depend on host load, terminal capability, view sequence, and dimensions. Interactive `--profile` reports render timing only because the fullscreen context sends bytes directly to stdout.
+- **Observed process wall time:** 2.86 s for 3,600 headless frames including profiling; results depend on host load, terminal capability, view sequence, and dimensions. Interactive `--profile` reports render timing only because the fullscreen context sends bytes directly to stdout.
 - **Observed peak resident memory:** 8,448 KiB over 3,600 unprofiled frames and 8,576 KiB over 18,000 on this host, measured with `resource.getrusage(RUSAGE_CHILDREN).ru_maxrss`. These two samples support stable memory in that workload but do not prove a process-wide bound.
 
 ## LibGibson Issues Discovered & Filed
