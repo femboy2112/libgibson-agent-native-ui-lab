@@ -58,3 +58,9 @@ research consumers, not production domain tools. See the
 
 Final local suite: 61 integration tests. Frozen dependency/helper/IR integrity is
 checked with `python3 scripts/verify_freeze.py` locally and in public CI.
+
+## v0.2.0 Europa-shot holdout
+
+Project Galileo:
+  europa/project-galileo/
+
