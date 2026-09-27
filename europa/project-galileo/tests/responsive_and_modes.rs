@@ -617,6 +617,58 @@ fn test_orbital_target_and_encounter_handoff_agree() {
 }
 
 #[test]
+fn test_dsn_light_time_uses_seconds_not_separation_angle() {
+    let mut state = DashboardState::new(false);
+    let (light_time_seconds, sep_angle_degrees, _) = state.sim.earth_communication();
+    let light_time_minutes = light_time_seconds / 60.0;
+    assert!((30.0..60.0).contains(&light_time_minutes));
+    assert!(sep_angle_degrees < 10.0);
+
+    state.active_view = ActiveView::MissionControl;
+    let ops = state.render_visualization_surface(160, 50);
+    let mut ops_text = String::new();
+    for y in 0..ops.height {
+        for x in 0..ops.width {
+            ops_text.push_str(&ops.get(x, y).unwrap().glyph.grapheme);
+        }
+    }
+    assert!(
+        ops_text.contains(&format!("1-WAY LIGHT:  {:>10.1} min", light_time_minutes)),
+        "Ops readout must use one-way light time"
+    );
+
+    state.active_view = ActiveView::System;
+    let env = UiEnvironment {
+        width: 160,
+        height: 50,
+        color_depth: ColorDepth::TrueColor,
+        motion: MotionPreference::None,
+        ..Default::default()
+    };
+    let now = Duration::from_millis(1_000);
+    let mut runtime = UiRuntime::new(state.resolved_skin());
+    let tree = state.view(&runtime.build_cx(env, now));
+    let frame = runtime.frame(&tree, env, now).unwrap();
+    let mut context = Context::headless(RenderMode::Fullscreen, 160, 50);
+    context.set_root(frame.node);
+    context.render_now().unwrap();
+    let mut parser = vt100::Parser::new(50, 160, 0);
+    parser.process(context.rendered_bytes());
+    let header = (0..160)
+        .map(|x| {
+            parser
+                .screen()
+                .cell(0, x)
+                .map_or(" ", |cell| cell.contents())
+        })
+        .collect::<String>();
+    assert!(
+        header.contains(&format!("DSN LT: {:.1}m", light_time_minutes)),
+        "header light time must reflect Earth distance: {header}"
+    );
+}
+
+#[test]
 fn test_demo_transitions_keep_shell_and_instrument_readouts_whole() {
     let demo = DemoScript::new();
     for ms in [4_200, 4_400, 4_650, 8_200, 8_400, 12_200, 12_400] {

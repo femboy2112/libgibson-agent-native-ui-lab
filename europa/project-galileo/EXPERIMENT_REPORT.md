@@ -61,7 +61,7 @@ The following parts of LibGibson v0.2.0 were materially exercised:
 
 ### Generic LibGibson Ergonomic Friction
 - **No Fractional / Percentage Sizing on Semantic Elements**: While substrate `Node` supports `percent_width` and `percent_height` via Taffy, `Element<A>` only accepts absolute `u16` cells or flex `grow(f32)`. Creating proportional columns required manually querying `cx.environment.width` and calculating cell counts. (Filed as Issue #36).
-- **Manual Braille Blitting onto Surface**: `BrailleCanvas` cannot be blitted directly onto a `Surface` with background style preservation via a high-level helper; users must iterate over glyphs manually. (Reported in related lab issue #38).
+- **Manual Braille Blitting onto Surface**: `BrailleCanvas` cannot be blitted directly onto a `Surface` with background style preservation via a high-level helper; users must iterate over glyphs manually. (Included in Galileo's umbrella Issue #43.)
 
 ### Proven LibGibson Defects
 - **`Alt+<char>` Swallowed by `TextInputState`**:
@@ -90,7 +90,7 @@ Measured on Linux x86_64 (AMD EPYC 9V74, Rust 1.98.1 release build) with `--demo
 | **Total wall time** | 2.73 s for 3,600 frames | Fast headless virtual-time playback, no real-time frame pacing |
 | **Incremental ANSI output** | 5,686 bytes/frame mean, 19.52 MiB total | TrueColor 120×40 frames; output drained every frame |
 | **Observed max RSS** | 8,448 KiB at 3,600 frames; 8,576 KiB at 18,000 | Unprofiled headless `resource.getrusage(RUSAGE_CHILDREN).ru_maxrss`; two workload samples, not a proved bound |
-| **Integration suite** | 22 tests passing | Five views × required sizes; four color depths; deterministic captures, transitions, coupling, styling, incremental profile bytes |
+| **Integration suite** | 23 tests passing | Five views × required sizes; four color depths; deterministic captures, transitions, coupling, DSN units, styling, incremental profile bytes |
 
 The demo samples simulated time at 60 frames/s; no interactive 60 FPS claim follows from this measurement. The previous frame-time, byte-volume, simulation-step, RSS, and interactive-VSync numbers were not independently reproducible on this build and are withdrawn. Alert/history collections have explicit size caps, and headless output is drained per frame; a process-wide RSS bound has not been established.
 

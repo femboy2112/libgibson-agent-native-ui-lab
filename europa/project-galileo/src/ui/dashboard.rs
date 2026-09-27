@@ -988,8 +988,8 @@ impl DashboardState {
         );
         row2 += 2;
 
-        let (_, lt_sec, _) = self.sim.earth_communication();
-        let lt_min = lt_sec / 60.0;
+        let (light_time_sec, _, _) = self.sim.earth_communication();
+        let lt_min = light_time_sec / 60.0;
 
         surface.print_str(
             c2_x,
@@ -1228,13 +1228,13 @@ impl DashboardState {
         }
 
         // Clock & Status Badge
-        let (_, lt_sec, _) = self.sim.earth_communication();
+        let (light_time_sec, _, _) = self.sim.earth_communication();
         if width >= 160 {
             let clock_str = format!(
                 "MET: +{:03}d {:02}h | DSN LT: {:.1}m",
                 (self.sim.mission_time_hours.max(0.0) / 24.0) as u32,
                 (self.sim.mission_time_hours.max(0.0) as u32) % 24,
-                lt_sec / 60.0
+                light_time_sec / 60.0
             );
             header_row =
                 header_row.child(label(clock_str).tone(Tone::Info).emphasis(Emphasis::Muted));

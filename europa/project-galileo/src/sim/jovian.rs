@@ -385,7 +385,8 @@ impl JovianModel {
         // Sun-Earth-Probe (SEP) angle in degrees
         let sep_angle = (earth_phase.sin().abs() * 90.0).max(4.2);
 
-        // Blackout if occulted by Jupiter or solar conjunction (SEP < 2.0 deg)
+        // Illustrative Jovian shadow flag; this does not model the separate
+        // Earth-probe line-of-sight occultation or solar-conjunction blackout.
         let sc_pos = self.spacecraft_position_at(self.mission_time_hours).0;
         let occulted = self.is_in_jupiter_shadow(sc_pos);
         (light_time_seconds, sep_angle, occulted)
