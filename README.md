@@ -1,9 +1,10 @@
 # LibGibson agent-native UI lab
 
 External, non-binding pressure tests of LibGibson's experimental public Rust API.
-This is a research consumer, not a new engine, stable instrument schema or
-claim of arbitrary generated UI. The dependency is pinned to a reviewed main
-commit; all semantics are fictional local deterministic fixtures.
+The original root campaign is a research consumer, not a new engine, stable
+instrument schema or claim of arbitrary generated UI. Its dependency is pinned
+to a reviewed pre-v0.2.0 commit; its semantics are fictional local deterministic
+fixtures. The separate Europa applications below consume the released v0.2.0 tag.
 
 Protocol: [experiment gates](docs/EXPERIMENT_PROTOCOL.md),
 [friction ledger](docs/FRICTION_LEDGER.md), [results](docs/RESULTS.md).
@@ -59,16 +60,27 @@ research consumers, not production domain tools. See the
 Final local suite: 61 integration tests. Frozen dependency/helper/IR integrity is
 checked with `python3 scripts/verify_freeze.py` locally and in public CI.
 
-## v0.2.0 Europa-shot holdout
+## LibGibson v0.2.0 Europa-shot campaign
 
-Project Galileo:
-  europa/project-galileo/
+Three independently developed application branches now coexist as standalone
+Cargo packages. Each consumes the **released v0.2.0 tag**, with its lockfile
+resolving LibGibson to the same commit, without a local path dependency or
+LibGibson source changes. Their separate Git histories and
+experiment reports preserve which application produced each observation.
 
-Project Palimpsest:
-  europa/project-palimpsest/
+| Application | Directory | Distinct pressure test |
+|---|---|---|
+| [Project Galileo](europa/project-galileo/README.md) | `europa/project-galileo/` | Jovian procedural visualization, semantic UI, scale transitions and radar graphics |
+| [Project Palimpsest](europa/project-palimpsest/README.md) | `europa/project-palimpsest/` | Large irregular Git histories, provenance, bounded viewports and native scrollback |
+| [Project Synesthesia](europa/project-synesthesia/README.md) | `europa/project-synesthesia/` | Sustained state-driven music graphics, editing, audio separation and input under animation |
 
-[Project Synesthesia](europa/project-synesthesia/) is a separate playable
-terminal music workstation consuming the released LibGibson v0.2.0 tag. Its
-[experiment report](europa/project-synesthesia/EXPERIMENT_REPORT.md) records
-the new measurements and claim limits. The older root experiments and their
-frozen dependency remain historical evidence.
+Read the [cross-Europa report](docs/EUROPA_V0_2_0_REPORT.md) and the individual
+`EXPERIMENT_REPORT.md` files for validation, limitations and upstream LibGibson
+issues. These applications are external research holdouts; the original frozen
+campaign above remains historical evidence against its earlier pinned commit.
+
+Each application builds and tests from its own directory; `cargo test` at the
+repository root checks only the original lab. To check every consumer, run the
+root suite and then `cargo test --locked` separately in each `europa/project-*`
+directory. The original freeze receipt remains checked with
+`python3 scripts/verify_freeze.py`.
