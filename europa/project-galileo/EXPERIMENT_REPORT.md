@@ -2,9 +2,9 @@
 
 ## Goal
 
-The objective of Project Galileo was to test whether the released LibGibson v0.2.0 API could support an absurdly ambitious, pure-terminal scientific instrument: a real-time Jovian mission operations and scientific visualization environment.
+The objective of Project Galileo was to test whether the released LibGibson v0.2.0 API could support a detailed pure-terminal **procedural mission simulator**: a Jovian operations dashboard with authored scientific visualizations. Neither the dynamics nor the synthetic radargram are validated spacecraft or Europa measurements.
 
-The core challenge was the "impossible" multi-scale visual continuum: enabling an operator to seamlessly transition from viewing the entire Jovian system ($\sim 2{,}500{,}000\text{ km}$ across Jupiter and the Galilean moons), into Europa's hyperbolic encounter orbit ($\sim 50{,}000\text{ km}$), down into regional surface cycloid fractures ($\sim 500\text{ km}$), into an ice shell cross-section ($\sim 25\text{ km}$), and finally down to high-resolution subsurface ocean radar tomography ($\sim 5\text{ km}$) — all rendered through native terminal cells without Sixel, Kitty, or external GUI embedding.
+The core challenge was linking authored scenes at approximate Jovian-system ($\sim 2{,}500{,}000\text{ km}$), encounter ($\sim 50{,}000\text{ km}$), surface ($\sim 500\text{ km}$), deep ice ($\sim 25\text{ km}$), and shallow ice ($\sim 5\text{ km}$) extents. A short reveal follows the selected Europa/site into the next scene; labels switch as complete blocks, and compact terminals change the whole scene at midpoint. This is not a continuous spatial coordinate system or one integrated camera. Native terminal cells carry the images without Sixel, Kitty, or GUI embedding.
 
 ## LibGibson Surface Exercised
 
@@ -20,7 +20,7 @@ The following parts of LibGibson v0.2.0 were materially exercised:
   - Dynamic frame timestamp evaluation (`Duration` progression)
 - **`UiRuntime`**:
   - Semantic layout tree framing (`runtime.frame(&tree, env, elapsed)`)
-  - State reconciliation across 60 FPS continuous updates
+  - State reconciliation across configured update frames (30 FPS interactive default; headless accepts `--fps`)
   - Event dispatching and controlled focus (`runtime.handle_event(&event)`)
   - Animation tracking (`runtime.active_animation_count()`, `retained_key_count()`)
 - **Cell Framebuffer & Subcell Rasterization**:
@@ -39,24 +39,25 @@ The following parts of LibGibson v0.2.0 were materially exercised:
 - **Context & Headless Pipeline**:
   - `Context::headless(RenderMode::Fullscreen, width, height)`
   - `context.set_color_depth(ColorDepth)`
-  - Deterministic fixed-time captures (`--at-ms=`) and PTY headless benchmarks
+  - Deterministic fixed-time captures (`--at-ms=`) and headless profiling
 
 ## What Worked Surprisingly Well
 
 1. **Subcell Raster Performance**:
-   LibGibson's `RgbRaster` and `BrailleCanvas` render with exceptional speed. Generating a 3D shaded Jovian sphere, Keplerian orbits, magnetic dipole curves, and a full semantic dashboard takes approximately **1.11 ms per frame** in headless release mode, comfortably exceeding 900 FPS.
+   With the current release build and 120×40 demo, measured frame construction/render averaged **0.66 ms** over 3,600 virtual frames on the AMD EPYC host described below. End-to-end interactive throughput, latency, and refresh rate were not measured.
 2. **Surface Integration into Semantic UI**:
-   The `gibson::ui::surface(Arc<Surface>)` element makes integrating custom rasterizers into a Flexbox-based semantic UI remarkably clean. The layout engine computes dimensions, and the rasterizer fills the exact allotted space.
+   The `gibson::ui::surface(Arc<Surface>)` element embeds application-drawn rasters alongside semantic controls. Galileo computes the available stage size from `BuildCx.environment`, then hands the sized buffer to the layout engine.
 3. **Color Degradation Fidelity**:
    LibGibson's built-in capability pipeline translates TrueColor 24-bit RGB rasters into ANSI-256 and ANSI-16 with automatic palette quantization, while `RgbRaster::to_mono_surface()` allows clean, authored 1-bit monochrome fallback.
 4. **Deterministic Frame Capture**:
-   LibGibson's separation of `UiEnvironment`, explicit timestamps, and `Context::headless` allowed 100% bit-exact reproducible frame captures (`--at-ms=`) and verifiable regression testing.
+   LibGibson's separation of `UiEnvironment`, explicit timestamps, and `Context::headless` allowed bit-exact reproducible captures within the tested host/environment and regression tests across all five views and required terminal dimensions.
 
 ## Friction Encountered
 
 ### Application-Specific Friction
-- **Scale Continuity Tuning**: Harmonizing discrete view boundaries with continuous camera distance required careful threshold hysteresis to prevent camera flickering during zoom transitions.
+- **Scene Continuity**: Adjacent scenes use an anchored aperture at wider sizes and an atomic change on compact screens. Treating inspector text as an indivisible part of the scene prevents partial labels during reveals. Direct view tabs switch immediately.
 - **Terminal Cell Aspect Ratio**: Character cells are typically 1:2 (width:height). Spherical math requires vertical subcell pixel doubling ($pixel\_h = height \times 2$) to render circular discs.
+- **Bounded Headless Capture**: `Context::rendered_bytes()` exposes every byte since the previous drain. Galileo initially re-parsed a growing buffer each frame, causing inflated byte counts and quadratic profiling cost. Calling `take_output()` after every frame corrected this application bug; the library API behaves as documented. Fullscreen contexts stream to stdout, so the interactive profiler reports timing without claiming byte statistics.
 
 ### Generic LibGibson Ergonomic Friction
 - **No Fractional / Percentage Sizing on Semantic Elements**: While substrate `Node` supports `percent_width` and `percent_height` via Taffy, `Element<A>` only accepts absolute `u16` cells or flex `grow(f32)`. Creating proportional columns required manually querying `cx.environment.width` and calculating cell counts. (Filed as Issue #36).
@@ -81,36 +82,38 @@ The following issues were filed on `femboy2112/libgibson`:
 
 ## Performance & Scale Observations
 
-Measured on Linux x86_64 (`AMD Ryzen / Ubuntu 24.04`), release build:
+Measured on Linux x86_64 (AMD EPYC 9V74, Rust 1.98.1 release build) with `--demo --headless --frames=3600 --fps=60 --width=120 --height=40 --profile`:
 
 | Metric | Measured Value | Note |
 |---|---|---|
-| **Headless Frame Time** | $1.11\text{ ms}$ | $>900\text{ FPS}$ sustained throughput |
-| **Interactive Frame Time** | $< 1.5\text{ ms}$ | VSync capped at 60 FPS (90% idle time) |
-| **Rendered ANSI Byte Stream** | $4.2\text{ KB} - 5.1\text{ KB}$ | Full TrueColor $120\times 40$ screen |
-| **Simulation Step Cost** | $< 15\text{ }\mu\text{s}$ | Coupled orbital + telemetry physics |
-| **Resident Set Size (RSS)** | $18.4\text{ MB}$ | Strictly bounded, no history leakage |
-| **Integration Test Suite** | $0.08\text{ s}$ | 13 integration tests in release mode |
+| **Headless frame construction/render** | 0.66 ms mean, 0.38 ms min, 2.68 ms max | Excludes profiling/parser work and terminal display |
+| **Total wall time** | 2.73 s for 3,600 frames | Fast headless virtual-time playback, no real-time frame pacing |
+| **Incremental ANSI output** | 5,686 bytes/frame mean, 19.52 MiB total | TrueColor 120×40 frames; output drained every frame |
+| **Observed max RSS** | 8,448 KiB at 3,600 frames; 8,576 KiB at 18,000 | Unprofiled headless `resource.getrusage(RUSAGE_CHILDREN).ru_maxrss`; two workload samples, not a proved bound |
+| **Integration suite** | 22 tests passing | Five views × required sizes; four color depths; deterministic captures, transitions, coupling, styling, incremental profile bytes |
+
+The demo samples simulated time at 60 frames/s; no interactive 60 FPS claim follows from this measurement. The previous frame-time, byte-volume, simulation-step, RSS, and interactive-VSync numbers were not independently reproducible on this build and are withdrawn. Alert/history collections have explicit size caps, and headless output is drained per frame; a process-wide RSS bound has not been established.
 
 ## Capability & Fallback Observations
 
 - **TrueColor**: Hero visual experience with atmospheric gradient bands on Jupiter, subtle surface coloration on Europa, and radar dielectric return colormaps.
 - **ANSI-256 & ANSI-16**: Correctly quantized by LibGibson's color down-sampler. All structural lines and text remain legible.
-- **Monochrome (`--mono`)**: Fully legible scientific presentation using `RgbRaster::to_mono_surface()`, bold/dim typography, and Braille linework.
+- **Monochrome (`--mono`)**: Authored grayscale surfaces and text readouts remain available; a terminal font with Braille coverage is needed for fine lines (the screenshot host lacks those glyphs).
 - **Responsive Dimensions**:
   - `160x50`: Spacious layout with full 32-column telemetry rails, flight dynamics cards, and expanded logs.
   - `120x40`: Standard layout preserving visualization stage, key metrics, and radar diagnostics.
   - `100x30`: Compact layout collapsing secondary telemetry cards into status bars.
   - `80x24`: Minimum standard terminal preserving primary visualization, condensed scale tag, and command deck.
-  - `60x20`: Ultra-compact emergency mode collapsing header to 1 row and footer to 1 row.
+  - `60x20`: Minimal stage and abbreviated controls; scene transitions are atomic.
 
 ## What This Experiment Demonstrates
 
-1. **Terminal-Native Scientific Visualization is Viable**: The combination of subcell half-blocks and Braille vector lines provides sufficient spatial density to represent 3D planetary systems, orbital mechanics, and geophysical radar cross-sections without external graphic protocols.
-2. **LibGibson v0.2.0 is Capable of Real Host Applications**: The semantic UI layer, when paired with low-level cell buffers, enables professional-grade, multi-view applications with clean code structure and rapid render performance.
+1. **Terminal-Native Procedural Visualization Is Viable**: Half-blocks and Braille lines communicate the relative geometry of rendered bodies, prescribed trajectories, and illustrative radar slices without graphic protocols.
+2. **LibGibson v0.2.0 Can Host a Multi-View Application**: Semantic controls compose with low-level cell buffers, theme and capability fallbacks, focus routing, and fixed-time captures. Its API frictions and the application's local workarounds are recorded above.
 
 ## What Remains Unproven
 
 1. **Arbitrary 3D Mesh Pipelines**: Project Galileo uses analytical ray/sphere projection and procedural equations rather than loading arbitrary 3D OBJ/glTF polygon meshes into `Scene`.
 2. **Native Scrollback Integration**: While the command console maintains an internal circular history buffer, integration with host terminal scrollback buffers (`live_region`) was not evaluated.
 3. **Complex Multi-Windowing**: The application uses a single fullscreen modal deck rather than tiled floating windows or draggable viewports.
+4. **Physical Fidelity**: Prescribed moon orbits, a Keplerian spacecraft ellipse, first-order linear maneuver offsets, approximate encounter sampling, and procedurally generated radar reflectivity do not constitute n-body propagation, calibrated B-plane planning, instrument simulation, or evidence for subsurface water.
