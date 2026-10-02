@@ -1,0 +1,57 @@
+{
+  "schema": "sai.receipt/v1",
+  "git_commit": "fixtures",
+  "created_utc": "2026-10-02T06:10:51Z",
+  "source": {
+    "sha256": "f2ae678ecc7830e61b8de37af983a0f3117ffc826a31c7cc5ee3062fd6b18696",
+    "path_hint": "negative_white_noise.wav",
+    "duration_seconds": 2.0,
+    "sample_rate_hz": 22050,
+    "channels": 1,
+    "decoder": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers; ffprobe-probed wav/pcm_s16le",
+    "canonical_format": "f32le",
+    "canonical_sample_rate_hz": 22050,
+    "canonical_channels": 1,
+    "resampled": false,
+    "channel_conversion": "none",
+    "canonical_pcm_sha256": "6faf7750cbaff7e413c07d87cc5298b50ba11f7c19247eed4c28c152395e893e",
+    "license": "local:negative_white_noise.wav"
+  },
+  "analyzers": [
+    {
+      "id": "sai-baseline-dsp",
+      "version": "0.1.0",
+      "config": {
+        "onset_n_fft": 1024,
+        "onset_hop": 256,
+        "onset_threshold_delta": 0.35,
+        "onset_median_window": 8,
+        "tempo_min_bpm": 55.0,
+        "tempo_max_bpm": 210.0,
+        "tempo_prior_bpm": 120.0,
+        "tempo_prior_octaves": 0.6,
+        "chroma_n_fft": 4096,
+        "chroma_hop": 1024,
+        "chroma_min_hz": 55.0,
+        "chroma_max_hz": 2093.0,
+        "pitch_min_hz": 55.0,
+        "pitch_max_hz": 1200.0,
+        "note_window": 2048,
+        "note_min_confidence": 0.3,
+        "note_max_duration": 1.5,
+        "meter_candidates": [
+          4,
+          3
+        ],
+        "section_kernel_beats": 8,
+        "novelty_sigma": 1.0,
+        "recurrence_floor": 0.85
+      },
+      "wall_seconds": 0.3082869052886963,
+      "weights": null,
+      "cached": false
+    }
+  ],
+  "artifact_sha256": "c3c2b37be8a07be4a4e86c4172fb3e5ba591fcf6066c1ec478fa11285a6c4cb1",
+  "warnings": []
+}

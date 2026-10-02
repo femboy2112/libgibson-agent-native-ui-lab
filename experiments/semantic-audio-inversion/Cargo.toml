@@ -1,0 +1,17 @@
+# Independent consumer experiment: Semantic Audio Inversion.
+#
+# This is its own Cargo workspace root. It is deliberately NOT a member of the
+# repository-root `gibson-ui-lab` package: the root campaign, its pinned
+# pre-v0.2.0 dependency, its helper/IR freeze and its freeze receipts must remain
+# untouched by this experiment.
+#
+# It depends on the reviewed LibGibson v0.4.0 revision only from `sai-harness`.
+[workspace]
+resolver = "2"
+members = ["crates/sai-core", "crates/sai-harness"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false

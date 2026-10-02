@@ -1,0 +1,2026 @@
+{
+  "schema": "sai.evidence/v1",
+  "source": {
+    "sha256": "9e3de29964bfdb3207d3f5df1d043eb8ee9aa029c16cefd19c051c4ccc7b145f",
+    "path_hint": "positive_triad_c_maj.wav",
+    "duration_seconds": 2.0,
+    "sample_rate_hz": 22050,
+    "channels": 1,
+    "decoder": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers; ffprobe-probed wav/pcm_s16le",
+    "canonical_format": "f32le",
+    "canonical_sample_rate_hz": 22050,
+    "canonical_channels": 1,
+    "resampled": false,
+    "channel_conversion": "none",
+    "canonical_pcm_sha256": "5145c53044ade1339e3f27983c56cc5c2dbb41165219fec6e141c569b2ca2fa1",
+    "license": "local:positive_triad_c_maj.wav"
+  },
+  "analyzers": [
+    {
+      "id": "sai-baseline-dsp",
+      "version": "0.1.0",
+      "config": {
+        "onset_n_fft": 1024,
+        "onset_hop": 256,
+        "onset_threshold_delta": 0.35,
+        "onset_median_window": 8,
+        "tempo_min_bpm": 55.0,
+        "tempo_max_bpm": 210.0,
+        "tempo_prior_bpm": 120.0,
+        "tempo_prior_octaves": 0.6,
+        "chroma_n_fft": 4096,
+        "chroma_hop": 1024,
+        "chroma_min_hz": 55.0,
+        "chroma_max_hz": 2093.0,
+        "pitch_min_hz": 55.0,
+        "pitch_max_hz": 1200.0,
+        "note_window": 2048,
+        "note_min_confidence": 0.3,
+        "note_max_duration": 1.5,
+        "meter_candidates": [
+          4,
+          3
+        ],
+        "section_kernel_beats": 8,
+        "novelty_sigma": 1.0,
+        "recurrence_floor": 0.85
+      },
+      "wall_seconds": 0.2945122718811035,
+      "weights": null,
+      "cached": false
+    }
+  ],
+  "timing": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "derived-musical-event",
+      "method": "acf-tempo+dp-beat/v1",
+      "derived_from": [
+        "pcm",
+        "onsets"
+      ]
+    },
+    "tempo_bpm": 111.77650103725902,
+    "tempo_map": [
+      {
+        "at_second": 0.0,
+        "bpm": 111.77650103725902,
+        "confidence": 0.05257963935411977
+      }
+    ],
+    "beats": [
+      {
+        "second": 0.08126984126984127,
+        "confidence": 0.8,
+        "is_downbeat": true
+      },
+      {
+        "second": 0.615328798185941,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 1.1493877551020408,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 1.6950566893424037,
+        "confidence": 0.8,
+        "is_downbeat": false
+      }
+    ],
+    "downbeats": [
+      0.08126984126984127
+    ],
+    "meter_hypotheses": [
+      {
+        "beats_per_bar": 4,
+        "phase_beats": 0.0,
+        "support": 0.4290928998998021
+      },
+      {
+        "beats_per_bar": 3,
+        "phase_beats": 1.0,
+        "support": 0.3782678266138555
+      }
+    ],
+    "ambiguity": [
+      "tempo rivals: autocorrelation 111.8 bpm vs IOI-histogram 152.5 bpm",
+      "beat-phase rivals: periodic transport vs DP tracker differ by 0.24 beat (median)"
+    ]
+  },
+  "notes": [
+    {
+      "onset_second": 0.058049886621315196,
+      "offset_second": 0.1080498866213152,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083572829714269,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.058049886621315196,
+      "offset_second": 0.1080498866213152,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7031352903227803,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.058049886621315196,
+      "offset_second": 0.1080498866213152,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6969149312174259,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.11609977324263039,
+      "offset_second": 0.1889795918367347,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083520991687687,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.11609977324263039,
+      "offset_second": 0.1889795918367347,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030159776400147,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.11609977324263039,
+      "offset_second": 0.1889795918367347,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6966726713790172,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.2089795918367347,
+      "offset_second": 0.2589795918367347,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083520368958434,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.2089795918367347,
+      "offset_second": 0.2589795918367347,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030481276565798,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.2089795918367347,
+      "offset_second": 0.2589795918367347,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6967366787904395,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.25541950113378686,
+      "offset_second": 0.3747392290249433,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083526809958702,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.25541950113378686,
+      "offset_second": 0.3747392290249433,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030706276152165,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.25541950113378686,
+      "offset_second": 0.3747392290249433,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.696782596865338,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.3947392290249433,
+      "offset_second": 0.47922902494331066,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083577803080681,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.3947392290249433,
+      "offset_second": 0.47922902494331066,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7031500473368021,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.3947392290249433,
+      "offset_second": 0.47922902494331066,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6969452418700635,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.4992290249433107,
+      "offset_second": 0.5492290249433107,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083517994902898,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.4992290249433107,
+      "offset_second": 0.5492290249433107,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030393442910106,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.4992290249433107,
+      "offset_second": 0.5492290249433107,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6967194522259096,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.5456689342403628,
+      "offset_second": 0.8623582766439909,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083529154716194,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.5456689342403628,
+      "offset_second": 0.8623582766439909,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.703062462618978,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.5456689342403628,
+      "offset_second": 0.8623582766439909,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6967628393715782,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.8823582766439909,
+      "offset_second": 1.0016780045351474,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.708352929002533,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.8823582766439909,
+      "offset_second": 1.0016780045351474,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030749827616385,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.8823582766439909,
+      "offset_second": 1.0016780045351474,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6967895632064307,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.0216780045351475,
+      "offset_second": 1.3964172335600906,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083581267533909,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.0216780045351475,
+      "offset_second": 1.3964172335600906,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7031533167890187,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.0216780045351475,
+      "offset_second": 1.3964172335600906,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6969543946390826,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.4164172335600906,
+      "offset_second": 1.489297052154195,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083514600832053,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.4164172335600906,
+      "offset_second": 1.489297052154195,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030354615611731,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.4164172335600906,
+      "offset_second": 1.489297052154195,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6967098012929978,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.509297052154195,
+      "offset_second": 1.5592970521541951,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083546506512577,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.509297052154195,
+      "offset_second": 1.5592970521541951,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030790865262811,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.509297052154195,
+      "offset_second": 1.5592970521541951,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.696798649836686,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.5673469387755101,
+      "offset_second": 1.6173469387755102,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083526797084508,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.5673469387755101,
+      "offset_second": 1.6173469387755102,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030035183371834,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.5673469387755101,
+      "offset_second": 1.6173469387755102,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6966402007169543,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.6253968253968254,
+      "offset_second": 1.6866666666666668,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083522696100849,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.6253968253968254,
+      "offset_second": 1.6866666666666668,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030250933796911,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.6253968253968254,
+      "offset_second": 1.6866666666666668,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6966880552620544,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.7066666666666668,
+      "offset_second": 1.779546485260771,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.7083513932676848,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.7066666666666668,
+      "offset_second": 1.779546485260771,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030272063885241,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.7066666666666668,
+      "offset_second": 1.779546485260771,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6966951699122496,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.799546485260771,
+      "offset_second": 1.9420861678004535,
+      "pitch_midi": 59.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.708354334194558,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.799546485260771,
+      "offset_second": 1.9420861678004535,
+      "pitch_midi": 63.648263008993254,
+      "role_candidates": [],
+      "confidence": 0.7030682957772569,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.799546485260771,
+      "offset_second": 1.9420861678004535,
+      "pitch_midi": 66.80467587899878,
+      "role_candidates": [],
+      "confidence": 0.6967777195142439,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.9620861678004535,
+      "offset_second": 2.0,
+      "pitch_midi": 67.15995342402266,
+      "role_candidates": [],
+      "confidence": 0.7087499568478202,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.9620861678004535,
+      "offset_second": 2.0,
+      "pitch_midi": 60.14040341536878,
+      "role_candidates": [],
+      "confidence": 0.7072347762400377,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    }
+  ],
+  "tonal": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "acoustic-observation",
+      "method": "stft-chroma/v1",
+      "derived_from": [
+        "pcm"
+      ]
+    },
+    "chroma_frames": [
+      {
+        "center_second": 0.09287981859410431,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3066243367697733,
+          0.005574618749099786,
+          0.0011663013412854864,
+          0.0126575629641573,
+          0.3188776680417447,
+          0.0018784796228253295,
+          0.0011068922300749816,
+          0.32275788411005124,
+          0.0035866954285665347,
+          0.0007142000698898673,
+          0.0010127094688402293,
+          0.024042651203691198
+        ]
+      },
+      {
+        "center_second": 0.13931972789115646,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3067756983528687,
+          0.005540370274806037,
+          0.0012148994874245404,
+          0.012684261972648337,
+          0.319072423108818,
+          0.0018971399913359588,
+          0.0012069576451911284,
+          0.3228977232074354,
+          0.003381409826834449,
+          0.000525972152023424,
+          0.0008723441606334491,
+          0.023930799819980544
+        ]
+      },
+      {
+        "center_second": 0.18575963718820862,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3067161925763758,
+          0.0055571504784577355,
+          0.0013251473360764109,
+          0.01271247003345881,
+          0.3190045028298033,
+          0.0019106677564286955,
+          0.0012749209797733433,
+          0.322831600675574,
+          0.0033669843641041157,
+          0.0005159490623508673,
+          0.000867546205593664,
+          0.023916867702003325
+        ]
+      },
+      {
+        "center_second": 0.23219954648526078,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3066535417018818,
+          0.005576281899570596,
+          0.0014377889643161774,
+          0.012745640763854758,
+          0.3189286838208798,
+          0.0019261641218738792,
+          0.001343515526528118,
+          0.3227634682224769,
+          0.003352635881200826,
+          0.000508035988223321,
+          0.0008609185236807398,
+          0.02390332458551298
+        ]
+      },
+      {
+        "center_second": 0.2786394557823129,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30659646839316534,
+          0.005595037541043781,
+          0.0015472004282144345,
+          0.012780443493963106,
+          0.31885903609159433,
+          0.0019418661091133431,
+          0.0014056272008791024,
+          0.32269899309640476,
+          0.0033373620909504095,
+          0.0004975681581286843,
+          0.000853257092231286,
+          0.02388714030431145
+        ]
+      },
+      {
+        "center_second": 0.3250793650793651,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.306539354115717,
+          0.005615645766289386,
+          0.0016505363837980567,
+          0.012816876049924762,
+          0.31879072874160846,
+          0.0019580670328911273,
+          0.0014627935775669634,
+          0.3226365955566981,
+          0.003323051894192287,
+          0.00048674079533114116,
+          0.0008471897037126484,
+          0.023872420382270165
+        ]
+      },
+      {
+        "center_second": 0.37151927437641724,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30648686575028394,
+          0.005634370112252151,
+          0.0017433106760403783,
+          0.012851984485581596,
+          0.3187275286035487,
+          0.001971741898297767,
+          0.0015120901282257477,
+          0.3225792539949085,
+          0.0033130433905257483,
+          0.00047893526191948983,
+          0.0008430458982849152,
+          0.023857829800130983
+        ]
+      },
+      {
+        "center_second": 0.4179591836734694,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30644205601969104,
+          0.005650966414705692,
+          0.0018215400099446679,
+          0.012884712366719505,
+          0.31867318264299666,
+          0.0019842747238297304,
+          0.0015512228210229242,
+          0.32252867104955507,
+          0.00330531930597526,
+          0.0004731224270765027,
+          0.000837353602302367,
+          0.02384757861618052
+        ]
+      },
+      {
+        "center_second": 0.46439909297052157,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3064024675774669,
+          0.005665687119624382,
+          0.0018863331419312318,
+          0.01291402041559046,
+          0.3186250548699898,
+          0.0019958631001264766,
+          0.0015815902874742691,
+          0.322484685537651,
+          0.003300875093585322,
+          0.00046957391361200906,
+          0.0008344581325949756,
+          0.023839390810353106
+        ]
+      },
+      {
+        "center_second": 0.5108390022675737,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063708831580705,
+          0.005677303874812416,
+          0.0019370673914840973,
+          0.01293622050822558,
+          0.3185846958601464,
+          0.0020042851427530877,
+          0.0016044410494595676,
+          0.32245037523800674,
+          0.0032989575049771217,
+          0.0004678730753836011,
+          0.000835004982033873,
+          0.023832892214647065
+        ]
+      },
+      {
+        "center_second": 0.5572789115646258,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063489515358142,
+          0.005686161928079463,
+          0.0019698739846188413,
+          0.012951507572320163,
+          0.3185597433063324,
+          0.002009990689765701,
+          0.0016193570040090395,
+          0.32242551773057937,
+          0.0032993655383309548,
+          0.00046736429584569365,
+          0.0008334057436497076,
+          0.023828760670654398
+        ]
+      },
+      {
+        "center_second": 0.603718820861678,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30634025105402457,
+          0.0056896770141858545,
+          0.0019851375911702474,
+          0.012958501826047287,
+          0.31854989776024256,
+          0.002011270084256175,
+          0.00162645821486835,
+          0.32241623012279347,
+          0.0032971430986442015,
+          0.00046629415422673264,
+          0.0008322296811948801,
+          0.02382690939834582
+        ]
+      },
+      {
+        "center_second": 0.6501587301587302,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.306340535390462,
+          0.005688953512663771,
+          0.0019843615798024964,
+          0.012957699171863379,
+          0.3185510405113939,
+          0.002011899211129895,
+          0.0016253404005386067,
+          0.32241596348305446,
+          0.003296536006656785,
+          0.00046730559191971615,
+          0.00083235635271989,
+          0.023828008787795313
+        ]
+      },
+      {
+        "center_second": 0.6965986394557823,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30635166914312506,
+          0.005685612781879383,
+          0.001964185003297039,
+          0.012948214176293162,
+          0.31856543772218365,
+          0.0020090912429340966,
+          0.0016173164114310287,
+          0.3224295031870692,
+          0.003298084950631838,
+          0.0004682317863337439,
+          0.0008332673077366437,
+          0.02382938628708507
+        ]
+      },
+      {
+        "center_second": 0.7430385487528345,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063742830451118,
+          0.00567569696611614,
+          0.0019269499009589592,
+          0.012931327053017713,
+          0.31859448826822995,
+          0.0020028173056241007,
+          0.001602101728144991,
+          0.32245554324694836,
+          0.003298752115069301,
+          0.0004698384643280576,
+          0.0008354929614455916,
+          0.023832708945005148
+        ]
+      },
+      {
+        "center_second": 0.7894784580498866,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30640941986327613,
+          0.005662818048014733,
+          0.0018738998334703115,
+          0.012907381714901444,
+          0.3186355965254314,
+          0.0019944387649562458,
+          0.001576875123405014,
+          0.32249316339139583,
+          0.0033007587290346772,
+          0.0004704882383188187,
+          0.0008355183900650031,
+          0.02383964137773049
+        ]
+      },
+      {
+        "center_second": 0.8359183673469388,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30644927964270535,
+          0.005646313252287345,
+          0.0018057117291509805,
+          0.01287847304392972,
+          0.31868519240283355,
+          0.0019820966163146022,
+          0.0015439033729876654,
+          0.3225398904678364,
+          0.0033073294607363778,
+          0.00047444255377486634,
+          0.0008387766177826183,
+          0.023848590839660448
+        ]
+      },
+      {
+        "center_second": 0.8823582766439909,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3064972924576927,
+          0.00562900552902823,
+          0.0017227652255504293,
+          0.012845632516490318,
+          0.31874221198155717,
+          0.0019680738836572336,
+          0.0015018918903335337,
+          0.32259422148919625,
+          0.003316531424463083,
+          0.00048067306363188913,
+          0.000841587197679254,
+          0.02386011334072001
+        ]
+      },
+      {
+        "center_second": 0.9287981859410431,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30655306463983517,
+          0.005610450532535898,
+          0.0016270437671738003,
+          0.012809655957360413,
+          0.31880670961776725,
+          0.0019536347562285976,
+          0.0014505372440519048,
+          0.3226518169544166,
+          0.0033268644047954746,
+          0.0004884723588171522,
+          0.0008469892176804761,
+          0.023874760549337078
+        ]
+      },
+      {
+        "center_second": 0.9752380952380952,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30660989059937077,
+          0.0055899285791189395,
+          0.0015229960044799286,
+          0.012772778170646993,
+          0.318875944048397,
+          0.0019381108891731093,
+          0.0013913585063931152,
+          0.3227155333300419,
+          0.003339666660762156,
+          0.0004977887853221419,
+          0.0008554638112759457,
+          0.02389054061501805
+        ]
+      },
+      {
+        "center_second": 1.0216780045351475,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30666773092456096,
+          0.005571509559210118,
+          0.0014127873965572354,
+          0.012738039370435692,
+          0.31894648803469244,
+          0.0019220557525470017,
+          0.0013270292329681506,
+          0.3227790176732699,
+          0.003355731694434972,
+          0.0005086203886243609,
+          0.0008638779720483039,
+          0.023907112000650956
+        ]
+      },
+      {
+        "center_second": 1.0681179138321995,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3067296209897434,
+          0.005553469375616882,
+          0.0012998438761568914,
+          0.012705705666231526,
+          0.3190190202311214,
+          0.0019067948451993045,
+          0.001258843171894838,
+          0.32284764799205107,
+          0.003370583154103233,
+          0.0005185870791851447,
+          0.0008687199459804063,
+          0.023921163672716052
+        ]
+      },
+      {
+        "center_second": 1.1145578231292517,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3067878590018641,
+          0.005536772189242684,
+          0.0011915099659632379,
+          0.012679361063454842,
+          0.3190838757779814,
+          0.0018936516142055485,
+          0.0011922635600843008,
+          0.3229099430451982,
+          0.0033858520701809214,
+          0.0005267580989130397,
+          0.0008765539037394184,
+          0.023935599709172348
+        ]
+      },
+      {
+        "center_second": 1.1609977324263039,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3068375962689612,
+          0.005525819266802326,
+          0.00109630122976762,
+          0.012661026222566417,
+          0.31913995806045364,
+          0.0018837985554389512,
+          0.0011334345566119458,
+          0.32296183026374325,
+          0.0033974785667236526,
+          0.0005354004440690424,
+          0.0008799919335732355,
+          0.023947364631288767
+        ]
+      },
+      {
+        "center_second": 1.207437641723356,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3068776460216961,
+          0.005519885371054795,
+          0.001018909744425742,
+          0.012650716026833075,
+          0.31918401767500504,
+          0.0018784278466838238,
+          0.0010915383101542586,
+          0.3230044061934691,
+          0.003403242209849962,
+          0.0005390489385134325,
+          0.0008795050261996023,
+          0.023952656636114917
+        ]
+      },
+      {
+        "center_second": 1.253877551020408,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3068880514330149,
+          0.0055178561537666945,
+          0.000992520147893003,
+          0.012648709945638343,
+          0.3191964813137318,
+          0.0018781178341819719,
+          0.0010808342122169425,
+          0.3230171394412451,
+          0.003403696414148751,
+          0.0005409647138159732,
+          0.0008808720717655964,
+          0.023954756318580912
+        ]
+      },
+      {
+        "center_second": 1.3003174603174603,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30685459848354985,
+          0.005522735282163349,
+          0.0010576845884701965,
+          0.012656206101509358,
+          0.31916007078346637,
+          0.0018829098464104971,
+          0.0011107422821263204,
+          0.3229821315424905,
+          0.0033998349515378867,
+          0.0005410061408932554,
+          0.0008814422480018779,
+          0.023950637749380495
+        ]
+      },
+      {
+        "center_second": 1.3467573696145125,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3068102722482196,
+          0.005531560389935797,
+          0.0011448369482281414,
+          0.012670384417700348,
+          0.3191114539614691,
+          0.001889065097214536,
+          0.0011631860256857431,
+          0.32293589691650626,
+          0.003390084647164219,
+          0.0005337147489447961,
+          0.0008790610614670405,
+          0.02394048353746419
+        ]
+      },
+      {
+        "center_second": 1.3931972789115645,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30675713385417,
+          0.005545592275545014,
+          0.0012485814134989674,
+          0.012692823944778492,
+          0.31905148614475454,
+          0.001899243654475912,
+          0.0012280141027812036,
+          0.3228770417339354,
+          0.0033776088481966763,
+          0.0005221015478371643,
+          0.0008724105141179648,
+          0.023927961965908642
+        ]
+      },
+      {
+        "center_second": 1.4396371882086167,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30669412812444397,
+          0.005563330084448375,
+          0.0013610491543762716,
+          0.01272215819927806,
+          0.3189808929185423,
+          0.0019139727794093716,
+          0.0012960522549339386,
+          0.32281116409251126,
+          0.0033626395304642643,
+          0.0005139468084839942,
+          0.0008668492344645735,
+          0.02391381681864359
+        ]
+      },
+      {
+        "center_second": 1.486077097505669,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30663507908467685,
+          0.005581750779298683,
+          0.0014733357414811155,
+          0.012755267476838143,
+          0.31890761985947985,
+          0.00193093986774339,
+          0.0013626688646594888,
+          0.3227452446259785,
+          0.0033481264082246324,
+          0.0005033093898177531,
+          0.000859384447636896,
+          0.023897273454164435
+        ]
+      },
+      {
+        "center_second": 1.5325170068027212,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30657950818392976,
+          0.005601325924537413,
+          0.0015806394048553667,
+          0.012792126013843361,
+          0.3188395936550688,
+          0.0019467152384556592,
+          0.001423151449231468,
+          0.3226817016270901,
+          0.0033319858133864736,
+          0.0004920605838531797,
+          0.0008497564895313097,
+          0.023881435616217143
+        ]
+      },
+      {
+        "center_second": 1.5789569160997732,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3065209112945785,
+          0.005621907639631326,
+          0.0016796395849049176,
+          0.012828963014339572,
+          0.31877092302844595,
+          0.0019622386119134585,
+          0.001477301355007025,
+          0.32261980468007523,
+          0.0033228028907134025,
+          0.00048436381786475864,
+          0.0008441241390280789,
+          0.023867019943497842
+        ]
+      },
+      {
+        "center_second": 1.6253968253968254,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.30647105841952665,
+          0.005638767565164606,
+          0.0017693840759018915,
+          0.012864691880258988,
+          0.31870976431982356,
+          0.0019761638549756037,
+          0.0015249062930650168,
+          0.3225625135715902,
+          0.0033122102960408805,
+          0.00047771322064993067,
+          0.0008401529113938902,
+          0.023852673591608774
+        ]
+      },
+      {
+        "center_second": 1.6718367346938776,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3064279938516452,
+          0.005655734130304977,
+          0.001844196909203546,
+          0.012895876222217844,
+          0.31865756902268566,
+          0.001987918602657837,
+          0.001562467764952387,
+          0.32251462168071204,
+          0.0033044586450385006,
+          0.0004716985020959568,
+          0.0008353117699725059,
+          0.02384215289851341
+        ]
+      },
+      {
+        "center_second": 1.7182766439909296,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063910450560842,
+          0.005669724161792736,
+          0.0019052390716091322,
+          0.01292156721657676,
+          0.3186115532812797,
+          0.0019991006961513204,
+          0.0015912156755040223,
+          0.3224722150196589,
+          0.0033000610275590835,
+          0.0004693237785217314,
+          0.000833446345937503,
+          0.023835508669324698
+        ]
+      },
+      {
+        "center_second": 1.7647165532879818,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063617833942481,
+          0.005681279052092038,
+          0.0019488401381391783,
+          0.012940978075842912,
+          0.3185763779048154,
+          0.0020058925290145943,
+          0.0016115388871195116,
+          0.32244090212134097,
+          0.0032980068377744753,
+          0.0004700305500838504,
+          0.0008334438906226642,
+          0.02383092661890631
+        ]
+      },
+      {
+        "center_second": 1.811156462585034,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063442354647605,
+          0.005688243371740924,
+          0.0019773205073261766,
+          0.012953876534967917,
+          0.31855504400627915,
+          0.002010228927566395,
+          0.0016233871021890812,
+          0.32242153435555726,
+          0.0032972762759108866,
+          0.00046758428026824167,
+          0.0008329626991380859,
+          0.02382830647429554
+        ]
+      },
+      {
+        "center_second": 1.8575963718820863,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3063378086223039,
+          0.005690517939877687,
+          0.0019879286198975802,
+          0.012959684340700604,
+          0.318547563259064,
+          0.0020130047468346225,
+          0.0016272080068711616,
+          0.32241508290278165,
+          0.003296241088180336,
+          0.0004659254017561192,
+          0.0008324716628365423,
+          0.02382656340889579
+        ]
+      },
+      {
+        "center_second": 1.9040362811791383,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.3061637871158214,
+          0.005754058529026866,
+          0.0020582640416055517,
+          0.012969414664100338,
+          0.3183531986049843,
+          0.002095048281726025,
+          0.0017036203321853384,
+          0.3221973206459153,
+          0.003407793527902499,
+          0.0005751915802033343,
+          0.0008946382347174605,
+          0.023827664441811554
+        ]
+      }
+    ],
+    "key_candidates": [
+      {
+        "tonic_pc": 0,
+        "mode": "major",
+        "confidence": 0.9107520603575967
+      },
+      {
+        "tonic_pc": 4,
+        "mode": "minor",
+        "confidence": 0.8921254855635632
+      }
+    ],
+    "chord_candidates": []
+  },
+  "onsets": [
+    {
+      "second": 0.058049886621315196,
+      "strength": 0.41166089513116233,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.11609977324263039,
+      "strength": 0.4363173632032834,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.2089795918367347,
+      "strength": 0.41359051673860836,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.25541950113378686,
+      "strength": 0.4121505017415143,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.3947392290249433,
+      "strength": 0.4221548839118157,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.4992290249433107,
+      "strength": 0.4288918680487582,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.5456689342403628,
+      "strength": 0.41911099383711287,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.8823582766439909,
+      "strength": 0.4125266012624568,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.0216780045351475,
+      "strength": 0.4232801143390216,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.4164172335600906,
+      "strength": 0.4174217294613087,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.509297052154195,
+      "strength": 0.4152768425982315,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.5673469387755101,
+      "strength": 0.4236848458056414,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.6253968253968254,
+      "strength": 0.42373137705185177,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.7066666666666668,
+      "strength": 0.43005410765783036,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.799546485260771,
+      "strength": 0.4495022507226696,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.9620861678004535,
+      "strength": 1.0,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    }
+  ],
+  "recurrence": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "derived-structural-interpretation",
+      "method": "section-chroma-recurrence/v1",
+      "derived_from": [
+        "chroma",
+        "beats"
+      ]
+    },
+    "links": [],
+    "summary": "1 candidate sections, 0 section-recurrence links above 0.85"
+  },
+  "sections": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "derived-structural-interpretation",
+      "method": "novelty-sections/v1",
+      "derived_from": [
+        "chroma",
+        "beats"
+      ]
+    },
+    "boundaries": [
+      0.08126984126984127,
+      2.0
+    ],
+    "sections": [
+      {
+        "start_second": 0.08126984126984127,
+        "end_second": 2.0,
+        "label_candidate": null
+      }
+    ]
+  },
+  "refusals": [],
+  "unknowns": [
+    "onset routes disagree on >40% of peaks; onset set is route-A only and is ambiguous",
+    "key top-2 hypotheses retained; no majority vote taken",
+    "form: no section boundary crossed the novelty floor"
+  ]
+}

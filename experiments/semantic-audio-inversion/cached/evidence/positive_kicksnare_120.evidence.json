@@ -1,0 +1,4462 @@
+{
+  "schema": "sai.evidence/v1",
+  "source": {
+    "sha256": "330ce75ceb7ebed89f36fe978aebdc76bbd2f3ba41dc169a29cc6edb062ac1f2",
+    "path_hint": "positive_kicksnare_120.wav",
+    "duration_seconds": 8.0,
+    "sample_rate_hz": 22050,
+    "channels": 1,
+    "decoder": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers; ffprobe-probed wav/pcm_s16le",
+    "canonical_format": "f32le",
+    "canonical_sample_rate_hz": 22050,
+    "canonical_channels": 1,
+    "resampled": false,
+    "channel_conversion": "none",
+    "canonical_pcm_sha256": "459f51866a4a4fc8bf8b9a75267dc21f050d25d67009495daa3d3595551f37a6",
+    "license": "local:positive_kicksnare_120.wav"
+  },
+  "analyzers": [
+    {
+      "id": "sai-baseline-dsp",
+      "version": "0.1.0",
+      "config": {
+        "onset_n_fft": 1024,
+        "onset_hop": 256,
+        "onset_threshold_delta": 0.35,
+        "onset_median_window": 8,
+        "tempo_min_bpm": 55.0,
+        "tempo_max_bpm": 210.0,
+        "tempo_prior_bpm": 120.0,
+        "tempo_prior_octaves": 0.6,
+        "chroma_n_fft": 4096,
+        "chroma_hop": 1024,
+        "chroma_min_hz": 55.0,
+        "chroma_max_hz": 2093.0,
+        "pitch_min_hz": 55.0,
+        "pitch_max_hz": 1200.0,
+        "note_window": 2048,
+        "note_min_confidence": 0.3,
+        "note_max_duration": 1.5,
+        "meter_candidates": [
+          4,
+          3
+        ],
+        "section_kernel_beats": 8,
+        "novelty_sigma": 1.0,
+        "recurrence_floor": 0.85
+      },
+      "wall_seconds": 0.3778502941131592,
+      "weights": null,
+      "cached": false
+    }
+  ],
+  "timing": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "derived-musical-event",
+      "method": "acf-tempo+dp-beat/v1",
+      "derived_from": [
+        "pcm",
+        "onsets"
+      ]
+    },
+    "tempo_bpm": 120.04968883380003,
+    "tempo_map": [
+      {
+        "at_second": 0.0,
+        "bpm": 120.04968883380003,
+        "confidence": 0.8300737425971596
+      }
+    ],
+    "beats": [
+      {
+        "second": 0.10448979591836735,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 0.603718820861678,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 1.1029478458049886,
+        "confidence": 0.8,
+        "is_downbeat": true
+      },
+      {
+        "second": 1.6021768707482993,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 2.10140589569161,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 2.6006349206349206,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 3.0998639455782313,
+        "confidence": 0.8,
+        "is_downbeat": true
+      },
+      {
+        "second": 3.599092970521542,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 4.098321995464852,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 4.597551020408163,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 5.0967800453514736,
+        "confidence": 0.8,
+        "is_downbeat": true
+      },
+      {
+        "second": 5.607619047619048,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 6.106848072562358,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 6.606077097505669,
+        "confidence": 0.8,
+        "is_downbeat": false
+      },
+      {
+        "second": 7.1053061224489795,
+        "confidence": 0.8,
+        "is_downbeat": true
+      },
+      {
+        "second": 7.604535147392291,
+        "confidence": 0.8,
+        "is_downbeat": false
+      }
+    ],
+    "downbeats": [
+      1.1029478458049886,
+      3.0998639455782313,
+      5.0967800453514736,
+      7.1053061224489795
+    ],
+    "meter_hypotheses": [
+      {
+        "beats_per_bar": 4,
+        "phase_beats": 2.0,
+        "support": 0.00034329726939163894
+      },
+      {
+        "beats_per_bar": 3,
+        "phase_beats": 0.0,
+        "support": 0.00031033676397732496
+      }
+    ],
+    "ambiguity": [
+      "beat-phase rivals: periodic transport vs DP tracker differ by 0.21 beat (median)"
+    ]
+  },
+  "notes": [
+    {
+      "onset_second": 0.08126984126984127,
+      "offset_second": 0.47922902494331066,
+      "pitch_midi": 38.45383492638228,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.4992290249433107,
+      "offset_second": 0.9784580498866213,
+      "pitch_midi": 85.00358218788965,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.4992290249433107,
+      "offset_second": 0.9784580498866213,
+      "pitch_midi": 94.95397392109953,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.4992290249433107,
+      "offset_second": 0.9784580498866213,
+      "pitch_midi": 91.62643273359197,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 0.9984580498866213,
+      "offset_second": 1.0597278911564625,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.8999997809985055,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.0797278911564625,
+      "offset_second": 1.477687074829932,
+      "pitch_midi": 38.45383492638228,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.497687074829932,
+      "offset_second": 1.9769160997732427,
+      "pitch_midi": 78.56254129574721,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.497687074829932,
+      "offset_second": 1.9769160997732427,
+      "pitch_midi": 87.93442391244567,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.497687074829932,
+      "offset_second": 1.9769160997732427,
+      "pitch_midi": 64.21593158633353,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 1.9969160997732427,
+      "offset_second": 2.058185941043084,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.8999999914907473,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 2.078185941043084,
+      "offset_second": 2.4761451247165533,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 2.4961451247165534,
+      "offset_second": 2.975374149659864,
+      "pitch_midi": 49.17085247938414,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 2.4961451247165534,
+      "offset_second": 2.975374149659864,
+      "pitch_midi": 94.95397392109953,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 2.4961451247165534,
+      "offset_second": 2.975374149659864,
+      "pitch_midi": 76.21593158633353,
+      "role_candidates": [],
+      "confidence": 0.8980737711172603,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 2.995374149659864,
+      "offset_second": 3.056643990929705,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.8999999994656331,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 3.076643990929705,
+      "offset_second": 3.4746031746031747,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.9844323234932008,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 3.4946031746031747,
+      "offset_second": 3.9738321995464854,
+      "pitch_midi": 53.8151299566951,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 3.4946031746031747,
+      "offset_second": 3.9738321995464854,
+      "pitch_midi": 88.35498727763607,
+      "role_candidates": [],
+      "confidence": 0.8590054053711546,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 3.4946031746031747,
+      "offset_second": 3.9738321995464854,
+      "pitch_midi": 83.42064208182268,
+      "role_candidates": [],
+      "confidence": 0.8426375513403233,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 3.9938321995464854,
+      "offset_second": 4.055102040816327,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.8999999999436678,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 4.0751020408163265,
+      "offset_second": 4.473061224489796,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.9526286917196624,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 4.493061224489796,
+      "offset_second": 4.972290249433107,
+      "pitch_midi": 44.628713000339374,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 4.493061224489796,
+      "offset_second": 4.972290249433107,
+      "pitch_midi": 65.8151299566951,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 4.493061224489796,
+      "offset_second": 4.972290249433107,
+      "pitch_midi": 38.45383492638228,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 4.992290249433107,
+      "offset_second": 5.053560090702948,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.8999999999912196,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 5.073560090702948,
+      "offset_second": 5.471519274376417,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.9285193346035853,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 5.491519274376417,
+      "offset_second": 5.9707482993197285,
+      "pitch_midi": 85.50062131644941,
+      "role_candidates": [],
+      "confidence": 0.9881471635694564,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 5.491519274376417,
+      "offset_second": 5.9707482993197285,
+      "pitch_midi": 74.45383492638229,
+      "role_candidates": [],
+      "confidence": 0.9182074160255218,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 5.491519274376417,
+      "offset_second": 5.9707482993197285,
+      "pitch_midi": 83.42064208182268,
+      "role_candidates": [],
+      "confidence": 0.8194405185760311,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 5.990748299319728,
+      "offset_second": 6.063628117913833,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.8999999999982043,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 6.0836281179138325,
+      "offset_second": 6.469977324263039,
+      "pitch_midi": 42.80467587899878,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 6.489977324263038,
+      "offset_second": 6.96920634920635,
+      "pitch_midi": 91.39559810723696,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 6.489977324263038,
+      "offset_second": 6.96920634920635,
+      "pitch_midi": 75.93442391244567,
+      "role_candidates": [],
+      "confidence": 0.9993381859758597,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 6.489977324263038,
+      "offset_second": 6.96920634920635,
+      "pitch_midi": 82.85911154407538,
+      "role_candidates": [],
+      "confidence": 0.9915990685959455,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 6.989206349206349,
+      "offset_second": 7.062086167800454,
+      "pitch_midi": 35.7851258703449,
+      "role_candidates": [],
+      "confidence": 0.899999999999553,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 7.082086167800454,
+      "offset_second": 7.480045351473923,
+      "pitch_midi": 40.76557586169103,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 7.500045351473923,
+      "offset_second": 7.98,
+      "pitch_midi": 54.80467587899878,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 7.500045351473923,
+      "offset_second": 7.98,
+      "pitch_midi": 40.76557586169103,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "onset_second": 7.500045351473923,
+      "offset_second": 7.98,
+      "pitch_midi": 46.27875528533859,
+      "role_candidates": [],
+      "confidence": 1.0,
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "poly-peak+harmonic-fit/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    }
+  ],
+  "tonal": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "acoustic-observation",
+      "method": "stft-chroma/v1",
+      "derived_from": [
+        "pcm"
+      ]
+    },
+    "chroma_frames": [
+      {
+        "center_second": 0.09287981859410431,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17602731154694448,
+          0.05666653661909095,
+          0.07698390894849472,
+          0.029042891965806485,
+          0.06029459563345807,
+          0.05351664051275544,
+          0.04984131938398359,
+          0.047710515017278694,
+          0.04662527375156327,
+          0.059003770782205395,
+          0.3019698395910965,
+          0.0423173962473223
+        ]
+      },
+      {
+        "center_second": 0.13931972789115646,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.14380373641645125,
+          0.10135605303905518,
+          0.10061316988823965,
+          0.037819883947055134,
+          0.08168412088776386,
+          0.06611126489986581,
+          0.06528955239921384,
+          0.06199750106005707,
+          0.061121039533547895,
+          0.07598467061739833,
+          0.14899200005296281,
+          0.05522700725838918
+        ]
+      },
+      {
+        "center_second": 0.18575963718820862,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.23219954648526078,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.2786394557823129,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.3250793650793651,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.37151927437641724,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.4179591836734694,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.094328208545606,
+          0.058325147212790404,
+          0.059511384030740445,
+          0.05611557001411099,
+          0.09272493099098503,
+          0.08049784555219233,
+          0.053914078602971593,
+          0.07211893763079225,
+          0.1108212784694198,
+          0.09899856808815977,
+          0.0931852705671557,
+          0.12945878029507554
+        ]
+      },
+      {
+        "center_second": 0.46439909297052157,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11291354654979001,
+          0.05122009292947331,
+          0.052904970882089196,
+          0.05153684697078119,
+          0.08687689015038116,
+          0.08817835734869428,
+          0.06349197998434541,
+          0.07805018011468509,
+          0.09090766622529656,
+          0.0911844821315415,
+          0.08818616258904108,
+          0.14454882412388123
+        ]
+      },
+      {
+        "center_second": 0.5108390022675737,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.13703052037844973,
+          0.05424137270072142,
+          0.05165536511682215,
+          0.0487173070692387,
+          0.08977821309954703,
+          0.08414162152358703,
+          0.0639685891461659,
+          0.07775767439824216,
+          0.08464719865541613,
+          0.08592803041092212,
+          0.09143503079426704,
+          0.13069907670662065
+        ]
+      },
+      {
+        "center_second": 0.5572789115646258,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.13847974604257646,
+          0.058547171576223085,
+          0.04871633611740587,
+          0.052916733288679844,
+          0.08746369468900597,
+          0.07754365660066452,
+          0.0644599302793985,
+          0.07925159513490873,
+          0.08814699016575812,
+          0.08738970987770818,
+          0.09600357862044712,
+          0.12108085760722374
+        ]
+      },
+      {
+        "center_second": 0.603718820861678,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08387881037402935,
+          0.06509402404912258,
+          0.0573210582696154,
+          0.05947646383138366,
+          0.09791872014552885,
+          0.06579078509539629,
+          0.07304699004918104,
+          0.08648379478378089,
+          0.10570843787301527,
+          0.11725720648110817,
+          0.0899341029807568,
+          0.0980896060670817
+        ]
+      },
+      {
+        "center_second": 0.6501587301587302,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09215939102395651,
+          0.04524435987261387,
+          0.06682191504538297,
+          0.04271220859205412,
+          0.10313563502109752,
+          0.0707899874950748,
+          0.0855436555435198,
+          0.07750513034884327,
+          0.14031585967834073,
+          0.1280406897951781,
+          0.07169038672848792,
+          0.07604078085545042
+        ]
+      },
+      {
+        "center_second": 0.6965986394557823,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.7430385487528345,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.7894784580498866,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.8359183673469388,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.8823582766439909,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 0.9287981859410431,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1346537475139107,
+          0.10331995342726807,
+          0.11374490359051591,
+          0.02465182173386291,
+          0.09715840170694699,
+          0.08271004865636813,
+          0.07449480588205223,
+          0.0647225499617883,
+          0.05754975860110273,
+          0.0793946877514054,
+          0.12752570917238462,
+          0.04007361200239396
+        ]
+      },
+      {
+        "center_second": 0.9752380952380952,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18328524567168342,
+          0.1177335793661952,
+          0.09853216009213296,
+          0.01803131066923742,
+          0.07660711749834105,
+          0.06139547515286105,
+          0.05299286211454946,
+          0.04581585613771209,
+          0.04112793891492804,
+          0.057992051773635464,
+          0.21679482916360648,
+          0.029691573445117313
+        ]
+      },
+      {
+        "center_second": 1.0216780045351475,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18611220807157777,
+          0.0981771575886573,
+          0.08311111122936474,
+          0.014958315116022204,
+          0.06362559098188582,
+          0.05031412364975648,
+          0.04400736766421396,
+          0.037468182204228026,
+          0.03405780196773043,
+          0.04761455678696044,
+          0.3158822510251006,
+          0.024671333714502374
+        ]
+      },
+      {
+        "center_second": 1.0681179138321995,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.16299355944347022,
+          0.06035320538499017,
+          0.06273339598945384,
+          0.021715660463853162,
+          0.05200182903633939,
+          0.04108714245175996,
+          0.04112738912654898,
+          0.03547782445369317,
+          0.03704879799851391,
+          0.04540064094627281,
+          0.40769624971089125,
+          0.0323643049942131
+        ]
+      },
+      {
+        "center_second": 1.1145578231292517,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17051294043376747,
+          0.09025472557554788,
+          0.07726326591722812,
+          0.03325454064640381,
+          0.07291990522362415,
+          0.059999126681166616,
+          0.05695275976596583,
+          0.05455977574238043,
+          0.053341929869660056,
+          0.06741336989615061,
+          0.21499233110313043,
+          0.04853532914497466
+        ]
+      },
+      {
+        "center_second": 1.1609977324263039,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11533744529640547,
+          0.08408383328299149,
+          0.10201690168761451,
+          0.04374582827358217,
+          0.0938055580827806,
+          0.08090883538417926,
+          0.0782165986125922,
+          0.07237164215883744,
+          0.07086981021133107,
+          0.08731251972836915,
+          0.10769547849588329,
+          0.06363554878543339
+        ]
+      },
+      {
+        "center_second": 1.207437641723356,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.253877551020408,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.3003174603174603,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.3467573696145125,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.3931972789115645,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.4396371882086167,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07669036866712442,
+          0.06541077069763354,
+          0.06877804439824875,
+          0.043324092220574775,
+          0.04338631310610659,
+          0.09007245242449735,
+          0.10699043351697425,
+          0.12267038040327741,
+          0.0941445108866949,
+          0.08947230633808605,
+          0.09361757321736065,
+          0.10544275412342123
+        ]
+      },
+      {
+        "center_second": 1.486077097505669,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07266267253963248,
+          0.06720569210741652,
+          0.06422870043602374,
+          0.044377851203978545,
+          0.053803140981000676,
+          0.08446487719934244,
+          0.09061469448579863,
+          0.10983838755108045,
+          0.10685827620156253,
+          0.08813886081364306,
+          0.10348542088998727,
+          0.11432142559053354
+        ]
+      },
+      {
+        "center_second": 1.5325170068027212,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0786203871919065,
+          0.06343093145941446,
+          0.06851891563604,
+          0.04726787918708628,
+          0.06925991292691462,
+          0.07624770346641259,
+          0.08302740356706838,
+          0.09623910944747321,
+          0.10126108654844833,
+          0.08685838740219619,
+          0.1112538679256107,
+          0.11801441524142883
+        ]
+      },
+      {
+        "center_second": 1.5789569160997732,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08789645584258753,
+          0.06190543445765185,
+          0.07380365604221263,
+          0.048261450223555845,
+          0.0917818061114312,
+          0.06324947632780696,
+          0.07464457045597801,
+          0.09032947993512823,
+          0.08409997006683838,
+          0.09603724285416539,
+          0.11625545386752303,
+          0.11173500381512079
+        ]
+      },
+      {
+        "center_second": 1.6253968253968254,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.092550899523367,
+          0.046172204339478974,
+          0.06942730443401346,
+          0.05271952125162117,
+          0.11461772710483573,
+          0.05654620930993672,
+          0.06848228527272099,
+          0.07345719475049516,
+          0.08648414882439384,
+          0.11913337258860972,
+          0.11782208469760361,
+          0.10258704790292353
+        ]
+      },
+      {
+        "center_second": 1.6718367346938776,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08922094028917492,
+          0.05522440850691353,
+          0.09602456576022983,
+          0.08060364266205183,
+          0.08371794657847273,
+          0.058047785093296514,
+          0.03396260440518661,
+          0.05805618701398389,
+          0.10178183598434433,
+          0.12101213791831442,
+          0.13124007374386923,
+          0.09110787204416207
+        ]
+      },
+      {
+        "center_second": 1.7182766439909296,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.7647165532879818,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.811156462585034,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.8575963718820863,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.9040362811791383,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 1.9504761904761905,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.16407484599664063,
+          0.12116385081087375,
+          0.11289573249768418,
+          0.020285984271327138,
+          0.08679180443425705,
+          0.06801529135428008,
+          0.05923576896391755,
+          0.05161394308550309,
+          0.04647021591878307,
+          0.06508260848756654,
+          0.17084266357536046,
+          0.033527290603806256
+        ]
+      },
+      {
+        "center_second": 1.9969160997732427,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18899055483408078,
+          0.10788341233326194,
+          0.09201139656788664,
+          0.01653374418520109,
+          0.07065284333802936,
+          0.056337229210742155,
+          0.048870944595869915,
+          0.042034106103574664,
+          0.03775498786424594,
+          0.05324787211081555,
+          0.2584262034476499,
+          0.02725670540864198
+        ]
+      },
+      {
+        "center_second": 2.043356009070295,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1752072118725322,
+          0.0863905437617922,
+          0.07079070881336894,
+          0.015269729738161078,
+          0.05740272828212267,
+          0.04300137268138726,
+          0.040607095470384845,
+          0.032989003067479185,
+          0.03250739558744549,
+          0.04273830236950392,
+          0.3783470003856062,
+          0.024748907970216144
+        ]
+      },
+      {
+        "center_second": 2.089795918367347,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.174806073476892,
+          0.05293086890535949,
+          0.07616518329424313,
+          0.028314472032650487,
+          0.058119095162524316,
+          0.05275314643582154,
+          0.048308858367394354,
+          0.046872855830640416,
+          0.04531872992799676,
+          0.05767808684165318,
+          0.3175123127314617,
+          0.04122031699336271
+        ]
+      },
+      {
+        "center_second": 2.136235827664399,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1479016478306525,
+          0.10197040555853439,
+          0.0980591335460577,
+          0.03726001990905603,
+          0.07887450035086964,
+          0.06525685487610276,
+          0.06486160802178147,
+          0.06098999488472221,
+          0.05969406662348168,
+          0.07505034467381001,
+          0.1559452684149939,
+          0.05413615530993768
+        ]
+      },
+      {
+        "center_second": 2.182675736961451,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09489761094648592,
+          0.06308322452310272,
+          0.08964318887070664,
+          0.06263482647734121,
+          0.08882626088972437,
+          0.07733116590022862,
+          0.08223456537103668,
+          0.08129864949470897,
+          0.0858328840147593,
+          0.0991419986838629,
+          0.08945995902229682,
+          0.08561566580574581
+        ]
+      },
+      {
+        "center_second": 2.2291156462585033,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.2755555555555556,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.3219954648526078,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.36843537414966,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.414875283446712,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11711289812464305,
+          0.05827182105786181,
+          0.06441792553799325,
+          0.03665525475366066,
+          0.06221068872776995,
+          0.07125034077570667,
+          0.08971375139223658,
+          0.09823470914108322,
+          0.08934382744361648,
+          0.08722915755018205,
+          0.11379944885195327,
+          0.11176017664329313
+        ]
+      },
+      {
+        "center_second": 2.461315192743764,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0842528351301432,
+          0.07444780846739026,
+          0.08623515879275719,
+          0.05961929471007113,
+          0.06593256239928749,
+          0.0634606270449983,
+          0.0757741545379596,
+          0.09274235777524119,
+          0.10573402187470295,
+          0.07488934969773683,
+          0.10196968755090235,
+          0.11494214201880949
+        ]
+      },
+      {
+        "center_second": 2.507755102040816,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0765486065727837,
+          0.07370909286426539,
+          0.07906452099188614,
+          0.06294189192632471,
+          0.06418736738246822,
+          0.06663821861229735,
+          0.07977649387150906,
+          0.09345056563786558,
+          0.10689730762268904,
+          0.08405976117352969,
+          0.10304684418551108,
+          0.10967932915886995
+        ]
+      },
+      {
+        "center_second": 2.5541950113378684,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07471141312073362,
+          0.06622614052204401,
+          0.06663687702284526,
+          0.058246534035602364,
+          0.07779584994529311,
+          0.06935015419021398,
+          0.07960169515120925,
+          0.09646699586919168,
+          0.11057077176749086,
+          0.09266459112182521,
+          0.10773742257769682,
+          0.09999155467585384
+        ]
+      },
+      {
+        "center_second": 2.6006349206349206,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09352899650270537,
+          0.04998335279327668,
+          0.06494659301460576,
+          0.0456058450211665,
+          0.0918099136767399,
+          0.0646809748585225,
+          0.07451199879573907,
+          0.0850813982220142,
+          0.09928545097717453,
+          0.1071045722320865,
+          0.11903265040306042,
+          0.10442825350290852
+        ]
+      },
+      {
+        "center_second": 2.647074829931973,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1297859555143518,
+          0.053102138020788704,
+          0.06540495467050816,
+          0.05103525847546991,
+          0.07990374727932756,
+          0.055898134044116136,
+          0.07362233502750551,
+          0.06836471695335035,
+          0.06769118191513528,
+          0.12384753667889745,
+          0.11392550693872172,
+          0.11741853448182751
+        ]
+      },
+      {
+        "center_second": 2.693514739229025,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.7399546485260773,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.786394557823129,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.8328344671201813,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.8792743764172335,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 2.9257142857142857,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1295649521968528,
+          0.09844101759631972,
+          0.11127954685051383,
+          0.02600312988524141,
+          0.09687565008206826,
+          0.08337659392160993,
+          0.07609268839579403,
+          0.06730133624925629,
+          0.0610568823370928,
+          0.08574944643875353,
+          0.12203374917392104,
+          0.04222500687257638
+        ]
+      },
+      {
+        "center_second": 2.972154195011338,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18170669237527537,
+          0.11893805841805617,
+          0.09996215208873853,
+          0.018249450720705773,
+          0.07728273655044861,
+          0.06223825673283634,
+          0.05369938661405645,
+          0.04630682808676133,
+          0.041713948504287814,
+          0.05869160939808517,
+          0.2111524768277895,
+          0.03005840368295907
+        ]
+      },
+      {
+        "center_second": 3.01859410430839,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18696900802556646,
+          0.09942907459567353,
+          0.08449575025806472,
+          0.015118093248068896,
+          0.06448846560656724,
+          0.05122000480543125,
+          0.04458489123522748,
+          0.038123612689047896,
+          0.03447223491727637,
+          0.04836571267491824,
+          0.3078021753010851,
+          0.024930976643072936
+        ]
+      },
+      {
+        "center_second": 3.0650340136054424,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.16303961027971361,
+          0.06424723154772838,
+          0.06195518633852911,
+          0.020618183090976076,
+          0.05233184920137917,
+          0.040009664091789444,
+          0.0406586521902178,
+          0.034095851519540143,
+          0.03606926143779209,
+          0.04402100839024848,
+          0.4119379236128947,
+          0.031015578299191014
+        ]
+      },
+      {
+        "center_second": 3.111473922902494,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1725747464059359,
+          0.08616021488922333,
+          0.0761959344133025,
+          0.03263038831605115,
+          0.07243460566194077,
+          0.05821381846594429,
+          0.05648151256174922,
+          0.05353141529193157,
+          0.05228733052613753,
+          0.0663343344251226,
+          0.225413151158091,
+          0.0477425478845702
+        ]
+      },
+      {
+        "center_second": 3.1579138321995464,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11925931360419431,
+          0.0873997259030751,
+          0.10330937626497377,
+          0.04273852354549773,
+          0.09405883806264927,
+          0.07949599195087817,
+          0.0756827016007038,
+          0.06961844293488238,
+          0.06813420304008454,
+          0.08476480914647683,
+          0.11313927895142756,
+          0.06239879499515661
+        ]
+      },
+      {
+        "center_second": 3.2043537414965986,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.250793650793651,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.297233560090703,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.3436734693877552,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.3901133786848074,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.436553287981859,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07538432242062544,
+          0.05223065669009398,
+          0.06769909288321775,
+          0.06579015484477008,
+          0.07693246556472642,
+          0.06649210235621231,
+          0.13090539773428367,
+          0.10365627237931063,
+          0.0854299239161822,
+          0.09801281812601755,
+          0.08855240520121586,
+          0.08891438788334413
+        ]
+      },
+      {
+        "center_second": 3.4829931972789114,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07844647590316281,
+          0.06825721102489395,
+          0.058195782560209186,
+          0.06866927403608519,
+          0.0801055565832868,
+          0.06254412817107295,
+          0.10957352788218716,
+          0.10616413246807585,
+          0.10977922953449486,
+          0.07936214803018274,
+          0.09422932498368237,
+          0.08467320882266618
+        ]
+      },
+      {
+        "center_second": 3.5294331065759637,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08149741545015028,
+          0.07330041995826846,
+          0.06517029478077893,
+          0.06855293440276128,
+          0.07811815989497035,
+          0.06931899311319596,
+          0.09283391424326197,
+          0.096944145000001,
+          0.11398892426105003,
+          0.07187584417795749,
+          0.10007530791659014,
+          0.08832364680101404
+        ]
+      },
+      {
+        "center_second": 3.575873015873016,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09212794506842371,
+          0.07642976974092114,
+          0.07518666685274822,
+          0.06485994936197828,
+          0.07699344283457724,
+          0.07289655609800107,
+          0.07741457914311389,
+          0.07884066107891345,
+          0.0958081126517107,
+          0.07404774950728645,
+          0.10229787440205444,
+          0.11309669326027136
+        ]
+      },
+      {
+        "center_second": 3.622312925170068,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09741409922717406,
+          0.06121901015022876,
+          0.08919360336123526,
+          0.06794549065893281,
+          0.07951032871279198,
+          0.06736400685471622,
+          0.09746184511741365,
+          0.06004489415925588,
+          0.06648430609294531,
+          0.08228753889739464,
+          0.08987417867327138,
+          0.14120069809464
+        ]
+      },
+      {
+        "center_second": 3.6687528344671203,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10847140752247234,
+          0.05717921688163776,
+          0.1002257664685013,
+          0.08958917116495502,
+          0.08332805759326115,
+          0.05453990917476561,
+          0.06735215662215344,
+          0.09001159890093716,
+          0.07743008016583894,
+          0.06037303669792336,
+          0.08151313154006944,
+          0.1299864672674844
+        ]
+      },
+      {
+        "center_second": 3.7151927437641725,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.7616326530612243,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.8080725623582765,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.8545124716553287,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.900952380952381,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 3.947392290249433,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.16071420510315212,
+          0.12002867938151607,
+          0.11432913223086137,
+          0.02073093134080382,
+          0.0890709455458679,
+          0.0697727020303962,
+          0.06015276817109312,
+          0.052266150133317126,
+          0.04741993219684899,
+          0.06658111079010899,
+          0.16481938681341593,
+          0.0341140562626182
+        ]
+      },
+      {
+        "center_second": 3.9938321995464854,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18870632452220942,
+          0.10922375948542598,
+          0.09282923002660658,
+          0.016737386236656302,
+          0.07160337559651078,
+          0.05692164562455698,
+          0.04952569874945988,
+          0.042502270702999737,
+          0.03825311633430037,
+          0.053898697411458855,
+          0.2521947097528507,
+          0.027603785556964404
+        ]
+      },
+      {
+        "center_second": 4.040272108843538,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17726221751133114,
+          0.08854257369681476,
+          0.07276031265992879,
+          0.014983516395898152,
+          0.05828663971740726,
+          0.04407700465052182,
+          0.040966869824046084,
+          0.033527638870971946,
+          0.03250323005057014,
+          0.043299776417611416,
+          0.3693479198127637,
+          0.024442300392134783
+        ]
+      },
+      {
+        "center_second": 4.08671201814059,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.173123089487361,
+          0.050214061204470646,
+          0.07482068612807025,
+          0.02755979019719406,
+          0.05623871616114586,
+          0.05162715519518334,
+          0.04690737564846095,
+          0.045766003479173846,
+          0.0440648218010606,
+          0.05620392954784623,
+          0.3333602534595337,
+          0.04011411769049946
+        ]
+      },
+      {
+        "center_second": 4.133151927437642,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.15192114069566517,
+          0.10198842757739554,
+          0.09527085892860843,
+          0.036611211041966255,
+          0.07644402659325937,
+          0.06485921190599142,
+          0.06434918038260769,
+          0.059597495350107436,
+          0.05852133024258374,
+          0.07425513104814847,
+          0.16294745162313817,
+          0.05323453461052831
+        ]
+      },
+      {
+        "center_second": 4.179591836734694,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09628627624908243,
+          0.06296272676060233,
+          0.09117079898596506,
+          0.05999283499583799,
+          0.08908860392339477,
+          0.07871944740914683,
+          0.08274468070459208,
+          0.08140638149295082,
+          0.0847646380610214,
+          0.10183214165553023,
+          0.08728262322405529,
+          0.08374884653782089
+        ]
+      },
+      {
+        "center_second": 4.2260317460317465,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.272471655328798,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.31891156462585,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.365351473922902,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.4117913832199545,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07562760742338673,
+          0.04318354300783557,
+          0.06335248522136257,
+          0.07099883696008538,
+          0.09824738866625583,
+          0.09890152519001252,
+          0.09959009516111322,
+          0.10206071313538018,
+          0.1027054082304059,
+          0.09832868336878883,
+          0.07156170244367824,
+          0.07544201119169501
+        ]
+      },
+      {
+        "center_second": 4.458231292517007,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10561104697627022,
+          0.05377117843203188,
+          0.06613161664813474,
+          0.0695564683602464,
+          0.09072101593944296,
+          0.0850476862577189,
+          0.06692649056646077,
+          0.06015466525304527,
+          0.0820454812240576,
+          0.09983710698381904,
+          0.11736353425038756,
+          0.10283370910838469
+        ]
+      },
+      {
+        "center_second": 4.504671201814059,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09922104751211946,
+          0.060693849261315685,
+          0.06969108411332665,
+          0.06664231686964892,
+          0.08251052789469003,
+          0.07908647348068716,
+          0.07139589935469876,
+          0.05765374884145429,
+          0.08932195875739475,
+          0.10039060055152454,
+          0.12849854594506052,
+          0.09489394741807922
+        ]
+      },
+      {
+        "center_second": 4.551111111111111,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09768587993364389,
+          0.06570918488280143,
+          0.07977323101343828,
+          0.06422886907759347,
+          0.07319565948906669,
+          0.07211244885681282,
+          0.07742735621562871,
+          0.05815377172133335,
+          0.09256034171849062,
+          0.09840579746212824,
+          0.12817521688248537,
+          0.09257224274657729
+        ]
+      },
+      {
+        "center_second": 4.597551020408163,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09998981368847455,
+          0.05701839337923385,
+          0.0892517408325055,
+          0.05035847402499495,
+          0.07741861436677148,
+          0.08796837800185173,
+          0.08324743321390381,
+          0.07692233678820234,
+          0.09264848846462258,
+          0.08635281594038949,
+          0.10002955910040448,
+          0.09879395219864542
+        ]
+      },
+      {
+        "center_second": 4.6439909297052155,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10072566908637808,
+          0.050699768389914183,
+          0.08858398542148914,
+          0.06164528466765074,
+          0.06958927922791917,
+          0.08648475196233786,
+          0.07197594221739323,
+          0.09966655413017667,
+          0.08730922927147983,
+          0.09189370184874986,
+          0.09124702041549895,
+          0.10017881336101225
+        ]
+      },
+      {
+        "center_second": 4.690430839002268,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.73687074829932,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.783310657596372,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.829750566893424,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.876190476190477,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 4.922630385487528,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.12590601016684674,
+          0.09305203598809923,
+          0.1077954434839795,
+          0.027234935917387654,
+          0.09499234219703649,
+          0.08343179734712063,
+          0.07777282007116888,
+          0.06970844864054694,
+          0.0641020020694985,
+          0.09254517037028161,
+          0.11712925605918685,
+          0.04632973768884711
+        ]
+      },
+      {
+        "center_second": 4.96907029478458,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17989618498628662,
+          0.12003418016258824,
+          0.10153561342197484,
+          0.018497825071077396,
+          0.07799554950030463,
+          0.0630194615608511,
+          0.054514204107319025,
+          0.04681776829560089,
+          0.04226339507330149,
+          0.05946335297275573,
+          0.2054837135434998,
+          0.030478751304440117
+        ]
+      },
+      {
+        "center_second": 5.015510204081632,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18767386060526153,
+          0.10063578009507158,
+          0.08579032988935535,
+          0.015296924058122292,
+          0.06534584129986304,
+          0.05207988129455041,
+          0.045170286181434614,
+          0.038759166237925,
+          0.034906820056790716,
+          0.04910663843533544,
+          0.3000126244101922,
+          0.025221847436097802
+        ]
+      },
+      {
+        "center_second": 5.061950113378685,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.16373798138876614,
+          0.06809570165222847,
+          0.06188907975727541,
+          0.0195534813137798,
+          0.05281668283185479,
+          0.03942735025447524,
+          0.04031340510267952,
+          0.03307173366676893,
+          0.03518056705470718,
+          0.04297474850600687,
+          0.41321271431697565,
+          0.02972655415448223
+        ]
+      },
+      {
+        "center_second": 5.108390022675737,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17427841369643088,
+          0.0816825150583915,
+          0.07577663945735137,
+          0.032094333853533386,
+          0.07143812654251756,
+          0.05656646426482676,
+          0.056094969817904496,
+          0.05228285815719739,
+          0.051485732926191956,
+          0.06510357841335426,
+          0.23640472939646454,
+          0.046791638415836063
+        ]
+      },
+      {
+        "center_second": 5.154829931972789,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.12289907810778115,
+          0.09053863542364675,
+          0.10451542076216157,
+          0.041784301672835464,
+          0.09314807181308205,
+          0.07754998170561764,
+          0.07315369023242854,
+          0.06703287218705253,
+          0.06613561059164341,
+          0.083627317711409,
+          0.11867585370551925,
+          0.06093916608682276
+        ]
+      },
+      {
+        "center_second": 5.201269841269841,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.2477097505668935,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.294149659863946,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.340589569160998,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.38702947845805,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.433469387755102,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08767356185723599,
+          0.05509684346379988,
+          0.07256202924757965,
+          0.06836519237007015,
+          0.08606312166990107,
+          0.09197851312588769,
+          0.0741717501034292,
+          0.05580250597009553,
+          0.05962016202640556,
+          0.11143292014968605,
+          0.12611452405589904,
+          0.11111887596001029
+        ]
+      },
+      {
+        "center_second": 5.479909297052155,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.06811458367188515,
+          0.05814481209105252,
+          0.1033488569705918,
+          0.04680813480019082,
+          0.07472895917734117,
+          0.09001064045911812,
+          0.0708085127728813,
+          0.06428498183103248,
+          0.07013876361997701,
+          0.12058275588997143,
+          0.13079862601697023,
+          0.10223037269898813
+        ]
+      },
+      {
+        "center_second": 5.526349206349207,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07456254379111804,
+          0.07017141161205702,
+          0.1102965998061072,
+          0.039678149827097976,
+          0.07159801958943199,
+          0.07695848722479547,
+          0.07159658274644747,
+          0.07423437485412362,
+          0.08004390859444342,
+          0.10823408779078163,
+          0.12531438809555834,
+          0.09731144606803767
+        ]
+      },
+      {
+        "center_second": 5.572789115646258,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08291974724691523,
+          0.07789955445754364,
+          0.09128788623461138,
+          0.04759907103652526,
+          0.08400172573726274,
+          0.06268901021312435,
+          0.0774411424610689,
+          0.08497456859086357,
+          0.0960600909111475,
+          0.08997646698956874,
+          0.10637849852369693,
+          0.09877223759767172
+        ]
+      },
+      {
+        "center_second": 5.61922902494331,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0671497983388358,
+          0.06621697236477483,
+          0.05666652225111157,
+          0.05927176376055231,
+          0.10485340412042424,
+          0.059874094188540325,
+          0.0744534594880958,
+          0.10454636684825037,
+          0.10463395092625233,
+          0.10810244919835017,
+          0.08140368035158103,
+          0.11282753816323127
+        ]
+      },
+      {
+        "center_second": 5.6656689342403626,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11051716437845888,
+          0.06735476540938207,
+          0.05378669951417492,
+          0.044126108527671994,
+          0.08059162887497255,
+          0.060296848641411896,
+          0.037517420242741184,
+          0.0688269479290183,
+          0.09789111576524218,
+          0.14431392341686752,
+          0.09667846706582567,
+          0.138098910234233
+        ]
+      },
+      {
+        "center_second": 5.712108843537415,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.758548752834467,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.804988662131519,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.851428571428571,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.897868480725624,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 5.944308390022676,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.15700155583212405,
+          0.11856793984411071,
+          0.11536702454024945,
+          0.021137470577638283,
+          0.09141131633498578,
+          0.07188500565916343,
+          0.061534543260053615,
+          0.053025503033097214,
+          0.04816186354431782,
+          0.06829719327221925,
+          0.15889552379607133,
+          0.03471506030596908
+        ]
+      },
+      {
+        "center_second": 5.990748299319728,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.18825546299873525,
+          0.11063279364066082,
+          0.09361525723075906,
+          0.016939338168429668,
+          0.07255874333134038,
+          0.05751790057728651,
+          0.05016046453079363,
+          0.042996065422190685,
+          0.03872155813449508,
+          0.05454818687308954,
+          0.2461281379132144,
+          0.02792609117900509
+        ]
+      },
+      {
+        "center_second": 6.03718820861678,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1791751390322388,
+          0.09049653661464792,
+          0.07468885894521934,
+          0.014799537344887535,
+          0.059178455226743296,
+          0.04516620642027408,
+          0.041383434317915975,
+          0.034126263436091674,
+          0.03259458603654065,
+          0.04393453008899722,
+          0.36019915441490136,
+          0.02425729812154225
+        ]
+      },
+      {
+        "center_second": 6.0836281179138325,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17110749828720676,
+          0.04882150835190033,
+          0.07301570883720512,
+          0.02675348947525182,
+          0.0546645062065206,
+          0.050162170204412916,
+          0.04561934837619967,
+          0.04438988763273179,
+          0.04283557723986683,
+          0.05456573920547062,
+          0.3490991972685115,
+          0.03896536891472208
+        ]
+      },
+      {
+        "center_second": 6.130068027210885,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.15552203219078042,
+          0.10154156500989661,
+          0.09198553379096569,
+          0.035995805423701274,
+          0.07473425441329552,
+          0.0647116547370973,
+          0.06336263792450246,
+          0.05818727636250682,
+          0.05771216876554208,
+          0.07317772538504062,
+          0.17051664379856687,
+          0.05255270219810442
+        ]
+      },
+      {
+        "center_second": 6.176507936507937,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10164643514127132,
+          0.06699333632501248,
+          0.0950853006544674,
+          0.05623305812713505,
+          0.09006383444547617,
+          0.07886474963611079,
+          0.08097618726451296,
+          0.07873976718465373,
+          0.08104790404359,
+          0.10157778927329061,
+          0.08917229599227502,
+          0.07959934191220448
+        ]
+      },
+      {
+        "center_second": 6.222947845804988,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.2693877551020405,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.315827664399093,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.362267573696145,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.408707482993197,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09476576301027605,
+          0.057972286329712554,
+          0.07870168411233995,
+          0.06356680683528099,
+          0.08307458895797894,
+          0.07426918017528263,
+          0.0789414762447766,
+          0.08111771244711365,
+          0.08834449260120597,
+          0.09970458348565214,
+          0.09857753879370937,
+          0.1009638870066712
+        ]
+      },
+      {
+        "center_second": 6.455147392290249,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10810957833027204,
+          0.04489785592241572,
+          0.06413874426106632,
+          0.04911400665280967,
+          0.09195754156106699,
+          0.09981058148366569,
+          0.07782230242428201,
+          0.11267407186783815,
+          0.07877378082182376,
+          0.09774080152866335,
+          0.07026501520796694,
+          0.1046957199381293
+        ]
+      },
+      {
+        "center_second": 6.501587301587302,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10029027410258867,
+          0.0404114554970944,
+          0.06440741483373533,
+          0.05030648189064069,
+          0.09074776391516591,
+          0.1108472795021273,
+          0.0724574735648215,
+          0.11039403179000822,
+          0.08563674674590341,
+          0.09415882339109018,
+          0.0853487506387853,
+          0.09499350412803903
+        ]
+      },
+      {
+        "center_second": 6.548027210884354,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08874538335863455,
+          0.04022801719395321,
+          0.06735418817874722,
+          0.051532507619820075,
+          0.08669402514854752,
+          0.10612843233587371,
+          0.08132297086439377,
+          0.10504683251512285,
+          0.08597242491625214,
+          0.08677293342980527,
+          0.10768364436714142,
+          0.09251864007170814
+        ]
+      },
+      {
+        "center_second": 6.594467120181406,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.10767128368057731,
+          0.056946620215969294,
+          0.07658665651397432,
+          0.04974551498319353,
+          0.06910149132953687,
+          0.07745070684005272,
+          0.09033154363266595,
+          0.11290487014099072,
+          0.077580194063147,
+          0.08043509838400227,
+          0.11169175965158079,
+          0.08955426056430925
+        ]
+      },
+      {
+        "center_second": 6.640907029478458,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0957422735773192,
+          0.061762564406911746,
+          0.10425179556932383,
+          0.07142765008960206,
+          0.061287563447663694,
+          0.05749092460817154,
+          0.10359642492830232,
+          0.08499306866107732,
+          0.08807425426797938,
+          0.09857841535186064,
+          0.1077324761314096,
+          0.06506258896037877
+        ]
+      },
+      {
+        "center_second": 6.6873469387755105,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.733786848072563,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.780226757369615,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.826666666666667,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.873106575963718,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 6.919546485260771,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.12555964905716407,
+          0.08954186969821672,
+          0.10716954916425683,
+          0.029653302128931882,
+          0.09188709518335002,
+          0.08059102006377562,
+          0.07670687693711055,
+          0.07057460532796396,
+          0.0665106998433367,
+          0.09833715619678182,
+          0.11262452785540113,
+          0.050843648543710776
+        ]
+      },
+      {
+        "center_second": 6.965986394557823,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17783554413762395,
+          0.12096512201420756,
+          0.10328345378924748,
+          0.018765567844310698,
+          0.07880833989107586,
+          0.06373911850701201,
+          0.055398328845303636,
+          0.04740331972177006,
+          0.0427748111632635,
+          0.06033390348194788,
+          0.19975676177019472,
+          0.0309357288340426
+        ]
+      },
+      {
+        "center_second": 7.012426303854875,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.1882356371578365,
+          0.1018151322526623,
+          0.08700099692713101,
+          0.015488411776251423,
+          0.06620105812962007,
+          0.052893718575037045,
+          0.04576191429293532,
+          0.03937070333112383,
+          0.035355642663777276,
+          0.04983334534921893,
+          0.292509083086109,
+          0.02553435645829717
+        ]
+      },
+      {
+        "center_second": 7.058866213151927,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.16499379955267984,
+          0.0717796916744614,
+          0.06247521725626288,
+          0.01855555706706722,
+          0.05341674537566845,
+          0.03931611004406474,
+          0.04008824635752645,
+          0.03241336900802098,
+          0.034402265863506296,
+          0.04227598196727259,
+          0.4117486244183397,
+          0.028534391415129454
+        ]
+      },
+      {
+        "center_second": 7.1053061224489795,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.17559119554466848,
+          0.076902807521154,
+          0.07590585255141907,
+          0.03155833761492098,
+          0.06992050982513016,
+          0.05524850590851532,
+          0.05553144715202176,
+          0.05088001100349017,
+          0.050925202630705206,
+          0.06380414889620996,
+          0.24789724465157303,
+          0.045834736700191864
+        ]
+      },
+      {
+        "center_second": 7.151746031746032,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.12688770569017987,
+          0.0936522143051359,
+          0.10508919373687138,
+          0.04073774542924796,
+          0.09183043887132501,
+          0.0753548277019055,
+          0.07037639481285708,
+          0.06502342727804972,
+          0.06502058990973424,
+          0.08269315092877118,
+          0.1240343865698358,
+          0.059299924766086386
+        ]
+      },
+      {
+        "center_second": 7.198185941043084,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.244625850340136,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.291065759637188,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.337505668934241,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.383945578231293,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.430385487528345,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11222846413354648,
+          0.047640975889107706,
+          0.0796955961403605,
+          0.049594225173911245,
+          0.06378889922054062,
+          0.0849517323446402,
+          0.05844572910895506,
+          0.05488119341586153,
+          0.07146951895317712,
+          0.12106700850407269,
+          0.15317008759173875,
+          0.10306656952408805
+        ]
+      },
+      {
+        "center_second": 7.476825396825397,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0971643861893832,
+          0.05129649572584301,
+          0.07435342073861845,
+          0.04488959404657897,
+          0.08037344956053566,
+          0.09686609533655435,
+          0.062287601223203995,
+          0.058179950289541066,
+          0.0756704064437751,
+          0.12023130059019312,
+          0.14761688040107013,
+          0.09107041945470291
+        ]
+      },
+      {
+        "center_second": 7.523265306122449,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.08307427782270384,
+          0.045685738006191634,
+          0.06929650352368157,
+          0.04840871860786459,
+          0.08372452690725352,
+          0.08951190357220826,
+          0.06621563513484852,
+          0.0771974330306184,
+          0.08985753890214361,
+          0.12012811823108004,
+          0.13500550747765389,
+          0.09189409878375217
+        ]
+      },
+      {
+        "center_second": 7.569705215419501,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.07691352747366763,
+          0.04285225413258493,
+          0.07186521098629933,
+          0.04592312096688206,
+          0.0884841842672212,
+          0.078411650812809,
+          0.0794623277120206,
+          0.09467758068050848,
+          0.09953112111132234,
+          0.10522111375696279,
+          0.10635826954323235,
+          0.1102996385564894
+        ]
+      },
+      {
+        "center_second": 7.616145124716553,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.09300210079955169,
+          0.04015268304092036,
+          0.07084864297111251,
+          0.04298824867309765,
+          0.08189272366000566,
+          0.07605568961481042,
+          0.08956103250282432,
+          0.09567378753491018,
+          0.09631134593431101,
+          0.10721427519486733,
+          0.08182358036648006,
+          0.12447588970710867
+        ]
+      },
+      {
+        "center_second": 7.662585034013605,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.11251060896598536,
+          0.04547144671384678,
+          0.05878064250704191,
+          0.05451772625474688,
+          0.08223144946303053,
+          0.05617050883044863,
+          0.08056697739020709,
+          0.11259684486563055,
+          0.07813570029176758,
+          0.08364963014934744,
+          0.10582317519913712,
+          0.12954528936881013
+        ]
+      },
+      {
+        "center_second": 7.7090249433106575,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.75546485260771,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.801904761904762,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.848344671201814,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "center_second": 7.894784580498866,
+        "hop_seconds": 0.046439909297052155,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "key_candidates": [
+      {
+        "tonic_pc": 10,
+        "mode": "major",
+        "confidence": 0.7585131202898789
+      },
+      {
+        "tonic_pc": 10,
+        "mode": "minor",
+        "confidence": 0.7539474806807098
+      }
+    ],
+    "chord_candidates": []
+  },
+  "onsets": [
+    {
+      "second": 0.08126984126984127,
+      "strength": 0.26607873468013904,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.812
+        },
+        {
+          "family": "hat",
+          "confidence": 0.526
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.4992290249433107,
+      "strength": 0.9983881691232873,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.891
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 0.9984580498866213,
+      "strength": 0.762353283790729,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.0797278911564625,
+      "strength": 0.2673936135390677,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.76
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.497687074829932,
+      "strength": 1.0,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.913
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 1.9969160997732427,
+      "strength": 0.761004792184584,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 2.078185941043084,
+      "strength": 0.2641111642000089,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.716
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 2.4961451247165534,
+      "strength": 0.9941122955776217,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.886
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 2.995374149659864,
+      "strength": 0.758745382350954,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 3.076643990929705,
+      "strength": 0.2602477423703798,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.679
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 3.4946031746031747,
+      "strength": 0.9898569595033695,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.904
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 3.9938321995464854,
+      "strength": 0.7572553554199921,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 4.0751020408163265,
+      "strength": 0.2574570854097506,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.647
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 4.493061224489796,
+      "strength": 0.9951141033469264,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.884
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 4.992290249433107,
+      "strength": 0.7599781489592193,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 5.073560090702948,
+      "strength": 0.2552929719126129,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 0.504
+        },
+        {
+          "family": "snare",
+          "confidence": 0.619
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 5.491519274376417,
+      "strength": 0.9876540247903518,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.9
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 5.990748299319728,
+      "strength": 0.7617654285759339,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 6.0836281179138325,
+      "strength": 0.25470152254164596,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.908
+        },
+        {
+          "family": "hat",
+          "confidence": 0.616
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 6.489977324263038,
+      "strength": 0.9875621963063175,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.889
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 6.989206349206349,
+      "strength": 0.7626437657932393,
+      "family_candidates": [
+        {
+          "family": "kick",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 7.082086167800454,
+      "strength": 0.2612220633573948,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.844
+        },
+        {
+          "family": "hat",
+          "confidence": 0.555
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    },
+    {
+      "second": 7.500045351473923,
+      "strength": 0.9974529864046671,
+      "family_candidates": [
+        {
+          "family": "snare",
+          "confidence": 0.873
+        },
+        {
+          "family": "hat",
+          "confidence": 1.0
+        }
+      ],
+      "provenance": {
+        "analyzer_id": "sai-baseline-dsp",
+        "analyzer_version": "0.1.0",
+        "level": "derived-musical-event",
+        "method": "band-energy-family/v1",
+        "derived_from": [
+          "pcm",
+          "onsets"
+        ]
+      }
+    }
+  ],
+  "recurrence": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "derived-structural-interpretation",
+      "method": "section-chroma-recurrence/v1",
+      "derived_from": [
+        "chroma",
+        "beats"
+      ]
+    },
+    "links": [],
+    "summary": "1 candidate sections, 0 section-recurrence links above 0.85"
+  },
+  "sections": {
+    "provenance": {
+      "analyzer_id": "sai-baseline-dsp",
+      "analyzer_version": "0.1.0",
+      "level": "derived-structural-interpretation",
+      "method": "novelty-sections/v1",
+      "derived_from": [
+        "chroma",
+        "beats"
+      ]
+    },
+    "boundaries": [
+      0.10448979591836735,
+      8.0
+    ],
+    "sections": [
+      {
+        "start_second": 0.10448979591836735,
+        "end_second": 8.0,
+        "label_candidate": null
+      }
+    ]
+  },
+  "refusals": [],
+  "unknowns": [
+    "pitch routes (HPS vs ACF) disagree on many notes; pitches are ambiguous",
+    "key top-2 hypotheses retained; no majority vote taken",
+    "form: no section boundary crossed the novelty floor"
+  ]
+}
