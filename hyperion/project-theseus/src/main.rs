@@ -1,825 +1,741 @@
+//! Project Theseus — the Ship of Theseus machine for music.
+//!
+//! An interactive terminal instrument that makes LibGibson v0.4.0's HumanMusic
+//! Cover Mode quotient *visible* and *audible*. The middle object — the
+//! `CoverMap` — is the star: it is the only thing handed to the generator, and
+//! every visual is derived from the quotient state and the *real* generated
+//! score, never from the reference.
+//!
+//! Modes:
+//!   * interactive (default) — fullscreen RGB reactor with looping audio
+//!   * `--headless text|ansi|json|ppm` — deterministic single-frame capture
+//!   * `--script "1f2w"` / `--replay file` — ordered input replay (deterministic)
+//!   * `--matrix` — geometry × capability × glyph render matrix, no panic gate
+
 use clap::Parser;
-use gibson::audio::buffer::StereoBlock;
-use gibson::audio::device::AudioDevice;
-use gibson::audio::human_music::{
-    contract::CompositionGrammar,
-    cover::{
-        cover, CoverAdmission, CoverError, CoverFidelityPreset, CoverFidelityProfile,
-        CoverMap, CoverTarget, FormRelation, GrooveRelation, HarmonyRelation, LineRelation,
-        OrchestrationRelation,
-    },
-    functor::Composition,
-    policy::PerformanceProfile,
-    reference_song::ReferenceSong,
-    score::Score,
-    synth::HumanMusicSynth,
-    world::MusicWorld,
-};
-use gibson::audio::render::{AudioSource, OfflineRenderer, RenderCtx};
-use gibson::audio::time::{SampleRate, SampleTime};
-use gibson::audio::wav::write_wav_i16;
-use gibson::cell::{Color, Style};
-use gibson::field::{plasma, radial_pulse};
-use gibson::input::{Event, KeyCode};
-use gibson::node::{Node, WrapMode};
+use gibson::audio::human_music::cover::{CoverFidelityPreset, CoverKnowledge};
+use gibson::audio::human_music::reference_song::ReferenceSong;
+use gibson::audio::human_music::rhythm::MetricPosition;
+use gibson::audio::human_music::world::MusicWorld;
+use gibson::input::{Event, KeyCode, KeyEvent};
+use gibson::node::Node;
+use gibson::particles::ParticleSystem;
+use gibson::renderer::RenderMode;
 use gibson::ui::{
+    compile,
     element::*,
     skins,
     style::{Emphasis, Tone},
-    App, AppEvent, BuildCx, Control,
+    App, AppEvent, BuildCx, Control, MotionPreference, UiEnvironment,
 };
-use gibson::{BrailleCanvas, HalfBlockCanvas};
-use std::io;
+use gibson::{ColorDepth, Context};
+use std::io::{self, Write};
+use std::path::PathBuf;
 use std::time::Duration;
 
+use project_theseus::model::{display_index, AudioMode, Model, DISPLAY_AXES};
+use project_theseus::visual::{build_frame, identity_raster, GlyphMode, AXIS_DESC, AXIS_NAMES};
+
 #[derive(Parser, Debug)]
+#[command(
+    name = "project-theseus",
+    version,
+    about = "The Ship of Theseus machine for music — a CoverMap quotient instrument for LibGibson v0.4.0"
+)]
 struct Args {
+    /// Reference song fixture (TSV). Public-domain / synthetic only.
     #[arg(long, default_value = "fixtures/ode_to_joy.tsv")]
     fixture: String,
-    #[arg(long, default_value = "42")]
+    /// Deterministic generator seed.
+    #[arg(long, default_value_t = 42)]
     seed: u64,
+    /// Target world: VAPOR95 | BLACK_ICE | SWISS_SIGNAL.
     #[arg(long, default_value = "VAPOR95")]
     world: String,
+    /// Fidelity regime: Loose | Interpretive | Faithful | Strict.
     #[arg(long, default_value = "Interpretive")]
     fidelity: String,
+    /// Eight axis bits, e.g. 11111111 or 1,0,1,0,1,0,1,0.
+    #[arg(long)]
+    axes: Option<String>,
+    /// Terminal geometry WxH, e.g. 120x40.
+    #[arg(long, default_value = "120x40")]
+    geometry: String,
+    /// Colour capability: truecolor | ansi256 | ansi16 | mono.
+    #[arg(long, default_value = "truecolor")]
+    capability: String,
+    /// Glyph family: auto | halfblock | braille | block | ascii.
+    #[arg(long, default_value = "auto")]
+    glyphs: String,
+    /// Capture one deterministic frame: text | ansi | json | ppm | lines.
     #[arg(long)]
     headless: Option<String>,
+    /// Render the geometry × capability × glyph matrix (no-panic gate).
+    #[arg(long)]
+    matrix: bool,
+    /// Ordered key replay, e.g. "1f2w" or "1 2 3 4".
+    #[arg(long)]
+    script: Option<String>,
+    /// Read an ordered key replay from a file.
+    #[arg(long)]
+    replay: Option<PathBuf>,
+    /// Append every applied key to a file (input log).
+    #[arg(long)]
+    record: Option<PathBuf>,
+    /// Directory for exported WAVs / evidence / PPM.
+    #[arg(long, default_value = "exports")]
+    export_dir: PathBuf,
+    /// Never open an audio device (required for headless / CI).
+    #[arg(long)]
+    no_audio: bool,
+    /// Derive a harmony chart from the reference (needed to reach pinned-harmony refusals).
+    #[arg(long)]
+    harmony: bool,
+    /// Semantic skin override: VAPOR95 | BLACK_ICE | SWISS_SIGNAL.
+    #[arg(long)]
+    skin: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum AudioMode {
-    Stopped,
-    PlayingCover,
-    PlayingSource,
-}
+// ---------------------------------------------------------------------------
+// construction
+// ---------------------------------------------------------------------------
 
-/// Seamlessly loops an audio source indefinitely so the performance never abruptly stops.
-struct LoopingSynth {
-    score: Score,
-    world: MusicWorld,
-    sr: SampleRate,
-    synth: HumanMusicSynth,
-    loop_offset: u64,
-}
-
-impl LoopingSynth {
-    fn new(score: Score, world: MusicWorld, sr: SampleRate) -> Self {
-        let synth = HumanMusicSynth::new(&score, &world, sr);
-        Self {
-            score,
-            world,
-            sr,
-            synth,
-            loop_offset: 0,
-        }
+fn parse_world(name: &str) -> MusicWorld {
+    match name.to_uppercase().as_str() {
+        "BLACK_ICE" | "BLACKICE" => MusicWorld::black_ice(),
+        "SWISS_SIGNAL" | "SWISS" => MusicWorld::swiss_signal(),
+        _ => MusicWorld::vapor95(),
     }
 }
 
-impl AudioSource for LoopingSynth {
-    fn render(&mut self, out: &mut StereoBlock, ctx: &RenderCtx) {
-        let relative_start = ctx.start.0.saturating_sub(self.loop_offset);
-        let rel_ctx = RenderCtx {
-            sr: ctx.sr,
-            start: SampleTime(relative_start),
-        };
-        self.synth.render(out, &rel_ctx);
-        if self.synth.is_finished(SampleTime(relative_start + out.frames() as u64)) {
-            self.loop_offset = ctx.start.0 + out.frames() as u64;
-            self.synth = HumanMusicSynth::new(&self.score, &self.world, self.sr);
-        }
-    }
-
-    fn is_finished(&self, _at: SampleTime) -> bool {
-        false
+fn parse_fidelity(name: &str) -> CoverFidelityPreset {
+    match name.to_lowercase().as_str() {
+        "loose" => CoverFidelityPreset::Loose,
+        "faithful" => CoverFidelityPreset::Faithful,
+        "strict" => CoverFidelityPreset::Strict,
+        _ => CoverFidelityPreset::Interpretive,
     }
 }
 
-struct Model {
-    source: ReferenceSong,
-    world: MusicWorld,
-    seed: u64,
-    preset: CoverFidelityPreset,
-    axes_on: [bool; 8], // 0: Motif, 1: Riff, 2: Groove, 3: HarmContour, 4: HarmLoop, 5: Form, 6: Orch, 7: Bass
-    quotient: Option<CoverMap>,
-    admission: Option<CoverAdmission>,
-    cover_comp: Option<Composition>,
-    error_msg: Option<String>,
-    elapsed: Duration,
-    active_audio: Option<AudioDevice>,
-    audio_mode: AudioMode,
-    audio_status_msg: Option<String>,
+fn parse_capability(name: &str) -> ColorDepth {
+    match name.to_lowercase().as_str() {
+        "mono" | "none" => ColorDepth::Mono,
+        "ansi16" | "16" => ColorDepth::Ansi16,
+        "ansi256" | "256" => ColorDepth::Ansi256,
+        _ => ColorDepth::TrueColor,
+    }
 }
 
-const AXIS_NAMES: [&str; 8] = [
-    "MOTIF     [Lead Contour] ",
-    "RIFF      [Secondary Hook]",
-    "GROOVE    [Drum Pocket]  ",
-    "H-CONTOUR [Harmonic Path]",
-    "H-LOOP    [Cadence Cycle]",
-    "FORM      [AABA Phrasing]",
-    "ORCHESTRA [Timbre Map]   ",
-    "BASS      [Sub-Root Line]",
-];
-
-fn stop_audio(model: &mut Model) {
-    model.active_audio = None;
-    model.audio_mode = AudioMode::Stopped;
-    model.audio_status_msg = Some("Audio Muted".into());
+fn parse_geometry(s: &str) -> Result<(u16, u16), String> {
+    let (w, h) = s
+        .split_once(|c| c == 'x' || c == 'X' || c == ',')
+        .ok_or_else(|| format!("bad geometry {s:?} (want WxH)"))?;
+    let w: u16 = w.trim().parse().map_err(|_| format!("bad width {w:?}"))?;
+    let h: u16 = h.trim().parse().map_err(|_| format!("bad height {h:?}"))?;
+    Ok((w.max(20), h.max(8)))
 }
 
-fn play_cover(model: &mut Model) {
-    model.active_audio = None;
-    if let Some(comp) = &model.cover_comp {
-        let looper = LoopingSynth::new(comp.score.clone(), model.world.clone(), SampleRate::STUDIO);
-        let source: Box<dyn AudioSource + Send> = Box::new(looper);
-        match AudioDevice::play(source, SampleRate::STUDIO) {
-            Ok(device) => {
-                model.active_audio = Some(device);
-                model.audio_mode = AudioMode::PlayingCover;
-                model.audio_status_msg = Some(format!("Streaming Cover [{}] (Looping @ 48kHz)", model.world.name));
-            }
+fn parse_axes(s: &str) -> [bool; 8] {
+    let compact: Vec<bool> = if s.contains(',') {
+        s.split(',').map(|p| p.trim() == "1").collect()
+    } else {
+        s.chars().map(|c| c == '1' || c == 't' || c == 'T').collect()
+    };
+    let mut axes = [true; 8];
+    for (i, v) in compact.into_iter().take(8).enumerate() {
+        axes[i] = v;
+    }
+    axes
+}
+
+fn skin_for(world: &MusicWorld, override_skin: Option<&str>) -> gibson::ui::Skin {
+    match override_skin.map(|s| s.to_uppercase()) {
+        Some(s) if s == "VAPOR95" => skins::VAPOR95,
+        Some(s) if s == "BLACK_ICE" => skins::BLACK_ICE,
+        Some(s) if s == "SWISS_SIGNAL" => skins::SWISS_SIGNAL,
+        _ => match world.name {
+            "BLACK_ICE" => skins::BLACK_ICE,
+            "SWISS_SIGNAL" => skins::SWISS_SIGNAL,
+            _ => skins::VAPOR95,
+        },
+    }
+}
+
+fn build_model(args: &Args) -> io::Result<Model> {
+    let tsv = std::fs::read_to_string(&args.fixture)
+        .map_err(|e| io::Error::new(e.kind(), format!("read {}: {e}", args.fixture)))?;
+    let source = ReferenceSong::from_tsv(&tsv, "sop")
+        .or_else(|_| ReferenceSong::from_tsv(&tsv, "lead"))
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("parse fixture: {e:?}")))?;
+
+    let derived = if args.harmony {
+        match source.derive_harmony(MetricPosition::new(2, 1).expect("valid window")) {
+            Ok(h) => Some(h),
             Err(e) => {
-                model.audio_mode = AudioMode::Stopped;
-                model.audio_status_msg = Some(format!("Audio Device Error: {:?}", e));
+                eprintln!("harmony derivation refused: {e}");
+                None
             }
         }
     } else {
-        model.audio_mode = AudioMode::Stopped;
-        model.audio_status_msg = Some("Cover refused by target world".into());
+        None
+    };
+
+    let glyph = if args.glyphs.eq_ignore_ascii_case("auto")
+        && parse_capability(&args.capability) == ColorDepth::Mono
+    {
+        GlyphMode::Braille
+    } else {
+        GlyphMode::parse(&args.glyphs)
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "unknown --glyphs value"))?
+    };
+
+    let axes = args.axes.as_deref().map(parse_axes).unwrap_or([true; 8]);
+
+    Ok(Model {
+        source,
+        source_label: args.fixture.clone(),
+        derived,
+        world: parse_world(&args.world),
+        seed: args.seed,
+        preset: parse_fidelity(&args.fidelity),
+        glyph,
+        axes_on: axes,
+        quotient: None,
+        relations: String::new(),
+        knowledge: [CoverKnowledge::Unknown; 8],
+        ceiling_known: [false; 8],
+        conformance: [None; 8],
+        admission_checks: Vec::new(),
+        receipt_pass: None,
+        cover_comp: None,
+        refusal: None,
+        envelope: Vec::new(),
+        envelope_source: Vec::new(),
+        evidence: Vec::new(),
+        step: 0,
+        elapsed: Duration::ZERO,
+        particles: ParticleSystem::new(args.seed),
+        audio: None,
+        audio_mode: AudioMode::Stopped,
+        status: String::new(),
+        help: false,
+        no_audio: args.no_audio,
+        export_dir: args.export_dir.clone(),
+        cover_wav_hash: None,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// semantic shell
+// ---------------------------------------------------------------------------
+
+fn theseus_tone(model: &Model) -> Tone {
+    match model.active_count() {
+        8 => Tone::Success,
+        5..=7 => Tone::Info,
+        2..=4 => Tone::Warning,
+        _ => Tone::Danger,
     }
 }
 
-fn play_source(model: &mut Model) {
-    model.active_audio = None;
-    if let Ok(score) = model.source.melody_score() {
-        let looper = LoopingSynth::new(score, model.world.clone(), SampleRate::STUDIO);
-        let source: Box<dyn AudioSource + Send> = Box::new(looper);
-        match AudioDevice::play(source, SampleRate::STUDIO) {
-            Ok(device) => {
-                model.active_audio = Some(device);
-                model.audio_mode = AudioMode::PlayingSource;
-                model.audio_status_msg = Some("Auditioning Source Melody (A/B Test)".into());
-            }
-            Err(e) => {
-                model.audio_mode = AudioMode::Stopped;
-                model.audio_status_msg = Some(format!("Audio Device Error: {:?}", e));
-            }
-        }
+fn help_modal(model: &Model) -> Element<()> {
+    let mut col = column()
+        .child(heading("PROJECT THESEUS — operator manual"))
+        .child(text("The centre object is the CoverMap quotient. `cover()` receives the quotient and the target world, never the reference performance.").tone(Tone::Neutral))
+        .child(divider())
+        .child(text("AXES (toggle 1-8; a removed axis leaves the quotient and the bridge)").tone(Tone::Accent).emphasis(Emphasis::Strong));
+    for i in 0..8 {
+        let on = model.axes_on[i];
+        let known = model.knowledge[i] != CoverKnowledge::Unknown;
+        let state = if on {
+            "PRESERVED"
+        } else if known {
+            "PURGED"
+        } else {
+            "UNKNOWN"
+        };
+        col = col.child(
+            text(format!(
+                "[{}] {:<14} {:<11} {}",
+                i + 1,
+                AXIS_NAMES[i],
+                state,
+                AXIS_DESC[i]
+            ))
+            .tone(if on { Tone::Success } else { Tone::Neutral }),
+        );
     }
-}
-
-fn export_wavs(model: &mut Model) {
-    let mut msgs = Vec::new();
-    if let Some(comp) = &model.cover_comp {
-        let mut synth = HumanMusicSynth::new(&comp.score, &model.world, SampleRate::STUDIO);
-        let renderer = OfflineRenderer::new(SampleRate::STUDIO, 1024);
-        let result = renderer.render_seconds(&mut synth, comp.score.total_beats as f64 * (60.0 / model.world.tempo_bpm as f64));
-        let path = "/tmp/theseus_cover.wav";
-        if write_wav_i16(path, &result.audio, SampleRate::STUDIO).is_ok() {
-            msgs.push(format!("Saved {}", path));
-        }
-    }
-    if let Ok(score) = model.source.melody_score() {
-        let mut synth = HumanMusicSynth::new(&score, &model.world, SampleRate::STUDIO);
-        let renderer = OfflineRenderer::new(SampleRate::STUDIO, 1024);
-        let result = renderer.render_seconds(&mut synth, score.total_beats * (60.0 / 100.0));
-        let path = "/tmp/theseus_source.wav";
-        if write_wav_i16(path, &result.audio, SampleRate::STUDIO).is_ok() {
-            msgs.push(format!("Saved {}", path));
-        }
-    }
-    model.audio_status_msg = Some(msgs.join(" | "));
-}
-
-fn regenerate(model: &mut Model) {
-    let mut profile = CoverFidelityProfile::preset(model.preset);
-    if !model.axes_on[0] {
-        profile.motif = LineRelation::Free;
-    }
-    if !model.axes_on[1] {
-        profile.riff = LineRelation::Free;
-    }
-    if !model.axes_on[2] {
-        profile.groove = GrooveRelation::Free;
-    }
-    if !model.axes_on[3] && !model.axes_on[4] {
-        profile.harmony = HarmonyRelation::Free;
-    }
-    if !model.axes_on[5] {
-        profile.form = FormRelation::Free;
-    }
-    if !model.axes_on[6] {
-        profile.orchestration = OrchestrationRelation::Free;
-    }
-    if !model.axes_on[7] {
-        profile.bass = LineRelation::Free;
-    }
-
-    let was_playing_cover = model.audio_mode == AudioMode::PlayingCover;
-
-    match model.source.extract_fidelity(&profile, Some(model.preset), None) {
-        Ok((map, _report)) => {
-            model.quotient = Some(map.clone());
-            let target = CoverTarget {
-                world: &model.world,
-                seed: model.seed,
-                grammar: CompositionGrammar::DeflectedLift,
-                options: Default::default(),
-                profile: PerformanceProfile::BAND,
-            };
-            match cover(&map, target) {
-                Ok(comp) => {
-                    model.cover_comp = Some(comp);
-                    model.admission = None;
-                    model.error_msg = None;
-                    if was_playing_cover {
-                        play_cover(model);
-                    }
-                }
-                Err(CoverError::Rejected(admission)) => {
-                    model.cover_comp = None;
-                    model.admission = Some(*admission);
-                    model.error_msg = Some("Lawful Refusal: Invariant Violation In Target World".into());
-                    if was_playing_cover {
-                        stop_audio(model);
-                    }
-                }
-                Err(e) => {
-                    model.cover_comp = None;
-                    model.admission = None;
-                    model.error_msg = Some(format!("{:?}", e));
-                    if was_playing_cover {
-                        stop_audio(model);
-                    }
-                }
-            }
-        }
-        Err(e) => {
-            model.quotient = None;
-            model.cover_comp = None;
-            model.admission = None;
-            model.error_msg = Some(format!("Extraction error: {:?}", e));
-            if was_playing_cover {
-                stop_audio(model);
-            }
-        }
-    }
-}
-
-/// Renders a full-width real-time audio spectrum & waveform visualizer on HalfBlockCanvas.
-fn render_spectrum_banner(width: u16, time_secs: f32, tempo: f32, world_name: &str, _active_axes_count: usize) -> Element<()> {
-    let height = 3;
-    let mut canvas = HalfBlockCanvas::new(width, height);
-    let pw = canvas.pixel_width() as f32;
-    let ph = canvas.pixel_height() as f32;
-
-    let beat_phase = (time_secs * (tempo / 60.0) * std::f32::consts::PI * 2.0).sin().abs();
-
-    for x in 0..canvas.pixel_width() as i32 {
-        let x_norm = x as f32 / pw.max(1.0);
-        // Multi-harmonic spectrum bars
-        let f1 = (x_norm * 14.0 + time_secs * 3.0).sin();
-        let f2 = (x_norm * 28.0 - time_secs * 5.0).cos();
-        let f3 = (x_norm * 7.0 + time_secs * 1.5).sin();
-        let amp = ((f1 * 0.4 + f2 * 0.3 + f3 * 0.3).abs() * (0.6 + 0.4 * beat_phase)).clamp(0.05, 1.0);
-
-        let bar_h = (amp * ph).round() as i32;
-
-        for y in (canvas.pixel_height() as i32 - bar_h)..canvas.pixel_height() as i32 {
-            let y_norm = y as f32 / ph.max(1.0);
-            let rgb = match world_name {
-                "VAPOR95" => {
-                    // Sunset gradient: violet -> hot neon pink -> electric cyan
-                    let r = ((0.8 - y_norm * 0.5) * 255.0) as u8;
-                    let g = ((y_norm * 0.8) * 240.0) as u8;
-                    let b = ((0.5 + y_norm * 0.5) * 255.0) as u8;
-                    (r, g, b)
-                }
-                "BLACK_ICE" => {
-                    // Cryogenic stealth: slate -> electric laser blue -> ice white
-                    let r = ((y_norm * y_norm) * 160.0) as u8;
-                    let g = ((y_norm * 0.9) * 255.0) as u8;
-                    let b = 255;
-                    (r, g, b)
-                }
-                _ => {
-                    // SWISS_SIGNAL: pure international typographic red and crisp white
-                    if y_norm > 0.6 {
-                        (255, 255, 255)
-                    } else {
-                        (240, 20, 45)
-                    }
-                }
-            };
-            canvas.set_pixel(x, y, rgb);
-        }
-    }
-
-    raw(Node::rich_text_wrapped(canvas.to_rich_text(), WrapMode::NoWrap))
-}
-
-/// Renders a dynamic cybernetic plasma/energy field for the center quotient core.
-fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &str, active_axes_count: usize) -> Element<()> {
-    let mut canvas = HalfBlockCanvas::new(width, height);
-    let pw = canvas.pixel_width() as f32;
-    let ph = canvas.pixel_height() as f32;
-
-    let entropy_factor = (8.0 - active_axes_count as f32) / 8.0;
-    let turbulence = 1.0 + entropy_factor * 3.5;
-
-    for y in 0..canvas.pixel_height() as i32 {
-        for x in 0..canvas.pixel_width() as i32 {
-            let u = x as f32 / pw.max(1.0);
-            let v = y as f32 / ph.max(1.0);
-
-            let p = plasma(u * 5.0 * turbulence, v * 5.0 * turbulence, time_secs * 1.5, 42.0);
-            let pulse = radial_pulse(u * 4.0 - 2.0, v * 4.0 - 2.0, time_secs * 2.0);
-            let val = ((p * 0.7 + pulse * 0.3) * (0.8 + 0.2 * entropy_factor)).clamp(0.0, 1.0);
-
-            let rgb = match world_name {
-                "VAPOR95" => {
-                    if val < 0.25 {
-                        let t = val / 0.25;
-                        (
-                            (30.0 + t * 90.0) as u8,
-                            (10.0 + t * 20.0) as u8,
-                            (80.0 + t * 140.0) as u8,
-                        )
-                    } else if val < 0.6 {
-                        let t = (val - 0.25) / 0.35;
-                        (
-                            (120.0 + t * 135.0) as u8,
-                            (30.0 + t * 60.0) as u8,
-                            (220.0 - t * 40.0) as u8,
-                        )
-                    } else {
-                        let t = (val - 0.6) / 0.4;
-                        (
-                            255,
-                            (90.0 + t * 140.0) as u8,
-                            (180.0 - t * 150.0) as u8,
-                        )
-                    }
-                }
-                "BLACK_ICE" => {
-                    if val < 0.3 {
-                        let t = val / 0.3;
-                        (
-                            (5.0 + t * 15.0) as u8,
-                            (15.0 + t * 35.0) as u8,
-                            (30.0 + t * 60.0) as u8,
-                        )
-                    } else if val < 0.7 {
-                        let t = (val - 0.3) / 0.4;
-                        (
-                            (20.0 + t * 40.0) as u8,
-                            (50.0 + t * 150.0) as u8,
-                            (90.0 + t * 165.0) as u8,
-                        )
-                    } else {
-                        let t = (val - 0.7) / 0.3;
-                        (
-                            (60.0 + t * 195.0) as u8,
-                            (200.0 + t * 55.0) as u8,
-                            255,
-                        )
-                    }
-                }
-                _ => {
-                    if val < 0.5 {
-                        let t = val / 0.5;
-                        (
-                            (20.0 + t * 200.0) as u8,
-                            (10.0 + t * 15.0) as u8,
-                            (15.0 + t * 25.0) as u8,
-                        )
-                    } else {
-                        let t = (val - 0.5) / 0.5;
-                        (
-                            (220.0 + t * 35.0) as u8,
-                            (25.0 + t * 230.0) as u8,
-                            (40.0 + t * 215.0) as u8,
-                        )
-                    }
-                }
-            };
-
-            canvas.set_pixel(x, y, rgb);
-        }
-    }
-
-    raw(Node::rich_text_wrapped(canvas.to_rich_text(), WrapMode::NoWrap))
-}
-
-/// Renders a dynamic piano roll on BrailleCanvas for the notes in a track.
-fn render_piano_roll_braille(
-    notes: &[(f32, f32, i32)],
-    total_beats: f32,
-    width: u16,
-    height: u16,
-    style: Style,
-) -> Element<()> {
-    let mut canvas = BrailleCanvas::new(width, height);
-    if notes.is_empty() || total_beats <= 0.0 {
-        return raw(Node::rich_text_wrapped(canvas.to_rich_text(style), WrapMode::NoWrap));
-    }
-
-    let pw = canvas.pixel_width() as i32;
-    let ph = canvas.pixel_height() as i32;
-
-    let min_pitch = notes.iter().map(|n| n.2).min().unwrap_or(60).max(36);
-    let max_pitch = notes.iter().map(|n| n.2).max().unwrap_or(74).max(min_pitch + 12);
-    let pitch_range = (max_pitch - min_pitch).max(1) as f32;
-
-    for note in notes {
-        let x0 = ((note.0 / total_beats) * pw as f32).round() as i32;
-        let x1 = (((note.0 + note.1) / total_beats) * pw as f32).round() as i32;
-        let x1 = x1.max(x0 + 1);
-
-        let y_norm = (note.2 - min_pitch) as f32 / pitch_range;
-        let y = ph - 1 - (y_norm * (ph - 1) as f32).round() as i32;
-
-        for x in x0..x1.min(pw) {
-            canvas.set(x, y);
-            if y > 0 {
-                canvas.set(x, y - 1);
-            }
-        }
-    }
-
-    raw(Node::rich_text_wrapped(canvas.to_rich_text(style), WrapMode::NoWrap))
+    col = col
+        .child(divider())
+        .child(text("KEYS  d = WTF snap (strip identity → new music; restore one axis → recognisability)".to_string()).tone(Tone::Info))
+        .child(text("      f = fidelity regime   w = target world   s = new seed   r = reset".to_string()).tone(Tone::Info))
+        .child(text("      p/space = play cover   o = audition reference   x = export cover+source+evidence   q = quit".to_string()).tone(Tone::Info))
+        .child(divider())
+        .child(text("LAWFUL REFUSAL is a first-class outcome: a target world may reject the bridge, and the involved axes light up red.").tone(Tone::Warning))
+        .child(text("`?` toggles this manual; Esc closes it when open (otherwise Esc quits).").tone(Tone::Neutral).emphasis(Emphasis::Muted));
+    // Deliberately a non-trapping `panel`, not the library `modal`: a modal
+    // consumes every key while open (including `q`), so a lone Esc that arrives
+    // fused to the next byte in a fast input burst can strand the user inside
+    // help. This overlay teaches the same material without owning the keyboard.
+    panel("HELP").child(col)
 }
 
 fn view(model: &Model, cx: &BuildCx) -> Element<()> {
-    let term_w = cx.environment.width.max(60);
-    let time_s = model.elapsed.as_secs_f32();
-    let active_count = model.axes_on.iter().filter(|&&x| x).count();
-    let pct_preserved = (active_count as f32 / 8.0) * 100.0;
+    let w = cx.environment.width.max(24);
+    let h = cx.environment.height.max(8);
+    let params = model
+        .visual(model.elapsed.as_secs_f32(), cx.environment.color_depth);
 
-    // 1. SLEEK TOP METRIC TELEMETRY (Cyberpunk Console Header)
-    let audio_badge = match model.audio_mode {
-        AudioMode::PlayingCover => format!("▶ LIVE COVER [{}]", model.world.name),
-        AudioMode::PlayingSource => "▶ AUDITIONING REF".into(),
-        AudioMode::Stopped => "■ AUDIO MUTED".into(),
-    };
-    let audio_tone = match model.audio_mode {
-        AudioMode::PlayingCover => Tone::Success,
-        AudioMode::PlayingSource => Tone::Accent,
-        AudioMode::Stopped => Tone::Neutral,
-    };
-
-    let header_line = row()
-        .child(text("◆ PROJECT THESEUS").tone(Tone::Accent).emphasis(Emphasis::Strong))
-        .child(text(" // HUMAN_MUSIC RECOMBINANT QUOTIENT ENGINE ").tone(Tone::Neutral).emphasis(Emphasis::Muted))
-        .child(spacer())
-        .child(text(format!("[{}] ", model.world.name)).tone(Tone::Accent).emphasis(Emphasis::Strong))
-        .child(text(format!("[FIDELITY: {}] ", model.preset.label())).tone(Tone::Info).emphasis(Emphasis::Strong))
-        .child(text(format!("[SEED: {}] ", model.seed)).tone(Tone::Neutral).emphasis(Emphasis::Muted))
-        .child(text(format!("[{}] ", audio_badge)).tone(audio_tone).emphasis(Emphasis::Strong));
-
-    // Full-width real-time spectrum banner
-    let spectrum_w = term_w.saturating_sub(2).min(100);
-    let spectrum_element = render_spectrum_banner(spectrum_w, time_s, model.world.tempo_bpm, model.world.name, active_count);
-
-    // 2. THE THREE TIERS: (Reference DNA) -> (CoverMap Quotient) -> (Fresh Cover)
-
-    // --- TIER 1: REFERENCE PERFORMANCE (Beethoven 64-beat Soprano) ---
-    let ref_notes: Vec<(f32, f32, i32)> = model
-        .source
-        .voices
-        .first()
-        .map(|v| {
-            v.notes
-                .iter()
-                .map(|n| (n.at.beats() as f32, n.duration.beats() as f32, n.pitch))
-                .collect()
-        })
-        .unwrap_or_default();
-
-    let ref_beats = model.source.length.beats() as f32;
-    let col_w = (term_w / 3).max(18).min(32);
-    let ref_canvas = render_piano_roll_braille(
-        &ref_notes,
-        ref_beats,
-        col_w,
-        3,
-        Style::new().fg(Color::Rgb(0, 240, 255)),
-    );
-
-    let ref_col = column()
-        .child(text("1. REFERENCE SOURCE DNA").tone(Tone::Accent).emphasis(Emphasis::Strong))
-        .child(text("Ode to Joy (Beethoven) · 64b").tone(Tone::Neutral).emphasis(Emphasis::Muted))
-        .child(ref_canvas)
-        .child(text(format!("Meter 4/4 · D-Maj · {} Notes", ref_notes.len())).tone(Tone::Neutral).emphasis(Emphasis::Faint));
-
-    // --- TIER 3: FRESH COVER PERFORMANCE ---
-    let cover_canvas = if let Some(comp) = &model.cover_comp {
-        let cov_notes: Vec<(f32, f32, i32)> = comp
-            .score
-            .notes
-            .iter()
-            .map(|n| (n.start_beat as f32, n.dur_beats, n.pitch))
-            .collect();
-        let cov_beats = comp.score.total_beats as f32;
-        render_piano_roll_braille(
-            &cov_notes,
-            cov_beats,
-            col_w,
-            3,
-            Style::new().fg(Color::Rgb(50, 255, 120)),
-        )
-    } else {
-        render_piano_roll_braille(&[], 1.0, col_w, 3, Style::new().fg(Color::Rgb(255, 50, 50)))
-    };
-
-    let cover_col = if let Some(comp) = &model.cover_comp {
-        column()
-            .child(text(format!("3. FRESH COVER [{}]", model.world.name)).tone(Tone::Success).emphasis(Emphasis::Strong))
-            .child(text(format!("Synthesized @ {:.0} BPM · Looping", model.world.tempo_bpm)).tone(Tone::Success))
-            .child(cover_canvas)
-            .child(text(format!("Score: {} notes · Receipts: PASS", comp.score.notes.len())).tone(Tone::Neutral).emphasis(Emphasis::Faint))
-    } else {
-        let err_desc = model.error_msg.clone().unwrap_or_else(|| "World Refusal".into());
-        column()
-            .child(text("3. ⚡ LAWFUL REFUSAL ⚡").tone(Tone::Danger).emphasis(Emphasis::Strong))
-            .child(text("Target world rejected pins").tone(Tone::Danger))
-            .child(cover_canvas)
-            .child(text(err_desc).tone(Tone::Warning).emphasis(Emphasis::Strong))
-    };
-
-    // --- TIER 2: IDENTITY QUOTIENT (THE MIDDLE STAR) ---
-    let gauge_blocks = (pct_preserved / 5.0).round() as usize;
-    let filled_bar = "█".repeat(gauge_blocks);
-    let empty_bar = "░".repeat(20 - gauge_blocks);
-    let gauge_str = format!("[{}{}] {:.1}%", filled_bar, empty_bar, pct_preserved);
-
-    let identity_state_desc = if active_count == 8 {
-        "CLASSICAL IDENTITY INTACT"
-    } else if active_count >= 5 {
-        "SURFACE TRANSLATION SHIFT"
-    } else if active_count >= 2 {
-        "CRITICAL IDENTITY DRIFT"
-    } else if active_count == 1 {
-        "WTF THRESHOLD (NEW MUSIC)"
-    } else {
-        "TOTAL SHIP OF THESEUS DISSOLUTION"
-    };
-
-    let gauge_tone = if active_count >= 6 {
-        Tone::Success
-    } else if active_count >= 3 {
-        Tone::Warning
-    } else {
-        Tone::Danger
-    };
-
-    let reactor_w = (term_w.saturating_sub(4)).min(74);
-    let reactor_element = render_reactor_canvas(reactor_w, 3, time_s, model.world.name, active_count);
-
-    let mut conduit_col = column();
-    for i in 0..8 {
-        let is_on = model.axes_on[i];
-        let axis_label = AXIS_NAMES[i];
-        let key_num = i + 1;
-
-        let conduit_line = if is_on {
-            let anim_offset = ((time_s * 7.0) as usize + i * 2) % 24;
-            let mut wire = "════════════════════════".chars().collect::<Vec<_>>();
-            if anim_offset < wire.len() {
-                wire[anim_offset] = '◈';
-            }
-            let wire_str: String = wire.into_iter().collect();
-
-            row()
-                .child(
-                    text(format!("[{}] {}", key_num, axis_label))
-                        .tone(Tone::Accent)
-                        .emphasis(Emphasis::Strong),
-                )
-                .child(
-                    text(format!(" ──▶▶ {} ▶▶── ", wire_str))
-                        .tone(Tone::Success)
-                        .emphasis(Emphasis::Strong),
-                )
-                .child(text("PRESERVED").tone(Tone::Success).emphasis(Emphasis::Strong))
-        } else {
-            row()
-                .child(
-                    text(format!("[{}] {}", key_num, axis_label))
-                        .tone(Tone::Neutral)
-                        .emphasis(Emphasis::Faint),
-                )
-                .child(
-                    text(" ──⚡ ░░░░░░ [SEVERED: PURGED] ░░░░░░ ⚡── ")
-                        .tone(Tone::Danger)
-                        .emphasis(Emphasis::Faint),
-                )
-                .child(text("STRIPPED").tone(Tone::Neutral).emphasis(Emphasis::Faint))
-        };
-
-        conduit_col = conduit_col.child(conduit_line);
-    }
-
-    let middle_tier = column()
-        .child(
-            row()
-                .child(text("THESEUS GAUGE: ").tone(Tone::Neutral).emphasis(Emphasis::Strong))
-                .child(text(gauge_str).tone(gauge_tone).emphasis(Emphasis::Strong))
-                .child(spacer())
-                .child(text(identity_state_desc).tone(gauge_tone).emphasis(Emphasis::Strong)),
-        )
-        .child(reactor_element)
-        .child(conduit_col);
-
-    // 3. SLEEK CONTROL COCKPIT (Clean Keycaps, No 90s Boxes)
-    let status_text = model
-        .audio_status_msg
-        .as_ref()
-        .map(|s| text(format!(">> {}", s)).tone(Tone::Accent))
-        .unwrap_or_else(|| text(">> Ready. Press P to Stream Cover, O to Audition Reference.").tone(Tone::Neutral));
-
-    let control_hud = column()
-        .child(status_text)
-        .child(
-            row()
-                .child(text("[P/Space] Play Cover ").tone(Tone::Success).emphasis(Emphasis::Strong))
-                .child(text("| [O] Audition Ref ").tone(Tone::Accent).emphasis(Emphasis::Strong))
-                .child(text("| [1-8] Axes ").tone(Tone::Info))
-                .child(text("| [F] Fidelity ").tone(Tone::Info))
-                .child(text("| [W] World ").tone(Tone::Success))
-                .child(text("| [D] WTF Snap ").tone(Tone::Warning).emphasis(Emphasis::Strong))
-                .child(text("| [E] Export WAV ").tone(Tone::Neutral))
-                .child(text("| [Q] Quit").tone(Tone::Danger)),
-        );
-
-    // ASSEMBLE CLEAN HIGH-TECH INTERFACE
-    screen().child(
-        column()
-            .child(header_line)
-            .child(spectrum_element)
+    let compact = w < 70;
+    let header = if compact {
+        row()
+            .child(text("◆ THESEUS").tone(Tone::Accent).emphasis(Emphasis::Strong))
+            .child(spacer())
+            .child(text(format!("[{}] ", model.world.name)).tone(Tone::Info))
             .child(
-                row()
-                    .child(ref_col)
-                    .child(spacer())
-                    .child(cover_col),
+                text(format!("{:.0}%", model.theseus_pct()))
+                    .tone(theseus_tone(model))
+                    .emphasis(Emphasis::Strong),
             )
-            .child(divider())
-            .child(middle_tier)
-            .child(divider())
-            .child(control_hud),
-    )
+    } else {
+        row()
+            .child(
+                text("◆ PROJECT THESEUS")
+                    .tone(Tone::Accent)
+                    .emphasis(Emphasis::Strong),
+            )
+            .child(spacer())
+            .child(
+                text(format!("[{}] ", model.world.name))
+                    .tone(Tone::Accent)
+                    .emphasis(Emphasis::Strong),
+            )
+            .child(
+                text(format!("[{}] ", model.preset.label()))
+                    .tone(Tone::Info)
+                    .emphasis(Emphasis::Strong),
+            )
+            .child(
+                text(format!("[seed {}] ", model.seed))
+                    .tone(Tone::Neutral)
+                    .emphasis(Emphasis::Muted),
+            )
+            .child(
+                text(format!("{:.0}%", model.theseus_pct()))
+                    .tone(theseus_tone(model))
+                    .emphasis(Emphasis::Strong),
+            )
+    };
+
+    let body_h = h.saturating_sub(2).max(4);
+    let body = raw(Node::raster(build_frame(w, body_h, &params)));
+
+    let footer = if compact {
+        row().child(
+            text("[1-8][f][w][s][d][p][o][x][?][q]")
+                .tone(Tone::Neutral)
+                .emphasis(Emphasis::Muted),
+        )
+    } else {
+        row().child(
+            text("[1-8] axes [f] fidelity [w] world [s] seed [d] WTF [p] play [o] source [x] export [r] reset [?] help [q] quit")
+                .tone(Tone::Neutral)
+                .emphasis(Emphasis::Muted),
+        )
+    };
+
+    let base = column().child(header).child(body).child(footer);
+    if model.help {
+        screen().child(base).overlay(help_modal(model))
+    } else {
+        screen().child(base)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// update / input
+// ---------------------------------------------------------------------------
+
+fn regen(model: &mut Model) {
+    let was_playing = model.audio_mode == AudioMode::Cover;
+    model.regenerate();
+    if was_playing && !model.no_audio {
+        model.play_cover();
+    }
+}
+
+fn toggle_axis(model: &mut Model, i: usize) {
+    if i >= 8 {
+        return;
+    }
+    if model.axes_on[i] {
+        model.axes_on[i] = false;
+        model.spawn_sever(i);
+    } else {
+        model.axes_on[i] = true;
+    }
+    regen(model);
+}
+
+fn wtf_snap(model: &mut Model) {
+    let active = model.active_count();
+    if active > 1 {
+        // strip identity: leave a single surviving axis
+        model.axes_on = [false; 8];
+        model.axes_on[0] = true;
+        for i in 1..8 {
+            model.spawn_sever(i);
+        }
+    } else if model.axes_on[0] {
+        // nothing left — "new music"
+        model.axes_on = [false; 8];
+        model.spawn_sever(0);
+    } else {
+        // restore the motif — recognisability snaps back
+        model.axes_on[0] = true;
+    }
+    regen(model);
+}
+
+/// Apply one key. Returns `true` when the application should quit.
+fn handle_key(model: &mut Model, k: KeyEvent) -> bool {
+    match k.code {
+        KeyCode::Char('q') => {
+            model.stop_audio();
+            model.help = false;
+            return true;
+        }
+        KeyCode::Esc => {
+            // Esc closes the manual when it is open, otherwise it quits.
+            if model.help {
+                model.help = false;
+            } else {
+                model.stop_audio();
+                return true;
+            }
+        }
+        KeyCode::Char('?') | KeyCode::Char('h') => {
+            model.help = !model.help;
+        }
+        KeyCode::Char(c @ '1'..='8') => {
+            toggle_axis(model, (c as u8 - b'1') as usize);
+        }
+        KeyCode::Char('f') => {
+            model.preset = match model.preset {
+                CoverFidelityPreset::Loose => CoverFidelityPreset::Interpretive,
+                CoverFidelityPreset::Interpretive => CoverFidelityPreset::Faithful,
+                CoverFidelityPreset::Faithful => CoverFidelityPreset::Strict,
+                CoverFidelityPreset::Strict => CoverFidelityPreset::Loose,
+            };
+            regen(model);
+        }
+        KeyCode::Char('w') => {
+            model.world = match model.world.name {
+                "VAPOR95" => MusicWorld::black_ice(),
+                "BLACK_ICE" => MusicWorld::swiss_signal(),
+                _ => MusicWorld::vapor95(),
+            };
+            regen(model);
+        }
+        KeyCode::Char('s') => {
+            model.seed = model.seed.wrapping_add(314_159);
+            regen(model);
+        }
+        KeyCode::Char('r') => {
+            model.axes_on = [true; 8];
+            model.preset = CoverFidelityPreset::Interpretive;
+            regen(model);
+        }
+        KeyCode::Char('d') => wtf_snap(model),
+        KeyCode::Char('p') | KeyCode::Char(' ') => {
+            if model.audio_mode == AudioMode::Cover {
+                model.stop_audio();
+            } else {
+                model.play_cover();
+            }
+        }
+        KeyCode::Char('o') => {
+            if model.audio_mode == AudioMode::Source {
+                model.stop_audio();
+            } else {
+                model.play_source();
+            }
+        }
+        KeyCode::Char('x') => match model.export() {
+            Ok(files) => println!("{}", files.join("\n")),
+            Err(e) => model.status = format!("export failed: {e}"),
+        },
+        _ => {}
+    }
+    false
 }
 
 fn update(model: &mut Model, event: AppEvent<()>) -> Control {
     match event {
         AppEvent::Tick(elapsed) => {
             model.elapsed = elapsed;
-            Control::Continue
+            model.tick(1.0 / 30.0);
         }
         AppEvent::Input(Event::Key(k)) => {
-            match k.code {
-                KeyCode::Char('q') | KeyCode::Esc => {
-                    stop_audio(model);
-                    return Control::Quit;
-                }
-                KeyCode::Char('p') | KeyCode::Char(' ') => {
-                    if model.audio_mode == AudioMode::PlayingCover {
-                        stop_audio(model);
-                    } else {
-                        play_cover(model);
-                    }
-                }
-                KeyCode::Char('o') => {
-                    if model.audio_mode == AudioMode::PlayingSource {
-                        stop_audio(model);
-                    } else {
-                        play_source(model);
-                    }
-                }
-                KeyCode::Char('e') => {
-                    export_wavs(model);
-                }
-                KeyCode::Char('f') => {
-                    model.preset = match model.preset {
-                        CoverFidelityPreset::Loose => CoverFidelityPreset::Interpretive,
-                        CoverFidelityPreset::Interpretive => CoverFidelityPreset::Faithful,
-                        CoverFidelityPreset::Faithful => CoverFidelityPreset::Strict,
-                        CoverFidelityPreset::Strict => CoverFidelityPreset::Loose,
-                    };
-                    regenerate(model);
-                }
-                KeyCode::Char('1') => {
-                    model.axes_on[0] = !model.axes_on[0];
-                    regenerate(model);
-                }
-                KeyCode::Char('2') => {
-                    model.axes_on[1] = !model.axes_on[1];
-                    regenerate(model);
-                }
-                KeyCode::Char('3') => {
-                    model.axes_on[2] = !model.axes_on[2];
-                    regenerate(model);
-                }
-                KeyCode::Char('4') => {
-                    model.axes_on[3] = !model.axes_on[3];
-                    regenerate(model);
-                }
-                KeyCode::Char('5') => {
-                    model.axes_on[4] = !model.axes_on[4];
-                    regenerate(model);
-                }
-                KeyCode::Char('6') => {
-                    model.axes_on[5] = !model.axes_on[5];
-                    regenerate(model);
-                }
-                KeyCode::Char('7') => {
-                    model.axes_on[6] = !model.axes_on[6];
-                    regenerate(model);
-                }
-                KeyCode::Char('8') => {
-                    model.axes_on[7] = !model.axes_on[7];
-                    regenerate(model);
-                }
-                KeyCode::Char('w') => {
-                    if model.world.name == "VAPOR95" {
-                        model.world = MusicWorld::black_ice();
-                    } else if model.world.name == "BLACK_ICE" {
-                        model.world = MusicWorld::swiss_signal();
-                    } else {
-                        model.world = MusicWorld::vapor95();
-                    }
-                    regenerate(model);
-                }
-                KeyCode::Char('s') => {
-                    model.seed = model.seed.wrapping_add(314159);
-                    regenerate(model);
-                }
-                KeyCode::Char('r') => {
-                    model.axes_on = [true; 8];
-                    model.preset = CoverFidelityPreset::Interpretive;
-                    regenerate(model);
-                }
-                KeyCode::Char('d') => {
-                    if model.axes_on.iter().filter(|&&x| x).count() > 1 {
-                        model.axes_on = [false; 8];
-                        model.axes_on[0] = true;
-                    } else if model.axes_on[0] {
-                        model.axes_on[0] = false;
-                    } else {
-                        model.axes_on[0] = true;
-                    }
-                    regenerate(model);
-                }
-                _ => {}
+            if handle_key(model, k) {
+                return Control::Quit;
             }
-            Control::Continue
         }
-        _ => Control::Continue,
+        AppEvent::Action(_) => {
+            // Dispatched by the help modal's dismiss binding.
+            model.help = false;
+        }
+        _ => {}
+    }
+    Control::Continue
+}
+
+// ---------------------------------------------------------------------------
+// capture helpers
+// ---------------------------------------------------------------------------
+
+fn build_node(model: &Model, args: &Args, w: u16, h: u16, depth: ColorDepth) -> Node {
+    let skin = skin_for(&model.world, args.skin.as_deref());
+    let env = UiEnvironment {
+        width: w,
+        height: h,
+        color_depth: depth,
+        glyph_mode: model.glyph.subcell(),
+        motion: MotionPreference::None,
+    };
+    let cx = BuildCx::new(skin, env);
+    match compile(&view(model, &cx), &cx) {
+        Ok(c) => c.node,
+        Err(e) => Node::text(format!("compile error: {e}"), gibson::cell::Style::new()),
     }
 }
 
-fn main() -> io::Result<()> {
-    let args = Args::parse();
+fn capture(model: &Model, args: &Args, w: u16, h: u16, depth: ColorDepth, ansi: bool) -> io::Result<String> {
+    let node = build_node(model, args, w, h, depth);
+    let mut ctx = Context::headless(RenderMode::Fullscreen, w, h);
+    ctx.set_color_depth(depth);
+    ctx.set_root(node);
+    ctx.render()?;
+    if ansi {
+        Ok(ctx.take_output())
+    } else {
+        Ok(ctx.last_frame_lines().join("\n"))
+    }
+}
 
-    let tsv = std::fs::read_to_string(&args.fixture).unwrap_or_else(|_| "".into());
-    let ref_song = ReferenceSong::from_tsv(&tsv, "sop")
-        .or_else(|_| ReferenceSong::from_tsv(&tsv, "lead"))
-        .expect("Failed to load reference TSV fixture");
-
-    let initial_world = match args.world.to_uppercase().as_str() {
-        "BLACK_ICE" => MusicWorld::black_ice(),
-        "SWISS_SIGNAL" => MusicWorld::swiss_signal(),
-        _ => MusicWorld::vapor95(),
-    };
-
-    let initial_fidelity = match args.fidelity.to_lowercase().as_str() {
-        "loose" => CoverFidelityPreset::Loose,
-        "faithful" => CoverFidelityPreset::Faithful,
-        "strict" => CoverFidelityPreset::Strict,
-        _ => CoverFidelityPreset::Interpretive,
-    };
-
-    let mut model = Model {
-        source: ref_song,
-        world: initial_world,
-        seed: args.seed,
-        preset: initial_fidelity,
-        axes_on: [true; 8],
-        quotient: None,
-        admission: None,
-        cover_comp: None,
-        error_msg: None,
-        elapsed: Duration::ZERO,
-        active_audio: None,
-        audio_mode: AudioMode::Stopped,
-        audio_status_msg: None,
-    };
-
-    regenerate(&mut model);
-
-    // Auto-start live looping audio stream of the freshly synthesized cover
-    play_cover(&mut model);
-
-    App::fullscreen().skin(skins::VAPOR95).run(model, update, view)?;
+fn run_headless(model: &mut Model, args: &Args, format: &str) -> io::Result<()> {
+    let (w, h) = parse_geometry(&args.geometry).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+    let depth = parse_capability(&args.capability);
+    match format.to_lowercase().as_str() {
+        "json" => {
+            print!("{}", headless_json(model, args, w, h, depth));
+        }
+        "ppm" => {
+            let params = model.visual(model.elapsed.as_secs_f32(), depth);
+            let raster = identity_raster(w, h.saturating_sub(2).max(2), &params);
+            std::fs::create_dir_all(&model.export_dir)?;
+            let path = model
+                .export_dir
+                .join(format!("theseus_identity_{}x{}.ppm", w, h));
+            let mut file = std::fs::File::create(&path)?;
+            raster.write_ppm(&mut file)?;
+            println!("wrote {}", path.display());
+        }
+        "ansi" | "raw" => {
+            io::stdout().write_all(capture(model, args, w, h, depth, true)?.as_bytes())?;
+        }
+        _ => {
+            println!("{}", capture(model, args, w, h, depth, false)?);
+        }
+    }
     Ok(())
 }
+
+fn headless_json(model: &Model, args: &Args, w: u16, h: u16, _depth: ColorDepth) -> String {
+    let outcome = match &model.refusal {
+        Some(r) => format!(
+            "{{\"outcome\":\"refused\",\"kind\":\"{}\",\"reason\":\"{}\"}}",
+            esc(r.kind),
+            esc(&r.reason)
+        ),
+        None => match (&model.cover_comp, model.receipt_pass) {
+            (Some(c), receipt) => format!(
+                "{{\"outcome\":\"covered\",\"notes\":{},\"receipt\":{}}}",
+                c.score.notes.len(),
+                receipt.unwrap_or(false)
+            ),
+            _ => "{\"outcome\":\"none\"}".to_string(),
+        },
+    };
+    let state = format!(
+        "{{\"world\":\"{}\",\"fidelity\":\"{}\",\"seed\":{},\"axes\":\"{}\",\"theseus_pct\":{:.1},\"harmony_derived\":{},\"geometry\":\"{}x{}\",\"capability\":\"{}\",\"glyphs\":\"{}\"}}",
+        model.world.name,
+        model.preset.label(),
+        model.seed,
+        model.axes_string(),
+        model.theseus_pct(),
+        model.derived.is_some(),
+        w,
+        h,
+        args.capability,
+        model.glyph.label(),
+    );
+    format!(
+        "{{\"application\":\"project-theseus\",\"libgibson\":\"v0.4.0\",\"state\":{state},\"current\":{outcome},\"evidence\":\n{}\n}}\n",
+        model.evidence_json()
+    )
+}
+
+fn esc(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+// ---------------------------------------------------------------------------
+// script replay / input log
+// ---------------------------------------------------------------------------
+
+fn run_script(model: &mut Model, args: &Args) -> io::Result<()> {
+    let mut keys: Vec<char> = Vec::new();
+    if let Some(s) = &args.script {
+        keys.extend(s.chars().filter(|c| !c.is_whitespace()));
+    }
+    if let Some(path) = &args.replay {
+        let text = std::fs::read_to_string(path)?;
+        keys.extend(text.chars().filter(|c| !c.is_whitespace() && *c != '\n'));
+    }
+
+    let (w, h) = parse_geometry(&args.geometry).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+    let depth = parse_capability(&args.capability);
+
+    let mut log = Vec::new();
+    println!("== script start: {} keys, geometry {}x{}, {} ==", keys.len(), w, h, args.capability);
+    for (step, &ch) in keys.iter().enumerate() {
+        model.elapsed = Duration::from_secs_f32(step as f32 * 0.1);
+        model.tick(0.1);
+        let quit = handle_key(model, KeyEvent::char(ch));
+        log.push(ch);
+        println!(
+            "-- step {} key={:?} world={} fidelity={} axes={} step#={} outcome={} --",
+            step + 1,
+            ch,
+            model.world.name,
+            model.preset.label(),
+            model.axes_string(),
+            model.step,
+            model.outcome_tag(),
+        );
+        println!("{}", capture(model, args, w, h, depth, false)?);
+        if quit {
+            println!("-- script quit at step {} --", step + 1);
+            break;
+        }
+    }
+    if let Some(path) = &args.record {
+        let text: String = log.iter().collect();
+        std::fs::write(path, text)?;
+        println!("-- recorded {} keys to {} --", log.len(), path.display());
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// geometry × capability × glyph matrix
+// ---------------------------------------------------------------------------
+
+fn run_matrix(model: &mut Model, args: &Args) -> io::Result<()> {
+    let geometries = [(42u16, 15u16), (60, 20), (80, 24), (120, 40), (160, 50)];
+    let caps = [
+        ("truecolor", ColorDepth::TrueColor),
+        ("ansi256", ColorDepth::Ansi256),
+        ("ansi16", ColorDepth::Ansi16),
+        ("mono", ColorDepth::Mono),
+    ];
+    let glyphs = [
+        ("halfblock", GlyphMode::HalfBlock),
+        ("block", GlyphMode::Block),
+        ("braille", GlyphMode::Braille),
+        ("ascii", GlyphMode::Ascii),
+    ];
+
+    println!("geometry\tcapability\tglyphs\tlines\tnonblank\tquotient\taxes\trefusal\tstatus");
+    let mut failures = 0usize;
+    for (gw, gh) in geometries {
+        for (cap_name, cap) in caps {
+            for (glyph_name, glyph) in glyphs {
+                let saved = model.glyph;
+                model.glyph = glyph;
+                let frame = capture(model, args, gw, gh, cap, false)?;
+                model.glyph = saved;
+                let lines = frame.lines().count();
+                let nonblank = frame
+                    .lines()
+                    .filter(|l| l.chars().any(|c| !c.is_whitespace()))
+                    .count();
+                let has_quotient = frame.contains("IDENTITY QUOTIENT") || frame.contains("QUOTIENT");
+                let has_axes = frame.contains("PRESERVATION DIMENSIONS");
+                let has_refusal = frame.contains("REFUSAL");
+                let ok = lines >= (gh as usize).saturating_sub(2) && nonblank > 0 && has_quotient;
+                if !ok {
+                    failures += 1;
+                }
+                println!(
+                    "{}x{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+                    gw,
+                    gh,
+                    cap_name,
+                    glyph_name,
+                    lines,
+                    nonblank,
+                    has_quotient,
+                    has_axes,
+                    has_refusal,
+                    if ok { "OK" } else { "FAIL" }
+                );
+            }
+        }
+    }
+    println!("-- matrix failures: {failures} --");
+    if failures > 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!("{failures} matrix cell(s) failed the visibility gate"),
+        ));
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// entry point
+// ---------------------------------------------------------------------------
+
+fn main() -> io::Result<()> {
+    let args = Args::parse();
+    let mut model = build_model(&args)?;
+    model.regenerate();
+
+    if args.matrix {
+        return run_matrix(&mut model, &args);
+    }
+    if let Some(format) = args.headless.clone() {
+        return run_headless(&mut model, &args, &format);
+    }
+    if args.script.is_some() || args.replay.is_some() || args.record.is_some() {
+        return run_script(&mut model, &args);
+    }
+
+    if !args.no_audio {
+        model.play_cover();
+    }
+    let skin = skin_for(&model.world, args.skin.as_deref());
+    App::fullscreen().skin(skin).run(model, update, view)?;
+    Ok(())
+}
+
+// Silence "unused" for the public axis index helper shared with tests.
+#[allow(dead_code)]
+fn axis_display_index(axis: gibson::audio::human_music::cover::CoverAxis) -> Option<usize> {
+    display_index(axis)
+}
+
+#[allow(dead_code)]
+const _DISPLAY_AXES: [gibson::audio::human_music::cover::CoverAxis; 8] = DISPLAY_AXES;

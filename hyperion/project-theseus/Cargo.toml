@@ -10,3 +10,10 @@ rand = "0.8"
 
 [dev-dependencies]
 portable-pty = "0.9"
+
+# The reactor rasterizes every frame with transcendental-heavy per-pixel math.
+# Even at `opt-level = 1` this app is ~10x faster than the unoptimized dev
+# default, which keeps the interactive loop and the PTY harness responsive while
+# preserving fast incremental compiles.
+[profile.dev]
+opt-level = 1
