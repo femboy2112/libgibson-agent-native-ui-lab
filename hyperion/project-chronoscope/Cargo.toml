@@ -12,11 +12,11 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 # Released API only: git tag, no path override, no [patch], no branch dependency.
 libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.4.0" }
+libc = "0.2"
 
 [dev-dependencies]
 portable-pty = "0.9"
 vt100 = "0.16"
-libc = "0.2"
 
 [profile.release]
 opt-level = 3

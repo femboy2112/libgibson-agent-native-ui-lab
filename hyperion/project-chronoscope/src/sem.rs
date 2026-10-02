@@ -52,7 +52,10 @@ pub fn dim_short(i: usize) -> String {
 
 /// Dimensions that are bookkeeping, excluded from the semantic projection.
 pub fn dim_is_semantic(i: usize) -> bool {
-    !matches!(dim_kind(i), DimKind::Var(V_TICKS) | DimKind::Var(V_OUT) | DimKind::Var(V_LEDGER))
+    !matches!(
+        dim_kind(i),
+        DimKind::Var(V_TICKS) | DimKind::Var(V_OUT) | DimKind::Var(V_LEDGER)
+    )
 }
 
 fn task_code(s: TStatus) -> (i32, i32) {
@@ -88,6 +91,7 @@ fn load_band(l: i32) -> i32 {
 }
 
 /// `(raw, class)` for every dimension of a machine state.
+#[allow(clippy::needless_range_loop)]
 pub fn dims(m: &Machine) -> [(i32, i32); NDIM] {
     let mut out = [(0, 0); NDIM];
     for v in 0..NVARS {
@@ -120,7 +124,10 @@ pub fn dims(m: &Machine) -> [(i32, i32); NDIM] {
     }
     for l in 0..NLOCKS {
         let owner = m.locks[l].owner.map(|o| o as i32 + 1).unwrap_or(0);
-        out[NVARS + MAX_TASKS + l] = (owner * 10 + m.locks[l].waiters.len() as i32, (owner != 0) as i32);
+        out[NVARS + MAX_TASKS + l] = (
+            owner * 10 + m.locks[l].waiters.len() as i32,
+            (owner != 0) as i32,
+        );
     }
     for c in 0..NCHAN {
         let n = m.chans[c].q.len() as i32;

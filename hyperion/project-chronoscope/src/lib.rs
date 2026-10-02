@@ -1,5 +1,13 @@
+pub mod app;
+pub mod audio;
+pub mod bench;
+pub mod demo;
+pub mod director;
+pub mod driver;
 pub mod epoch;
 pub mod fixture;
 pub mod history;
 pub mod sem;
+pub mod ui;
+pub mod view3d;
 pub mod vm;

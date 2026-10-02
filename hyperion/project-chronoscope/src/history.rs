@@ -100,7 +100,11 @@ fn make_rec(m: &Machine, ev: StepEvent, epoch: Epoch) -> Rec {
             m.locks[0].owner.map(|o| o + 1).unwrap_or(0),
             m.locks[1].owner.map(|o| o + 1).unwrap_or(0),
         ],
-        qlen: [m.chans[0].q.len() as u8, m.chans[1].q.len() as u8, m.chans[2].q.len() as u8],
+        qlen: [
+            m.chans[0].q.len() as u8,
+            m.chans[1].q.len() as u8,
+            m.chans[2].q.len() as u8,
+        ],
         dead: !m.deadlocked_tasks().is_empty(),
     }
 }
@@ -178,7 +182,10 @@ pub struct Retention {
 
 impl Default for Retention {
     fn default() -> Self {
-        Retention { max_resident_recs: 60_000, max_branches: 4096 }
+        Retention {
+            max_resident_recs: 60_000,
+            max_branches: 4096,
+        }
     }
 }
 
@@ -214,7 +221,11 @@ impl History {
             edit: Edit::None,
             script,
             recs: vec![],
-            ckpts: vec![Ckpt { pos: 0, m: m.clone(), tr: tr.clone() }],
+            ckpts: vec![Ckpt {
+                pos: 0,
+                m: m.clone(),
+                tr: tr.clone(),
+            }],
             frontier: (m, tr),
             terminal: None,
             residency: Residency::Resident,
@@ -270,7 +281,11 @@ impl History {
                     spans_push(&mut br.spans, ev.step, e);
                     br.recs.push(make_rec(m, ev, e));
                     if pos % CKPT_EVERY == 0 {
-                        br.ckpts.push(Ckpt { pos, m: m.clone(), tr: tr.clone() });
+                        br.ckpts.push(Ckpt {
+                            pos,
+                            m: m.clone(),
+                            tr: tr.clone(),
+                        });
                     }
                     done += 1;
                 }
@@ -296,20 +311,31 @@ impl History {
     }
 
     /// Exact state at position `pos` on branch `b`, by checkpoint + deterministic replay.
-    pub fn machine_at(&mut self, b: BranchId, pos: u32) -> Result<(Machine, EpochTracker), HistoryError> {
+    pub fn machine_at(
+        &mut self,
+        b: BranchId,
+        pos: u32,
+    ) -> Result<(Machine, EpochTracker), HistoryError> {
         if b as usize >= self.branches.len() {
             return Err(HistoryError::NoSuchBranch);
         }
         let first = self.branches[b as usize].first();
         if pos < first {
-            let p = self.branches[b as usize].parent.ok_or(HistoryError::BadPosition)?;
+            let p = self.branches[b as usize]
+                .parent
+                .ok_or(HistoryError::BadPosition)?;
             return self.machine_at(p, pos);
         }
         if pos > self.branches[b as usize].end() {
             return Err(HistoryError::BadPosition);
         }
         let br = &self.branches[b as usize];
-        let c = br.ckpts.iter().rev().find(|c| c.pos <= pos).ok_or(HistoryError::BadPosition)?;
+        let c = br
+            .ckpts
+            .iter()
+            .rev()
+            .find(|c| c.pos <= pos)
+            .ok_or(HistoryError::BadPosition)?;
         let (mut m, mut tr) = (c.m.clone(), c.tr.clone());
         let script = br.script.clone();
         let mut n = 0u64;
@@ -354,12 +380,20 @@ impl History {
             spans_push(&mut spans, ev.step, e);
             recs.push(make_rec(&m, ev, e));
             if m.step % CKPT_EVERY == 0 {
-                ckpts.push(Ckpt { pos: m.step, m: m.clone(), tr: tr.clone() });
+                ckpts.push(Ckpt {
+                    pos: m.step,
+                    m: m.clone(),
+                    tr: tr.clone(),
+                });
             }
             n += 1;
         }
         let br = &mut self.branches[b as usize];
-        debug_assert_eq!(br.frontier.0.digest_full(), m.digest_full(), "replay must reproduce the frontier");
+        debug_assert_eq!(
+            br.frontier.0.digest_full(),
+            m.digest_full(),
+            "replay must reproduce the frontier"
+        );
         br.recs = recs;
         br.ckpts = ckpts;
         br.spans = spans;
@@ -403,7 +437,11 @@ impl History {
             let victim = self
                 .branches
                 .iter()
-                .filter(|b| b.residency == Residency::Resident && !keep.contains(&b.id) && !b.recs.is_empty())
+                .filter(|b| {
+                    b.residency == Residency::Resident
+                        && !keep.contains(&b.id)
+                        && !b.recs.is_empty()
+                })
                 .min_by_key(|b| b.last_used)
                 .map(|b| b.id);
             match victim {
@@ -414,7 +452,12 @@ impl History {
     }
 
     /// The script that results from applying `edit` at position `at` to `parent`'s script.
-    pub fn apply_edit(&self, parent: BranchId, at: u32, edit: &Edit) -> Result<Script, HistoryError> {
+    pub fn apply_edit(
+        &self,
+        parent: BranchId,
+        at: u32,
+        edit: &Edit,
+    ) -> Result<Script, HistoryError> {
         let p = &self.branches[parent as usize];
         let mut inputs: Vec<Input> = p
             .script
@@ -435,11 +478,17 @@ impl History {
                     return Err(HistoryError::ValueOutOfRange);
                 }
                 inputs.retain(|i| !(i.at == at && matches!(i.kind, InputKind::Override(_))));
-                inputs.push(Input { at, kind: InputKind::Override(*v) });
+                inputs.push(Input {
+                    at,
+                    kind: InputKind::Override(*v),
+                });
             }
             Edit::InsertCmd(c) => {
                 inputs.retain(|i| !(i.at == at && matches!(i.kind, InputKind::Cmd(_))));
-                inputs.push(Input { at, kind: InputKind::Cmd(*c) });
+                inputs.push(Input {
+                    at,
+                    kind: InputKind::Cmd(*c),
+                });
             }
             Edit::DropCmd => {
                 let before = inputs.len();
@@ -465,7 +514,12 @@ impl History {
     }
 
     /// Fork `parent` at position `at` with `edit`. The old future stays where it is.
-    pub fn fork(&mut self, parent: BranchId, at: u32, edit: Edit) -> Result<BranchId, HistoryError> {
+    pub fn fork(
+        &mut self,
+        parent: BranchId,
+        at: u32,
+        edit: Edit,
+    ) -> Result<BranchId, HistoryError> {
         if parent as usize >= self.branches.len() {
             return Err(HistoryError::NoSuchBranch);
         }
@@ -485,7 +539,11 @@ impl History {
         let label = branch_label(id);
         let seq = self.branches.len() as u32;
         self.clock += 1;
-        let first_ckpt = Ckpt { pos: at, m: m.clone(), tr: tr.clone() };
+        let first_ckpt = Ckpt {
+            pos: at,
+            m: m.clone(),
+            tr: tr.clone(),
+        };
         self.branches.push(Branch {
             id,
             label,
@@ -570,8 +628,15 @@ pub fn landmarks(h: &History, b: BranchId) -> Vec<Landmark> {
         out.push(Landmark {
             pos: br.fork_at,
             kind: LandmarkKind::Fork,
-            text: format!("fork of {} · {}", h.branch(br.parent.unwrap_or(0)).label, br.edit.describe()),
-            epoch: h.rec_at(b, br.fork_at.saturating_sub(1)).map(|r| r.epoch).unwrap_or(Epoch::Stable),
+            text: format!(
+                "fork of {} · {}",
+                h.branch(br.parent.unwrap_or(0)).label,
+                br.edit.describe()
+            ),
+            epoch: h
+                .rec_at(b, br.fork_at.saturating_sub(1))
+                .map(|r| r.epoch)
+                .unwrap_or(Epoch::Stable),
         });
     }
     let end = br.end();
@@ -580,17 +645,23 @@ pub fn landmarks(h: &History, b: BranchId) -> Vec<Landmark> {
         let Some(r) = h.rec_at(b, s) else { continue };
         let pos = s + 1;
         if r.epoch != prev {
-            out.push(Landmark { pos, kind: LandmarkKind::Epoch, text: format!("→ {}", r.epoch.name()), epoch: r.epoch });
+            out.push(Landmark {
+                pos,
+                kind: LandmarkKind::Epoch,
+                text: format!("→ {}", r.epoch.name()),
+                epoch: r.epoch,
+            });
             prev = r.epoch;
         }
         let ev = &r.ev;
         if ev.flags & F_INPUT != 0 {
-            let cmd = br
-                .script
-                .cmd_at(s)
-                .map(|(_, c)| cmd_name(c))
-                .unwrap_or("?");
-            out.push(Landmark { pos, kind: LandmarkKind::Input, text: format!("input {cmd}"), epoch: r.epoch });
+            let cmd = br.script.cmd_at(s).map(|(_, c)| cmd_name(c)).unwrap_or("?");
+            out.push(Landmark {
+                pos,
+                kind: LandmarkKind::Input,
+                text: format!("input {cmd}"),
+                epoch: r.epoch,
+            });
         }
         if ev.class == Class::Fate {
             let what = match (ev.task, ev.pc) {
@@ -600,13 +671,26 @@ pub fn landmarks(h: &History, b: BranchId) -> Vec<Landmark> {
                 _ => None,
             };
             if let Some(w) = what {
-                out.push(Landmark { pos, kind: LandmarkKind::Fate, text: format!("fate: {w}"), epoch: r.epoch });
+                out.push(Landmark {
+                    pos,
+                    kind: LandmarkKind::Fate,
+                    text: format!("fate: {w}"),
+                    epoch: r.epoch,
+                });
             }
         }
         if ev.class == Class::Mark {
             let t = ev.aux as u8;
-            if matches!(t, M_RESTART | M_STEAL | M_SCRAM | M_RECONCILE | M_AUDIT_FAIL | M_NUDGE) {
-                out.push(Landmark { pos, kind: LandmarkKind::Event, text: mark_name(t).to_string(), epoch: r.epoch });
+            if matches!(
+                t,
+                M_RESTART | M_STEAL | M_SCRAM | M_RECONCILE | M_AUDIT_FAIL | M_NUDGE
+            ) {
+                out.push(Landmark {
+                    pos,
+                    kind: LandmarkKind::Event,
+                    text: mark_name(t).to_string(),
+                    epoch: r.epoch,
+                });
             }
         }
         if ev.class == Class::Fail {
@@ -618,10 +702,20 @@ pub fn landmarks(h: &History, b: BranchId) -> Vec<Landmark> {
             });
         }
         if ev.flags & F_CATASTROPHE != 0 {
-            out.push(Landmark { pos, kind: LandmarkKind::Catastrophe, text: "MELTDOWN".into(), epoch: Epoch::Catastrophe });
+            out.push(Landmark {
+                pos,
+                kind: LandmarkKind::Catastrophe,
+                text: "MELTDOWN".into(),
+                epoch: Epoch::Catastrophe,
+            });
         }
         if pos % CKPT_EVERY == 0 {
-            out.push(Landmark { pos, kind: LandmarkKind::Checkpoint, text: format!("checkpoint @{pos}"), epoch: r.epoch });
+            out.push(Landmark {
+                pos,
+                kind: LandmarkKind::Checkpoint,
+                text: format!("checkpoint @{pos}"),
+                epoch: r.epoch,
+            });
         }
     }
     out.sort_by_key(|l| (l.pos, l.kind));
@@ -667,9 +761,12 @@ pub fn compare(h: &History, a: BranchId, b: BranchId) -> Option<Compare> {
         let rb = h.rec_at(b, s)?;
         let ea = &ra.ev;
         let eb = &rb.ev;
-        let dv = (ea.task, ea.pc, ea.class, ea.obj, ea.before, ea.after, ea.aux)
-            != (eb.task, eb.pc, eb.class, eb.obj, eb.before, eb.after, eb.aux)
-            || (ea.flags & (F_INPUT | F_OVERRIDDEN)) != (eb.flags & (F_INPUT | F_OVERRIDDEN));
+        let dv = (
+            ea.task, ea.pc, ea.class, ea.obj, ea.before, ea.after, ea.aux,
+        ) != (
+            eb.task, eb.pc, eb.class, eb.obj, eb.before, eb.after, eb.aux,
+        ) || (ea.flags & (F_INPUT | F_OVERRIDDEN))
+            != (eb.flags & (F_INPUT | F_OVERRIDDEN));
         diverged[s as usize] = dv;
         if dv && first_div.is_none() {
             first_div = Some(s);
@@ -686,19 +783,31 @@ pub fn compare(h: &History, a: BranchId, b: BranchId) -> Option<Compare> {
         let mut root = None;
         if diverged[s as usize] {
             let dep_diverged = [&ra.ev, &rb.ev].iter().any(|e| {
-                [e.parents[0], e.parents[1], e.parents[2]]
-                    .iter()
-                    .any(|&p| p != NONE && p & 0x8000_0000 == 0 && (p as usize) < diverged.len() && diverged[p as usize])
+                [e.parents[0], e.parents[1], e.parents[2]].iter().any(|&p| {
+                    p != NONE
+                        && p & 0x8000_0000 == 0
+                        && (p as usize) < diverged.len()
+                        && diverged[p as usize]
+                })
             });
             if !dep_diverged {
                 let intervention = (ra.ev.flags | rb.ev.flags) & (F_INPUT | F_OVERRIDDEN) != 0
                     && ((ra.ev.flags ^ rb.ev.flags) & (F_INPUT | F_OVERRIDDEN) != 0
                         || ra.ev.after != rb.ev.after
                         || ra.ev.flags & F_INPUT != 0);
-                root = Some(if intervention { RootKind::Intervention } else { RootKind::Reorder });
+                root = Some(if intervention {
+                    RootKind::Intervention
+                } else {
+                    RootKind::Reorder
+                });
             }
         }
-        rows.push(CompareRow { verdict, rel, diverged_event: diverged[s as usize], root });
+        rows.push(CompareRow {
+            verdict,
+            rel,
+            diverged_event: diverged[s as usize],
+            root,
+        });
     }
     // last run of non-divergent verdicts after the first divergence
     let mut run: Option<(u32, u32)> = None;
@@ -716,9 +825,16 @@ pub fn compare(h: &History, a: BranchId, b: BranchId) -> Option<Compare> {
             }
         }
     }
-    Some(Compare { a, b, rows, first_divergence: first_div, last_converged_run: run })
+    Some(Compare {
+        a,
+        b,
+        rows,
+        first_divergence: first_div,
+        last_converged_run: run,
+    })
 }
 
+#[allow(clippy::needless_range_loop)]
 fn rel_from_recs(a: &Rec, b: &Rec) -> [Rel; NDIM] {
     let mut out = [Rel::Same; NDIM];
     for v in 0..NVARS {
@@ -804,7 +920,11 @@ pub fn ancestry(h: &History, b: BranchId, step: u32, limit: usize) -> Vec<(u32, 
     let mut out: Vec<(u32, u8)> = vec![];
     let mut frontier = vec![(step, 0u8)];
     let mut seen = std::collections::BTreeSet::new();
-    while let Some((s, d)) = if frontier.is_empty() { None } else { Some(frontier.remove(0)) } {
+    while let Some((s, d)) = if frontier.is_empty() {
+        None
+    } else {
+        Some(frontier.remove(0))
+    } {
         if !seen.insert(s) {
             continue;
         }

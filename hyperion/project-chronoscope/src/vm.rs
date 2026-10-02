@@ -71,8 +71,14 @@ pub const T_SENSOR: u8 = 2;
 pub const T_OPERATOR: u8 = 3;
 pub const T_SUPERVISOR: u8 = 4;
 pub const T_AUDITOR: u8 = 5;
-pub const TASK_NAMES: [&str; MAX_TASKS] =
-    ["REACTOR", "COOLER", "SENSOR", "OPERATOR", "SUPERVISOR", "AUDITOR"];
+pub const TASK_NAMES: [&str; MAX_TASKS] = [
+    "REACTOR",
+    "COOLER",
+    "SENSOR",
+    "OPERATOR",
+    "SUPERVISOR",
+    "AUDITOR",
+];
 /// System pseudo-task id used for idle / input-only events.
 pub const T_SYSTEM: u8 = 255;
 
@@ -231,10 +237,13 @@ impl Script {
         Script { inputs }
     }
     pub fn cmd_at(&self, step: u32) -> Option<(usize, u8)> {
-        self.inputs.iter().enumerate().find_map(|(i, x)| match x.kind {
-            InputKind::Cmd(c) if x.at == step => Some((i, c)),
-            _ => None,
-        })
+        self.inputs
+            .iter()
+            .enumerate()
+            .find_map(|(i, x)| match x.kind {
+                InputKind::Cmd(c) if x.at == step => Some((i, c)),
+                _ => None,
+            })
     }
     pub fn override_at(&self, step: u32) -> Option<i32> {
         self.inputs.iter().find_map(|x| match x.kind {
@@ -247,7 +256,14 @@ impl Script {
     }
     /// A copy with every input at `step` or later removed (the common prefix of a fork).
     pub fn prefix_before(&self, step: u32) -> Script {
-        Script { inputs: self.inputs.iter().copied().filter(|i| i.at < step).collect() }
+        Script {
+            inputs: self
+                .inputs
+                .iter()
+                .copied()
+                .filter(|i| i.at < step)
+                .collect(),
+        }
     }
 }
 
@@ -375,7 +391,12 @@ impl Machine {
         let n = prog.tasks.len();
         let prog_init = prog.init_vars;
         let tasks = (0..n)
-            .map(|_| TaskState { pc: 0, regs: [0; NREGS], status: TStatus::Ready, restarts: 0 })
+            .map(|_| TaskState {
+                pc: 0,
+                regs: [0; NREGS],
+                status: TStatus::Ready,
+                restarts: 0,
+            })
             .collect();
         Machine {
             prog,
@@ -388,10 +409,20 @@ impl Machine {
             vars: prog_init,
             tasks,
             locks: [
-                LockState { owner: None, waiters: vec![] },
-                LockState { owner: None, waiters: vec![] },
+                LockState {
+                    owner: None,
+                    waiters: vec![],
+                },
+                LockState {
+                    owner: None,
+                    waiters: vec![],
+                },
             ],
-            chans: [ChanState { q: vec![] }, ChanState { q: vec![] }, ChanState { q: vec![] }],
+            chans: [
+                ChanState { q: vec![] },
+                ChanState { q: vec![] },
+                ChanState { q: vec![] },
+            ],
             prov: Prov {
                 var_writer: [NONE; NVARS],
                 task_last: [NONE; MAX_TASKS],
@@ -660,7 +691,10 @@ impl Machine {
             input_src = 0x8000_0000 | s;
             let ch = C_CONSOLE as usize;
             if self.chans[ch].q.len() < CHAN_CAP {
-                self.chans[ch].q.push(Msg { payload: cmd as i32, src: input_src });
+                self.chans[ch].q.push(Msg {
+                    payload: cmd as i32,
+                    src: input_src,
+                });
                 self.deliver_to_waiter(ch, s);
             } else {
                 flags |= F_DROPPED;
@@ -689,7 +723,8 @@ impl Machine {
             match p {
                 Some(t) => {
                     self.cur = t as u8;
-                    self.quantum_left = self.prog.quantum.get(t).copied().unwrap_or(QUANTUM).max(1) - 1;
+                    self.quantum_left =
+                        self.prog.quantum.get(t).copied().unwrap_or(QUANTUM).max(1) - 1;
                 }
                 None => self.cur = 255,
             }
@@ -697,7 +732,10 @@ impl Machine {
         };
         let ev = match pick {
             None => {
-                let sleepers = self.tasks.iter().any(|t| matches!(t.status, TStatus::Sleeping(_)));
+                let sleepers = self
+                    .tasks
+                    .iter()
+                    .any(|t| matches!(t.status, TStatus::Sleeping(_)));
                 if !sleepers && !script.has_future(s + 1) && flags & F_INPUT == 0 {
                     self.terminal = Some(Terminal::Wedged);
                 }
@@ -725,7 +763,14 @@ impl Machine {
         self.tasks[t].pc = target;
     }
 
-    fn exec(&mut self, t: usize, s: u32, mut flags: u16, input_src: u32, script: &Script) -> StepEvent {
+    fn exec(
+        &mut self,
+        t: usize,
+        s: u32,
+        mut flags: u16,
+        input_src: u32,
+        script: &Script,
+    ) -> StepEvent {
         let pc = self.tasks[t].pc;
         let code = &self.prog.tasks[t];
         let op = code.get(pc as usize).copied().unwrap_or(Op::Halt);
@@ -804,13 +849,17 @@ impl Machine {
                 self.prov.var_writer[v as usize] = s;
             }
             Op::Rnd(r, b) | Op::Fate(r, b) => {
-                ev.class = if matches!(op, Op::Fate(..)) { Class::Fate } else { Class::Decision };
+                ev.class = if matches!(op, Op::Fate(..)) {
+                    Class::Fate
+                } else {
+                    Class::Decision
+                };
                 let b = b.max(1) as u64;
                 let natural = ((self.next_rng() >> 33) % b) as i32;
                 let v = match script.override_at(s) {
                     Some(o) => {
                         flags |= F_OVERRIDDEN;
-                        (o.rem_euclid(b as i32)) as i32
+                        o.rem_euclid(b as i32)
                     }
                     None => natural,
                 };
@@ -887,10 +936,8 @@ impl Machine {
                 ev.class = Class::LockRel;
                 ev.obj = k;
                 ev.parents[1] = self.prov.lock_acq[ki];
-                if self.locks[ki].owner == Some(t as u8) {
-                    if self.release_lock(ki, s) {
-                        ev.flags |= F_HANDOFF;
-                    }
+                if self.locks[ki].owner == Some(t as u8) && self.release_lock(ki, s) {
+                    ev.flags |= F_HANDOFF;
                 }
             }
             Op::Steal(k) => {
@@ -1018,7 +1065,12 @@ impl Machine {
                 self.crash_release(ti, s);
                 let was = self.tasks[ti].status;
                 let restarts = self.tasks[ti].restarts.saturating_add(1);
-                self.tasks[ti] = TaskState { pc: 0, regs: [0; NREGS], status: TStatus::Ready, restarts };
+                self.tasks[ti] = TaskState {
+                    pc: 0,
+                    regs: [0; NREGS],
+                    status: TStatus::Ready,
+                    restarts,
+                };
                 self.prov.task_restart_ev[ti] = s;
                 self.prov.wake[ti] = s;
                 if ti == t {

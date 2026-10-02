@@ -140,7 +140,10 @@ impl EpochTracker {
         }
         let heat = m.vars[V_HEAT as usize];
         let dead = !m.deadlocked_tasks().is_empty();
-        let crashed = m.tasks.iter().any(|t| matches!(t.status, TStatus::Crashed(_)));
+        let crashed = m
+            .tasks
+            .iter()
+            .any(|t| matches!(t.status, TStatus::Crashed(_)));
         if m.vars[V_CREDITS as usize] != m.vars[V_LEDGER as usize] {
             self.mismatch_run += 1;
         } else {
