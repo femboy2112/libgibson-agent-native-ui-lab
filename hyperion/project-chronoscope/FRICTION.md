@@ -196,9 +196,11 @@ Searched first: 30 issues (`gh issue list -R femboy2112/libgibson --state all`),
 
 | action | what | link |
 |---|---|---|
-| issue | `Effect::Shake`/`Effect::Jitter` ignore `duration` (P1) | see `docs/upstream/ISSUES.md` for numbers once filed |
-| issue | `Scene` has no entity removal (P-scene) | " |
-| issue | `HumanMusicSynth::render` with a non-contiguous `RenderCtx::start` (P2) | " |
-| issue | `Context::run_once` never returns after the terminal hangs up (P3) | " |
-| comment | #74: seek + cancellation + measured numbers (P-music-seek, P-cancel) | " |
-| comment | #15: negative result — 48 resize→key trials, 0 held back; one multi-resize session flaked before a settle delay was added | " |
+| issue | `Effect::Shake`/`Effect::Jitter` never settle: `eval` ignores `duration` (P1) | https://github.com/femboy2112/libgibson/issues/76 |
+| issue | `Scene` has no entity removal; hidden entities are still cloned/evaluated every frame (P-scene) | https://github.com/femboy2112/libgibson/issues/77 |
+| issue | `HumanMusicSynth::render` with a non-contiguous `RenderCtx::start` fires every skipped event at once (P2) | https://github.com/femboy2112/libgibson/issues/78 |
+| issue | `Context::run_once` never returns after the terminal hangs up if the process survived SIGHUP (P3) | https://github.com/femboy2112/libgibson/issues/79 |
+| comment | #74: measurements from the interactive side — no cancel, 488 MB RSS under a 96 MiB PCM budget, seek cost (P-music-seek, P-cancel, A12) | https://github.com/femboy2112/libgibson/issues/74#issuecomment-5948489460 |
+| comment | #15: **positive** second-consumer data point — keys written with a 0 ms gap after a PTY resize were applied within 1.5 s in only 5/12, 4/12, 3/12 trials; 12/12 at ≥ 5 ms (not attributed to a layer) | https://github.com/femboy2112/libgibson/issues/15#issuecomment-5948489722 |
+
+Issue numbers and links are also in `docs/upstream/ISSUES.md`. Nothing in `femboy2112/libgibson` was modified.

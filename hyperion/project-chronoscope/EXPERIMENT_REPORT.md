@@ -339,8 +339,21 @@ wire for all four depths.
 
 ## 7. Upstream
 
-Searched 29 issues + keyword searches first (FRICTION, "Upstream actions"). Filed/commented: see the table at the
-end of FRICTION.md and `docs/upstream/`.
+Searched all 30 issues (`gh issue list --state all`) plus keyword searches first (Shake, Jitter duration, Scene remove
+entity, RenderCtx start, seek HumanMusicSynth, SIGHUP, run_once poll spin, crossterm poll): none of the four was
+already filed. Filed, each with a minimal public-API repro and recorded output under `docs/upstream/`, titled
+`[v0.4.0 consumer: Project Chronoscope] <mechanism>`:
+
+| # | mechanism | status of the claim |
+|---|---|---|
+| [#76](https://github.com/femboy2112/libgibson/issues/76) | `Effect::Shake`/`Jitter` never settle (`eval` ignores `duration`) | behaviour proven; defect-ness asked, not asserted |
+| [#77](https://github.com/femboy2112/libgibson/issues/77) | `Scene` has no entity removal; hidden entities are still cloned/evaluated | proven (measured growth) |
+| [#78](https://github.com/femboy2112/libgibson/issues/78) | non-contiguous `RenderCtx::start` on `HumanMusicSynth` fires every skipped event at once | proven |
+| [#79](https://github.com/femboy2112/libgibson/issues/79) | `run_once` never returns after the terminal hangs up if SIGHUP was survived | observed with recorded evidence; mechanism is crossterm 0.29 |
+
+Comments: [#74](https://github.com/femboy2112/libgibson/issues/74#issuecomment-5948489460) (cancellation, memory shape, seek cost, from the interactive
+side) and [#15](https://github.com/femboy2112/libgibson/issues/15#issuecomment-5948489722) (a positive data point: see §8). Full table in
+`FRICTION.md` and `docs/upstream/ISSUES.md`.
 
 ## 8. Claims
 
@@ -383,8 +396,13 @@ end of FRICTION.md and `docs/upstream/`.
   last four parameters were hand-adjusted afterwards.
 * **Perceptual claims about seams, harmony or the tempo lock.** The 1× rate is locked to the world's tempo
   arithmetically and tested; whether it *sounds* in step was not listened to.
-* **#15 (queued input after resize).** One multi-resize PTY session flaked ~5/8 *before* settle delays were
-  added; 48 isolated resize→key trials never reproduced a held-back key. Not attributed.
+* **The cause of #15 (queued input after resize).** One multi-resize PTY session flaked ~5/8 *before* settle delays
+  were added. The opt-in measurement (`tests/pty_resize_collision.rs`, three runs × 12 trials per gap) shows keys
+  written 0 ms after a resize applied within 1.5 s in only 5/12, 4/12 and 3/12 trials, and 12/12 at gaps ≥ 5 ms.
+  That reproduces the *symptom* in a second consumer; whether the layer is this app's loop, crossterm or the
+  harness's reader is **not attributed**, and I did not check that a held-back key is applied after a further key.
+  (An earlier claim in this project that 48 isolated trials never reproduced it is **withdrawn**: the committed
+  measurement contradicts it.)
 * **That `Shake`/`Jitter` not settling is a defect** rather than an intended "until the beat ends". The docs say
   "for `duration`"; the source ignores it. Filed as a question with a repro.
 * **That `≈` (semantic equivalence) predicts equal futures.** It does not; it is a stated abstraction.
