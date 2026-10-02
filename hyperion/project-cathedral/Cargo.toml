@@ -1,0 +1,32 @@
+[package]
+name = "project-cathedral"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+license = "MIT OR Apache-2.0"
+description = "PROJECT CATHEDRAL — a deterministic simulated distributed-system incident whose state is a living architectural structure and a HumanMusic score. External v0.4.0 pressure test."
+
+[[bin]]
+name = "cathedral"
+path = "src/main.rs"
+
+[dependencies]
+libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.4.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# Stream the score to the real output device through LibGibson's own backend
+# (`gibson::audio::device`, the crate's `audio-cpal` feature; cpal → ALSA on Linux).
+# On by default so `W`/`--play` are audible; `--no-default-features` builds a
+# device-free binary on hosts without audio libraries.
+default = ["device-audio"]
+device-audio = ["libgibson/audio-cpal"]
+
+[dev-dependencies]
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = "thin"
