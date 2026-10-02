@@ -1,0 +1,4 @@
+   10 retired entities: scene.len()=10 evaluate().len()=10 to_node = 3.265µs/call
+  400 retired entities: scene.len()=400 evaluate().len()=400 to_node = 157.989µs/call
+ 2000 retired entities: scene.len()=2000 evaluate().len()=2000 to_node = 3.001364ms/call
+ 5000 retired entities: scene.len()=5000 evaluate().len()=5000 to_node = 17.149263ms/call

@@ -1,0 +1,23 @@
+[package]
+name = "project-chronoscope"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Project Chronoscope: a time-travel debugger for alternate histories, built as an external consumer of LibGibson v0.4.0"
+license = "MIT OR Apache-2.0"
+
+# This package is its own workspace root so it never joins the lab repository's root package.
+[workspace]
+
+[dependencies]
+# Released API only: git tag, no path override, no [patch], no branch dependency.
+libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.4.0" }
+libc = "0.2"
+
+[dev-dependencies]
+portable-pty = "0.9"
+vt100 = "0.16"
+
+[profile.release]
+opt-level = 3
+debug = false

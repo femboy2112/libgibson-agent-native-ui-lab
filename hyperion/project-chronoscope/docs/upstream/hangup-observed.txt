@@ -1,0 +1,15 @@
+# hangup 4-way experiment (libgibson v0.4.0, crossterm 0.29; PTY master closed after 1 s; ps after 2 s more)
+## A. libgibson Context::run_once loop, SIGHUP ignored
+PID STAT %CPU     ELAPSED
+3346542 Rs   67.3       00:03
+## B. crossterm event::poll only, SIGHUP ignored
+PID STAT %CPU     ELAPSED
+3346553 Rs   66.7       00:03
+## C. libgibson loop, SIGHUP default (control)
+PID STAT %CPU     ELAPSED
+3346577 Zs    0.0       00:03
+exited: signal 1
+## D. crossterm poll only, SIGHUP default (control)
+PID STAT %CPU     ELAPSED
+3346587 Zs    0.0       00:03
+exited: signal 1
