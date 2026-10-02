@@ -1,0 +1,547 @@
+{
+  "schema": "sai.dataset/v1",
+  "anchor_rev": "c2f6483d92fe2b351e6cd50936a97d8cdf73cb79",
+  "sample_rate_hz": 48000,
+  "items": [
+    {
+      "id": "black-ice-demo-050000-holdout",
+      "world": "BlackIce",
+      "kind": "demo",
+      "seed": 50000,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "762b5643f611c09834d5b8803e02dbdd5046f9881903a222ee0cb5ec462bc49b",
+      "truth_sha256": "6070e3aa7fa50c488d88ab8a24393e2f1b54ed3602fa603e9eb7d9a57116f4f1",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-demo-050001-holdout",
+      "world": "BlackIce",
+      "kind": "demo",
+      "seed": 50001,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "93a8a5c14641575b8b1be15b2f484c4fa4a5c47ec207b85b6b393049e3e19221",
+      "truth_sha256": "36b171a0bf0c12136a0afffa7eabe1a36ade7bcdcca94b74d344e4a59ecf743f",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-rise-unresolved-050100-holdout",
+      "world": "BlackIce",
+      "kind": "rise-unresolved",
+      "seed": 50100,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "9003ad7b46d5fa9a86650f4bfe3daa3595181cb8e4399e8a0b31829039180e70",
+      "truth_sha256": "166095e741aa495099370bb8e96be37d7508b77a9bfb429ceaa9f24796ee10db",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-rise-unresolved-050101-holdout",
+      "world": "BlackIce",
+      "kind": "rise-unresolved",
+      "seed": 50101,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "bfb6a774fde289aa3126c9ca97d8695257cac35b2f802a1c63f262daec7d2fd7",
+      "truth_sha256": "2fe05525db2066b9d7368174200c903ad24d3c1101636652d2187784b7c5e344",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-false-climax-050200-holdout",
+      "world": "BlackIce",
+      "kind": "false-climax",
+      "seed": 50200,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "218558251aa3d3d33138d351119c15ad7c7fde7513056601da5a5423b03ce667",
+      "truth_sha256": "96cd917520bb8fd7a40c9a8a6d80b47b8afc398c18e1ccda4acdc35c2df749eb",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-false-climax-050201-holdout",
+      "world": "BlackIce",
+      "kind": "false-climax",
+      "seed": 50201,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "bcb2f564581ebf3c0686d63508d7883c58ec082cfb7237ac4bc36df3cf991095",
+      "truth_sha256": "ca2f81feff07f70d0a547ae65c924267cad4b59353d3872b3d043e34658b6da3",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-calm-loop-050300-holdout",
+      "world": "BlackIce",
+      "kind": "calm-loop",
+      "seed": 50300,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "6d5f85a315bfc6c00d3f070749fa22b88a74b8c60128a511c114059bf4ec6003",
+      "truth_sha256": "6eb48bd773a784ca2a4f9ba9d6d5dd6070cf6d37476187e830494767b63f398e",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-calm-loop-050301-holdout",
+      "world": "BlackIce",
+      "kind": "calm-loop",
+      "seed": 50301,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "46faae35d2fde1ebd0b9d2c61b25315503eafb0dbfcb01207accef619187dd5f",
+      "truth_sha256": "9e4e6a19de70f10ca6458d0a563e5b9dead891dd82398674ebb8b0ef67e4fce6",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-deflected-lift-050400-holdout",
+      "world": "BlackIce",
+      "kind": "deflected-lift",
+      "seed": 50400,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "dba387db9f9d3674c2809a301df4a6e96279b7c3bd4daf308c1f2b88f9e29dbe",
+      "truth_sha256": "958199faf397c8fe5bc2743407b2a39a673023133e0e0872dcd55348d43bf269",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "black-ice-deflected-lift-050401-holdout",
+      "world": "BlackIce",
+      "kind": "deflected-lift",
+      "seed": 50401,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "51103d22d538805650e083e88f23b676b043ec229ea49d403e4144e241afd97d",
+      "truth_sha256": "404cb3adce88e4254d1b0fa44b0fbec91e9f4ddf634812af61cd8f07ea356ae3",
+      "duration_seconds": 24.3181875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-demo-060000-holdout",
+      "world": "Vapor95",
+      "kind": "demo",
+      "seed": 60000,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "2c437f969fa7e3ec75933a1b744e1216854d0def7ca7cba89049174d31793404",
+      "truth_sha256": "12cdc9748dffa9f89a30aa99df04c37109520e767854b763dfe77d306ebc8001",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-demo-060001-holdout",
+      "world": "Vapor95",
+      "kind": "demo",
+      "seed": 60001,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "4d98abe3f2b091d3317d5c4866ecd24838cfbea595a300d5d6adfa23e7cd69c7",
+      "truth_sha256": "8a11efe3212ee4fab2e77a10170058c1922a1fe2f1a4c2096275645688c84a27",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-rise-unresolved-060100-holdout",
+      "world": "Vapor95",
+      "kind": "rise-unresolved",
+      "seed": 60100,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "34ca37681e977f6ca5663cf83a9df950a62ce71af3fcab0dffaad5460efc73a4",
+      "truth_sha256": "032646e7c87b6c7cc53cbd10a36cfeec4264f08d7e16c01f49b6f446acebcce5",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-rise-unresolved-060101-holdout",
+      "world": "Vapor95",
+      "kind": "rise-unresolved",
+      "seed": 60101,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "039513b4dbd48d3f0739f8b76551cdaf20096a4bd0fdb50ca35025b4a6a85a9c",
+      "truth_sha256": "ec2cdd4faa3fca43d13ecd0c55ea1a896f550d65673c401f8b7537704563e406",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-false-climax-060200-holdout",
+      "world": "Vapor95",
+      "kind": "false-climax",
+      "seed": 60200,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "cbed042f44eb17843c3603fe1dcc48c79407cc4191633a47821ece0cd5585467",
+      "truth_sha256": "fb898d63b6312f9e36a09d03a9a1b96612d1654a3dcd4feafe4f1e1a029f995c",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-false-climax-060201-holdout",
+      "world": "Vapor95",
+      "kind": "false-climax",
+      "seed": 60201,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "9fae1d622a99475efeacb99e5ba0c4b64c190b5455a93bb9b80f3583d3bdd698",
+      "truth_sha256": "9552ec2c5843ad38c405f237b974d42bd5beb515e150e5e28bd7c94d4255786f",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-calm-loop-060300-holdout",
+      "world": "Vapor95",
+      "kind": "calm-loop",
+      "seed": 60300,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "8fbf6ab6685afd5d7a407e774fea52893994a94dc30d72ce3a23eee3bc2c8ba2",
+      "truth_sha256": "65cdc224e9e8d6e7a0650f188b621cc5a27e9d30c1420fa6e336fd274943f9ba",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-calm-loop-060301-holdout",
+      "world": "Vapor95",
+      "kind": "calm-loop",
+      "seed": 60301,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "27168b0f586c3e070d130a5f2cce0fbfb05bd5321d3fdf684e3ffe978f8660ca",
+      "truth_sha256": "4c13afa5d52ef87715b1e80d7aee71fbc07b2ae4402140157a985fdbcbc1d4e6",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-deflected-lift-060400-holdout",
+      "world": "Vapor95",
+      "kind": "deflected-lift",
+      "seed": 60400,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "ecae8578175c9e72c0b1bb0777d49ccf2e484c91dd1af6ce43bd3dbc8bba9d4a",
+      "truth_sha256": "f7a86aed8cf48df4fa49c30113282bc70b5dac23bdc9a1c8dac3b16091c5c38f",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "vapor95-deflected-lift-060401-holdout",
+      "world": "Vapor95",
+      "kind": "deflected-lift",
+      "seed": 60401,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "781cef065d17c141396dba04ffb56f29f53d6dc974750dabec6a4ab70623ede3",
+      "truth_sha256": "59902eded85d94195a36ada7b5a3f62d2c4ec2eac6f049ac5aca6b30a98bdf9c",
+      "duration_seconds": 25.357145833333334,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-demo-070000-holdout",
+      "world": "SwissSignal",
+      "kind": "demo",
+      "seed": 70000,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "a846c5f047d54a5102af4d6f130e5aa0052a09de9d46659c46b9711fa4d6b5aa",
+      "truth_sha256": "d8109a6c0b26efc3f029301b1afd856b135162a9080440eaf3ca0f5e30ef9a96",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-demo-070001-holdout",
+      "world": "SwissSignal",
+      "kind": "demo",
+      "seed": 70001,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "2bb1a0b8e101901928d986b0f0890135a4f292dc12422ca4e7317331302a5c87",
+      "truth_sha256": "a26d3becc92e3ed2355813e5be90f519cf7a854de16304597bb27e32f6ad4950",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-rise-unresolved-070100-holdout",
+      "world": "SwissSignal",
+      "kind": "rise-unresolved",
+      "seed": 70100,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "1f7af858de35664a6c823b5d801e5d9b97c7551dde97480ba3bca90ebc537fa3",
+      "truth_sha256": "9c9fc87cfe956f8dbf337365baed7df8e93a5e70cdddc7607ebd51c8033c629d",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-rise-unresolved-070101-holdout",
+      "world": "SwissSignal",
+      "kind": "rise-unresolved",
+      "seed": 70101,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "fa05e05801e6c9d0082fbfaf1fc0550edacd11de2029aba7a5919db0980c56c7",
+      "truth_sha256": "b13eed6093f5a3001b9d69f2ec7ab0789b1fb9b8afbb0c0032b0a6fc7a4b36be",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-false-climax-070200-holdout",
+      "world": "SwissSignal",
+      "kind": "false-climax",
+      "seed": 70200,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "5bb0578d95528bb1395d324bc66dc3522b5b4dc93450f8e8ae1da0a0ed897637",
+      "truth_sha256": "10f8df81a80aa2817d1e69cc7e2a8f8bf3d88deb2725f1d1c3610a891972f63a",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-false-climax-070201-holdout",
+      "world": "SwissSignal",
+      "kind": "false-climax",
+      "seed": 70201,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "df4fac266854a821811c0749f6c3a7b6a773b3d02f8f25490336430c5aa1573d",
+      "truth_sha256": "31744fbb6c7729528129e28d36d023362e01426c6618e78ad3ababa3e160b0d5",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-calm-loop-070300-holdout",
+      "world": "SwissSignal",
+      "kind": "calm-loop",
+      "seed": 70300,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "724ccaa262529173ee13f717cafee90eeb4b4724d74a515d7ea457e6e89dfffb",
+      "truth_sha256": "120af7790b1578d3f129860e2fd35b27b7f18da30b8618f0460cbf3e117a8c0d",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-calm-loop-070301-holdout",
+      "world": "SwissSignal",
+      "kind": "calm-loop",
+      "seed": 70301,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "364413419115335300e9744f20001bfb548a064bce81eb0acc228631457671d6",
+      "truth_sha256": "68afa43440e433dc033ec7f5b50380fdb32b801c67da1ece8b64f1f76b3a5b4d",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-deflected-lift-070400-holdout",
+      "world": "SwissSignal",
+      "kind": "deflected-lift",
+      "seed": 70400,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "fda4c3f67c55914e0723db1445b33c2e5eb3adfa10585c21d99e88fc091788f3",
+      "truth_sha256": "9486290f919a8b5e10c63ca16b252872d329622eebdd0d72c3009d31ef50b77c",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "swiss-signal-deflected-lift-070401-holdout",
+      "world": "SwissSignal",
+      "kind": "deflected-lift",
+      "seed": 70401,
+      "total_beats": 32.0,
+      "split": "holdout",
+      "wav_sha256": "7fd61830dbc41a784cf25a14ecd0a453265810dd566d0ceb6df01a7dd8e5dd67",
+      "truth_sha256": "1d03b80e017b269aef833ee0714fd6729a2d90fc9224b5b625028292f06ff51f",
+      "duration_seconds": 18.7711875,
+      "established_axes": [
+        "motif",
+        "harmony",
+        "groove",
+        "form",
+        "orchestration"
+      ]
+    }
+  ]
+}

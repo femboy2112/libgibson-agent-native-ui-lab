@@ -1,0 +1,11 @@
+{
+  "schema": "sai.holdout.seal/v1",
+  "anchor_rev": "c2f6483d92fe2b351e6cd50936a97d8cdf73cb79",
+  "split": "holdout",
+  "n": 30,
+  "seed_base": 50000,
+  "manifest_sha256": "80422b1915b3073ee075580e06cd15c599767834651d8180b966d42d7c19eb11",
+  "commitment_sha256": "db8f863465b659b49e79d1f618170122cbef4e53e2977f9261709e9b7185c037",
+  "sealed_utc": "2026-10-02T06:09:44Z",
+  "note": "Holdout generated under a distinct seed base and committed as a manifest + hash commitment only. The development analyzer has not seen these WAVs; analysis is deferred until schemas, relations and thresholds are frozen."
+}
