@@ -1,0 +1,24 @@
+[package]
+name = "sai-harness"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Blind HumanMusic ground-truth harness for the Semantic Audio Inversion experiment"
+
+[lib]
+name = "sai_harness"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sai_gen"
+path = "src/bin/sai_gen.rs"
+
+[dependencies]
+sai-core = { path = "../sai-core" }
+# The reviewed LibGibson v0.4.0 merge, consumed read-only through public APIs.
+# This is the ONLY crate in the experiment that links the generator.
+gibson = { package = "libgibson", git = "https://github.com/femboy2112/libgibson", rev = "c2f6483d92fe2b351e6cd50936a97d8cdf73cb79" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
