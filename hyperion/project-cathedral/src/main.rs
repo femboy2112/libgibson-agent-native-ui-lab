@@ -72,6 +72,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let interactive = io::stdout().is_terminal()
         && !options.dump
+        && !options.text
         && options.frames.is_none()
         && options.at.is_none();
 
@@ -143,6 +144,7 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
     let mut checkpointer = replay::Checkpointer::new(200);
     let mut prev_stats = ctx.stats();
     let mut last_out = String::new();
+    let mut last_text = String::new();
 
     for _ in 0..frames {
         let t0 = profile::now_us();
@@ -159,6 +161,9 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
         let t1 = profile::now_us();
         let (now_playing, music_state) = music_state_string(&app);
         let surface = render_surface(&app, w, h, &now_playing, &music_state);
+        if options.text {
+            last_text = surface.to_visible_lines().join("\n");
+        }
         let t2 = profile::now_us();
         ctx.set_root(Node::raster(surface));
         ctx.render_now()?;
@@ -231,7 +236,13 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
         println!("record written: {path}");
     }
 
-    if options.dump || options.at.is_some() {
+    if options.text {
+        io::stdout().write_all(last_text.as_bytes())?;
+        if !last_text.ends_with('\n') {
+            io::stdout().write_all(b"\n")?;
+        }
+        io::stdout().flush()?;
+    } else if options.dump || options.at.is_some() {
         io::stdout().write_all(last_out.as_bytes())?;
         io::stdout().flush()?;
     }

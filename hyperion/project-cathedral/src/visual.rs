@@ -721,14 +721,41 @@ pub fn causal_path(engine: &Engine, start: ServiceId) -> Vec<ServiceId> {
     path
 }
 
+fn worst_cluster(view: &ViewState) -> (u8, f32) {
+    let n = view.engine.fixture.clusters.len();
+    let mut sum = vec![0.0f32; n];
+    for s in &view.engine.fixture.services {
+        let d = view.engine.states[s.id as usize].distress(&view.engine.fixture.services[s.id as usize]);
+        sum[s.cluster as usize] += d;
+    }
+    let mut best = (0u8, -1.0f32);
+    for (c, &v) in sum.iter().enumerate() {
+        if v > best.1 {
+            best = (c.min(255) as u8, v);
+        }
+    }
+    best
+}
+
 fn draw_header(surface: &mut Surface, view: &ViewState, width: u16) {
     let mut p = Painter::new(surface);
     let style = Style::new().fg(phase_color(view.phase)).bold();
     let m = view.engine.metrics;
+    // The major affected cluster is a first-class piece of incident state and must
+    // survive the compact layouts, so it lives in the header next to the phase.
+    let hot = worst_cluster(view);
+    let hot_name = view
+        .engine
+        .fixture
+        .clusters
+        .get(hot.0 as usize)
+        .map(String::as_str)
+        .unwrap_or("—");
     let mut line = format!(
-        " CATHEDRAL  {}  sev {:.2}  services {}  crit {:.1}%  ovl {:.1}%  brk {}  t={}  {} ",
+        " CATHEDRAL  {}  sev {:.2}  hot {:<9} services {}  crit {:.1}%  ovl {:.1}%  brk {}  t={}  {} ",
         view.phase.label(),
         view.phase.severity(),
+        hot_name,
         view.engine.len(),
         m.frac_critical * 100.0,
         m.frac_overloaded * 100.0,
@@ -754,7 +781,16 @@ fn draw_footer(surface: &mut Surface, view: &ViewState, width: u16, height: u16)
     } else {
         "[F]inject-fault  [R]ollback  [I]solate  [X]reroute  [S]hed-load  [A]cknowledge  [N]ote  [1-4]scale  [<-/->]select  [Space]pause  [W]AV  [H]elp  [Q]uit"
     };
-    p.text(0, y, &format!(" {}", keyline), keys);
+    // Truncation must never eat the exit affordance: keep the leading affordances
+    // and pin `[Q]uit` to the right edge of whatever width we have.
+    let mut line = format!(" {keyline}");
+    let exit = "[Q]uit";
+    if line.chars().count() > w as usize {
+        let avail = (w as usize).saturating_sub(exit.chars().count() + 1);
+        let head: String = line.chars().take(avail).collect();
+        line = format!("{head} {exit}");
+    }
+    p.text(0, y, &line, keys);
     let y2 = height as i32 - 1;
     let left = format!(
         " {} · {} · incident events {} · journal {} · music {}",

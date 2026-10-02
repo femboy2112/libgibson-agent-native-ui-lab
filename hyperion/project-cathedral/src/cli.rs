@@ -12,6 +12,7 @@ VIEW:
   (none)                 interactive live cathedral
   --frames=N             run N deterministic frames then exit (headless if not a TTY)
   --dump                 print the final ANSI frame instead of drawing interactively
+  --text                 print the final frame as plain readable text (no ANSI)
   --at=N                 jump to frame N and print one frame (deterministic seek)
   --width=N --height=N   force the render size
   --color=auto|truecolor|256|16|mono
@@ -66,6 +67,7 @@ pub struct Options {
     pub height: Option<u16>,
     pub color: ColorChoice,
     pub dump: bool,
+    pub text: bool,
     pub capability: bool,
     pub json: bool,
     pub wtf: bool,
@@ -87,6 +89,7 @@ impl Default for Options {
             height: None,
             color: ColorChoice::Auto,
             dump: false,
+            text: false,
             capability: false,
             json: false,
             wtf: false,
@@ -136,6 +139,7 @@ impl Options {
                 "--record" => o.record = Some(val.ok_or("--record needs a value")?),
                 "--replay" => o.replay = Some(val.ok_or("--replay needs a value")?),
                 "--dump" => o.dump = true,
+                "--text" => o.text = true,
                 "--capability" => o.capability = true,
                 "--json" => o.json = true,
                 "--wtf" => o.wtf = true,

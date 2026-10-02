@@ -9,8 +9,7 @@ use gibson::Node;
 use crate::app::App;
 use crate::cli::Options;
 use crate::visual::{build_frame, Camera, Layout, Scale, ViewState};
-use crate::sim::Fixture;
-use crate::incident::{Phase, PhaseTracker};
+use crate::incident::Phase;
 
 pub const SIZES: [(u16, u16); 5] = [(42, 15), (60, 20), (80, 24), (120, 40), (160, 50)];
 pub const DEPTHS: [ColorDepth; 4] = [
@@ -38,11 +37,10 @@ pub fn run(opts: &Options) -> Result<(), Box<dyn std::error::Error>> {
     // Reach a representative mid-incident state deterministically.
     let mut app = App::new(opts.seed, world_id(&opts.world), true);
     app.enable_music = false;
-    for _ in 0..420 {
+    for _ in 0..220 {
         let _ = app.step();
         app.camera.update();
     }
-    if let gibson::audio::human_music::world::WorldId::BlackIce = world_id(&opts.world) {}
     let rows = matrix(&app, &opts.color.depth());
     let mut all = true;
     println!("size        depth      bytes  exact  state cluster afford exit colorcodes");
@@ -100,7 +98,8 @@ pub fn render_cell(app: &App, w: u16, h: u16, depth: ColorDepth, _requested: &Co
         has_state: Phase::ALL.iter().any(|p| text.contains(p.label()))
             || text.contains("crit ")
             || text.contains("sev "),
-        has_cluster: text.contains("CLUSTER")
+        has_cluster: text.contains("hot ")
+            || text.contains("CLUSTER")
             || text.contains("cluster")
             || text.contains("WHOLE SYSTEM")
             || text.contains("district"),
@@ -185,7 +184,3 @@ pub fn smoke() -> usize {
     }
     ok
 }
-
-/// Touch unused imports so the module's intent is explicit.
-#[allow(dead_code)]
-fn _keep(_: &Fixture, _: &PhaseTracker) {}
