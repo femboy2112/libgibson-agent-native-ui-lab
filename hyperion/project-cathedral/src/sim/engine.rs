@@ -182,6 +182,51 @@ impl Engine {
         self.fixture.is_empty()
     }
 
+    /// The service with the most direct dependents (ties broken by lowest id).
+    ///
+    /// This is the keystone the scripted incident targets; the interactive host
+    /// starts focused here so the first operator fault exercises the cascade.
+    pub fn most_depended_on(&self) -> ServiceId {
+        let mut best = 0u16;
+        let mut best_n = 0usize;
+        for s in &self.fixture.services {
+            let n = self
+                .fixture
+                .services
+                .iter()
+                .filter(|x| x.deps.contains(&s.id))
+                .count();
+            if n > best_n {
+                best_n = n;
+                best = s.id;
+            }
+        }
+        best
+    }
+
+    /// How many services transitively depend on `id` (excluding `id` itself).
+    ///
+    /// This is the blast radius of a fault placed on `id`: a leaf with zero
+    /// downstream dependents degrades in isolation and looks inert, while a
+    /// keystone with many downstream dependents cascades. The operator UI uses it
+    /// so a fault always reports its own fan-out.
+    pub fn downstream_count(&self, id: ServiceId) -> usize {
+        let mut seen = vec![false; self.fixture.len()];
+        seen[id as usize] = true;
+        let mut stack = vec![id];
+        let mut count = 0usize;
+        while let Some(cur) = stack.pop() {
+            for &caller in &self.callers[cur as usize] {
+                if !seen[caller as usize] {
+                    seen[caller as usize] = true;
+                    count += 1;
+                    stack.push(caller);
+                }
+            }
+        }
+        count
+    }
+
     /// Apply an operator action. Called at the frame the action was issued.
     pub fn apply(&mut self, action: &Action) {
         let t = action.target as usize;
@@ -584,6 +629,20 @@ mod tests {
         assert_eq!(e.metrics.frac_critical, 0.0, "did not recover: critical");
         assert_eq!(e.metrics.open_breakers, 0, "did not recover: breakers");
         assert!(e.metrics.mean_health > 0.999, "did not recover: health");
+    }
+
+    /// The blast radius of a fault is what makes the operator affordance honest:
+    /// the keystone cascades, a leaf only degrades itself. This is the property the
+    /// UI now surfaces, so it is pinned here.
+    #[test]
+    fn downstream_fanout_identifies_the_keystone() {
+        let e = Engine::new(Fixture::cathedral());
+        // The scripted incident targets #138 because it is the most directly
+        // depended-upon service; a fault there must have a real blast radius.
+        assert_eq!(e.most_depended_on(), 138);
+        assert!(e.downstream_count(138) >= 20, "keystone fan-out too small");
+        // #0 is a leaf with no dependents: faulting it can only degrade itself.
+        assert_eq!(e.downstream_count(0), 0);
     }
 
     /// Determinism: the same fixture stepped twice yields identical state digests.

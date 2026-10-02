@@ -865,25 +865,45 @@ fn draw_footer(surface: &mut Surface, view: &ViewState, width: u16, height: u16)
     }
     p.text(0, y, &line, keys);
     let y2 = height as i32 - 1;
+    // The music semantic axis is right-aligned on this same row, so the left run
+    // must be truncated to leave it room — otherwise the two runs overlap into a
+    // single corrupt word (e.g. "joTNeutral ...").
+    let sem = view.music_state;
+    let sem_len = sem.chars().count();
+    let show_sem = (w as usize) > sem_len + 2;
+    let reserve = if show_sem { sem_len + 2 } else { 0 };
     let left = format!(
-        " {} · {} · incident events {} · journal {} · music {}",
+        " {} · focus #{}·{}↓ · {} · incident events {} · journal {} · music {}",
         view.scale.label(),
+        view.selected,
+        view.engine.downstream_count(view.selected),
         view.message,
         view.incident_len,
         view.journal_len,
         view.now_playing,
     );
-    let mut txt = left;
-    if txt.chars().count() > w as usize {
-        txt = txt.chars().take(w as usize).collect();
-    }
+    let avail = (w as usize).saturating_sub(reserve);
+    let txt = ellipsize(&left, avail);
     p.text(0, y2, &txt, Style::new().fg(Color::Rgb(120, 135, 170)));
-    // The music semantic axis, tiny but honest.
-    let sem = view.music_state;
-    if (w as usize) > sem.chars().count() + 2 {
-        let x = w - sem.chars().count() as i32 - 1;
+    if show_sem {
+        let x = w - sem_len as i32 - 1;
         p.text(x, y2, sem, hot);
     }
+}
+
+/// Truncate `s` to at most `max` characters, then back off to the last separator
+/// so a cut never strands half a token or welds two labels together.
+fn ellipsize(s: &str, max: usize) -> String {
+    let mut t: String = s.chars().take(max).collect();
+    if s.chars().count() > max {
+        while let Some(last) = t.pop() {
+            if last == ' ' || last == '·' || last == '#' {
+                t.push(last);
+                break;
+            }
+        }
+    }
+    t
 }
 
 fn draw_panel(surface: &mut Surface, view: &ViewState, rect: Rect) {

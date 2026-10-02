@@ -240,27 +240,27 @@ Command (final binary, live music, WAV export, record):
 | metric | value |
 |---|---|
 | frames | 10,000 |
-| wall time (frame loop + WAV export) | 60.9 s |
-| mean frame time | 4.59 ms |
-| p95 frame time | 1.29 ms |
-| max frame time | 1.03 s (a music rebuild; profiler overhead included) |
-| mean LibGibson render | 0.51 ms/frame |
+| wall time (frame loop + WAV export) | 73.0 s |
+| mean frame time | 5.30 ms |
+| p95 frame time | 1.30 ms |
+| max frame time | 1.14 s (a music rebuild; profiler overhead included) |
+| mean LibGibson render | 0.60 ms/frame |
 | mean emitted bytes | 8,368.7 |
-| total emitted bytes | 83,687,203 (~79.8 MiB) |
-| mean affected / exact changed cells | 418.88 / 418.81 per frame |
+| total emitted bytes | 83,687,096 (~79.8 MiB) |
+| mean affected / exact changed cells | 418.86 / 418.79 per frame |
 | history insertions | 11 (max 2 in one frame) |
-| RSS (frame loop) start → end → peak | 7,088 → 23,488 KiB |
+| RSS (frame loop) start → end → peak | 7,088 → 23,188 KiB |
 | music checked rebuilds | 51 |
-| music total / last rebuild cost | 36.25 s / 0.93 s |
+| music total / last rebuild cost | 41.77 s / 1.12 s |
 | checked-route rejections | 0 |
 | incident events / final phase | 11 / NORMAL |
-| export peak RSS (`/usr/bin/time -v`) | 613,332 KiB |
+| export peak RSS (`/usr/bin/time -v`) | 612,604 KiB |
 
-Frame times vary a little run to run; a second identical run reported mean 4.50 ms, p95 1.49 ms and
-a 1.65 s worst frame while reproducing the same `b22330570bb7875f` semantic digest and the same PCM
+Frame times vary a little run to run; an earlier identical run reported mean 4.59 ms, p95 1.29 ms and
+a 1.03 s worst frame while reproducing the same `b22330570bb7875f` semantic digest and the same PCM
 hash. The digest and audio are deterministic; the wall-clock outliers are host noise.
 
-Mean frame time is dominated by outlier music rebuilds (p95 is 1.49 ms). `--frames` is a
+Mean frame time is dominated by outlier music rebuilds (p95 is 1.30 ms). `--frames` is a
 headless, unpaced loop; these numbers are not a steady-state frame rate. The profiler adds
 `profile::now_us()` calls around each phase and `rss_kib()` per frame; it is included in the
 figures.
@@ -278,26 +278,26 @@ state, the hot cluster, an action affordance and an exit path.
 
 | size | depth | bytes | exact | state | cluster | afford | exit | color codes |
 |---|---|---:|---:|---|---|---|---|---:|
-| 42×15 | TrueColor | 4,322 | 630 | yes | yes | yes | yes | 191 |
-| 42×15 | ANSI256 | 2,951 | 630 | yes | yes | yes | yes | 178 |
-| 42×15 | ANSI16 | 2,022 | 630 | yes | yes | yes | yes | 168 |
-| 42×15 | Mono | 1,243 | 630 | yes | yes | yes | yes | 36 |
-| 60×20 | TrueColor | 8,576 | 1,200 | yes | yes | yes | yes | 371 |
-| 60×20 | ANSI256 | 5,550 | 1,200 | yes | yes | yes | yes | 326 |
-| 60×20 | ANSI16 | 3,730 | 1,200 | yes | yes | yes | yes | 298 |
-| 60×20 | Mono | 2,281 | 1,200 | yes | yes | yes | yes | 44 |
-| 80×24 | TrueColor | 7,050 | 1,905 | yes | yes | yes | yes | 260 |
-| 80×24 | ANSI256 | 5,042 | 1,905 | yes | yes | yes | yes | 233 |
-| 80×24 | ANSI16 | 3,743 | 1,905 | yes | yes | yes | yes | 214 |
-| 80×24 | Mono | 2,704 | 1,905 | yes | yes | yes | yes | 38 |
-| 120×40 | TrueColor | 20,891 | 4,756 | yes | yes | yes | yes | 755 |
-| 120×40 | ANSI256 | 14,808 | 4,756 | yes | yes | yes | yes | 704 |
-| 120×40 | ANSI16 | 10,502 | 4,756 | yes | yes | yes | yes | 660 |
-| 120×40 | Mono | 6,859 | 4,756 | yes | yes | yes | yes | 52 |
-| 160×50 | TrueColor | 33,600 | 7,867 | yes | yes | yes | yes | 1,221 |
-| 160×50 | ANSI256 | 23,584 | 7,867 | yes | yes | yes | yes | 1,118 |
-| 160×50 | ANSI16 | 16,962 | 7,867 | yes | yes | yes | yes | 1,063 |
-| 160×50 | Mono | 10,998 | 7,867 | yes | yes | yes | yes | 70 |
+| 42×15 | TrueColor | 4,329 | 628 | yes | yes | yes | yes | 192 |
+| 42×15 | ANSI256 | 2,958 | 628 | yes | yes | yes | yes | 179 |
+| 42×15 | ANSI16 | 2,029 | 628 | yes | yes | yes | yes | 169 |
+| 42×15 | Mono | 1,245 | 628 | yes | yes | yes | yes | 36 |
+| 60×20 | TrueColor | 8,581 | 1,198 | yes | yes | yes | yes | 372 |
+| 60×20 | ANSI256 | 5,555 | 1,198 | yes | yes | yes | yes | 327 |
+| 60×20 | ANSI16 | 3,735 | 1,198 | yes | yes | yes | yes | 299 |
+| 60×20 | Mono | 2,281 | 1,198 | yes | yes | yes | yes | 44 |
+| 80×24 | TrueColor | 7,058 | 1,897 | yes | yes | yes | yes | 261 |
+| 80×24 | ANSI256 | 5,050 | 1,897 | yes | yes | yes | yes | 234 |
+| 80×24 | ANSI16 | 3,751 | 1,897 | yes | yes | yes | yes | 215 |
+| 80×24 | Mono | 2,707 | 1,897 | yes | yes | yes | yes | 38 |
+| 120×40 | TrueColor | 20,895 | 4,770 | yes | yes | yes | yes | 755 |
+| 120×40 | ANSI256 | 14,812 | 4,770 | yes | yes | yes | yes | 704 |
+| 120×40 | ANSI16 | 10,506 | 4,770 | yes | yes | yes | yes | 660 |
+| 120×40 | Mono | 6,863 | 4,770 | yes | yes | yes | yes | 52 |
+| 160×50 | TrueColor | 33,604 | 7,881 | yes | yes | yes | yes | 1,221 |
+| 160×50 | ANSI256 | 23,588 | 7,881 | yes | yes | yes | yes | 1,118 |
+| 160×50 | ANSI16 | 16,966 | 7,881 | yes | yes | yes | yes | 1,063 |
+| 160×50 | Mono | 11,002 | 7,881 | yes | yes | yes | yes | 70 |
 
 All 20 cells preserve incident state + hot cluster + affordance + exit. At the smallest size the
 view switches to a causal-chain close-up while keeping a compact header (`CATHEDRAL CASCADE …`)
@@ -320,9 +320,15 @@ and terminal restoration.
 
 | probe | argv | bytes captured | actions observed | alt-enter/leave | exit |
 |---|---|---:|---:|---|---:|
-| chaos, no music | `--wtf --no-music --fps=30` | 2,292,445 | 7/7 operator actions | yes/yes | 0 |
-| chaos, music | `--wtf --fps=30` | 2,230,366 | 7/7 operator actions | yes/yes | 0 |
-| observe-only | `--wtf --no-music --fps=300` | 9,298,972 | — | yes/yes | 0 |
+| chaos, no music | `--wtf --no-music --fps=30` | 2,289,667 | 7/7 operator actions | yes/yes | 0 |
+| chaos, music | `--wtf --fps=30` | 2,284,281 | 7/7 operator actions | yes/yes | 0 |
+| observe-only | `--wtf --no-music --fps=300` | 9,277,195 | — | yes/yes | 0 |
+
+The chaos probe's operator fault is visible in native scrollback with its own blast radius,
+which is the fix for the "I set a fault and nothing happened" trap: the default focus is a leaf,
+so the committed line reads `◇ INJECT-FAULT t=21 target=#0 operator inject · 0 downstream
+dependents`, and the footer persistently shows `focus #0·0↓`. Pressing `D` (or the arrow keys)
+moves focus to the keystone `#138` (62 downstream dependents), where the same `F` cascades.
 
 The observe-only probe sends only non-mutating view keys, so the scripted incident resolves,
 and it confirms the **compact incident report committed to native scrollback while the live
@@ -406,3 +412,16 @@ Recorded because they are consumer-side evidence, not upstream claims:
   recovery; open breakers now reject without retry amplification.
 
 These are all local to Project Cathedral. No LibGibson source was modified.
+
+- The narrow-terminal footer welded the right-aligned music-axis string onto the left footer
+  run, producing corrupt tokens such as `joTNeutral EMuted DSpacious LFlat` at every width up to
+  ~95 (including the classic 80×24 default). `draw_footer` now reserves the right run's width
+  before truncating the left run and backs the cut off to a separator. A black-box regression
+  test renders 80×24 and asserts the two runs never touch.
+- The operator fault affordance defaulted to the first service, a leaf with **zero** downstream
+  dependents. A fault there degrades exactly one service and then sits at a fixed low state
+  (measured: `crit=0.0037, degraded=1, mean_health≈0.9977` for hundreds of ticks), which reads as
+  "the dynamic system is inert". The fault is still correct; the *affordance* was the problem.
+  The footer now shows the focused service's blast radius (`focus #0·0↓`), the committed operator
+  line names it (`0 downstream dependents`), and `D` tie-breaks toward the keystone so a fault can
+  be placed where it propagates. The scripted incident is unchanged and still targets `#138`.

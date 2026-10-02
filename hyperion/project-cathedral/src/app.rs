@@ -80,6 +80,9 @@ impl App {
         } else {
             None
         };
+        // Focus starts on the first service. The header footer shows the focused
+        // service's downstream fan-out, and `D` jumps to the keystone, so a fault
+        // is never silently placed on an inert leaf.
         let selected = 0;
         let mut camera = Camera::new();
         camera.aim(&engine, &layout, Scale::Whole, selected, 120.0, 36.0);
@@ -295,7 +298,9 @@ impl App {
             }
             KeyCode::Char('f') | KeyCode::Char('F') => {
                 let t = self.selected;
-                self.enqueue(ActionKind::InjectFault, t, 0.6, "operator inject");
+                let down = self.engine.downstream_count(t);
+                let note = format!("operator inject · {down} downstream dependents");
+                self.enqueue(ActionKind::InjectFault, t, 0.6, &note);
                 true
             }
             KeyCode::Char('r') | KeyCode::Char('R') => {
@@ -381,16 +386,18 @@ impl App {
                 true
             }
             KeyCode::Char('d') | KeyCode::Char('D') => {
-                // Jump the focus to the most distressed service.
-                let mut best = (f32::MIN, 0u16);
+                // Jump the focus to the most distressed service; tie-break by blast
+                // radius so that at rest (all healthy) it lands on the keystone.
+                let mut best = (f32::MIN, 0usize, 0u16);
                 for i in 0..self.engine.len() as u16 {
                     let d = self.engine.states[i as usize]
                         .distress(&self.engine.fixture.services[i as usize]);
-                    if d > best.0 {
-                        best = (d, i);
+                    let down = self.engine.downstream_count(i);
+                    if (d, down) > (best.0, best.1) {
+                        best = (d, down, i);
                     }
                 }
-                self.selected = best.1;
+                self.selected = best.2;
                 true
             }
             _ => false,

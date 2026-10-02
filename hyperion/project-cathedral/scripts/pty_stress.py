@@ -201,6 +201,10 @@ def run(args):
 
     data = bytes(captured)
     txt = text_of(captured)
+    dump = os.environ.get("PTY_DUMP")
+    if dump:
+        with open(dump, "w") as fh:
+            fh.write(txt)
     leave_alt = ALT_SCREEN_LEAVE in data
 
     # Observable evidence from the captured stream.

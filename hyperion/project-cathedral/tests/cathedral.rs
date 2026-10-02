@@ -92,7 +92,17 @@ fn color_depth_degrades_monotonically() {
             rows[0].1 >= rows[1].1 && rows[1].1 >= rows[2].1 && rows[2].1 >= rows[3].1,
             "{size}: color codes not monotone across TrueColor/256/16/Mono: {rows:?}"
         );
-        assert!(rows[3].1 <= 80, "{size}: Mono should be nearly escape-free");
+        // Mono must strip at least three quarters of the escape sequences, and stay
+        // small in absolute terms. (An absolute cap alone is brittle: it tracks the
+        // exact chrome, not the degradation.)
+        assert!(
+            rows[3].1 * 4 <= rows[0].1,
+            "{size}: Mono kept too many escapes vs TrueColor: {rows:?}"
+        );
+        assert!(
+            rows[3].1 <= 200,
+            "{size}: Mono should be nearly escape-free"
+        );
     }
 }
 
@@ -216,6 +226,43 @@ fn text_capture_is_byte_stable_and_shows_the_contract() {
     }
     // The readable surface must be free of ANSI (that is the point of --text).
     assert!(!text.contains('\u{1b}'), "--text leaked ANSI escapes");
+}
+
+#[test]
+fn footer_does_not_collide_with_the_music_axis_at_narrow_widths() {
+    // 80x24 is the classic default terminal, and it is exactly where the
+    // right-aligned music axis used to overwrite the left footer run.
+    let out = run(&[
+        "--wtf",
+        "--at=220",
+        "--text",
+        "--no-music",
+        "--width=80",
+        "--height=24",
+    ]);
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let text = String::from_utf8_lossy(&out.stdout);
+    let line = text
+        .lines()
+        .find(|l| l.contains("TNeutral EMuted"))
+        .expect("music-axis footer line missing");
+    assert!(
+        line.chars().count() <= 80,
+        "footer overflowed 80 columns: {line:?}"
+    );
+    let idx = line.find("TNeutral").unwrap();
+    assert!(
+        line[..idx].chars().last().is_none_or(|c| c == ' '),
+        "music axis collided with the left footer run: {line:?}"
+    );
+    assert!(
+        !line.contains("joTNeutral"),
+        "footer collision regressed: {line:?}"
+    );
 }
 
 #[test]

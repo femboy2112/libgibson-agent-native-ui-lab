@@ -55,7 +55,7 @@ Interactive controls:
 | Key | Action |
 |---|---|
 | `1` / `2` / `3` / `4`, `Tab` | whole system / cluster / causal chain / service; `Tab` cycles |
-| Left / Right, `D` | move focus; find the most distressed service |
+| Left / Right, `D` | move focus; `D` jumps to the most distressed service — at rest, the largest blast radius (the keystone `#138`) |
 | `F` | inject a minor fault on the focused service |
 | `R` | roll back the (bad) deployment |
 | `I` | isolate / sever the focused service |
@@ -64,9 +64,20 @@ Interactive controls:
 | `A` | acknowledge (opens the diagnosis phase) |
 | `N` | annotate (cycles canned operator notes) |
 | `Space` | pause / resume |
-| `W` | write the current checked performance to `cathedral.wav` |
+| `W` | export the current checked performance to `cathedral.wav` |
 | `H` / `?` | toggle help |
 | `Q` / `Esc` / `Ctrl-C` | quit and restore the terminal |
+
+**There is no live audio.** The score is built and checked in memory; nothing is sent to a sound
+device. Press `W` (or run with `--music-out=DIR`) to write `cathedral.wav`, then play it with
+`ffplay cathedral.wav`, `aplay cathedral.wav`, or any audio player. The footer's
+`Tone/Emphasis/Density/Elevation` axis shows the score's current semantic state, not sound.
+
+**A fault only cascades if it has a blast radius.** The footer shows the focused service's
+downstream dependents (`focus #N·D↓`). The default focus `#0` is a leaf with `0↓`, so a fault
+there degrades exactly that one service and then sits still — that is the model working, not a
+hang. Press `D` to jump to the keystone (`#138`, `62↓`) before pressing `F`, or run `--wtf` to
+watch the scripted incident on the keystone.
 
 Every operator action enters one ordered journal. Replay is
 `fixture + seed + action journal → equivalent semantic state`:
@@ -104,7 +115,7 @@ lines to stderr.
 ```sh
 cargo fmt --check
 cargo clippy --locked --all-targets --all-features -- -D warnings
-cargo test --locked          # 14 unit + 7 black-box integration tests
+cargo test --locked          # 15 unit + 8 black-box integration tests
 cargo build --locked --release
 python3 scripts/pty_stress.py --binary target/release/cathedral --live-seconds=3
 python3 scripts/pty_stress.py --binary target/release/cathedral --observe-only --fps=300 --live-seconds=40
@@ -142,11 +153,11 @@ boundary that the app emits no per-key input receipt.
 ## Results and limits
 
 On this Ubuntu host, a **10,000-frame** deterministic run with live checked-BAND music and a
-final WAV export completed in **60.9 s**. Mean frame **4.59 ms**, p95 **1.29 ms**, max **1.03 s**
+final WAV export completed in **73.0 s**. Mean frame **5.30 ms**, p95 **1.30 ms**, max **1.14 s**
 (a music rebuild), mean **8,369 emitted bytes/frame** and **419 exact changed cells/frame**;
 bounded history stayed at **11 scrollback insertions / max 2 per frame**; the frame loop's RSS
-was 7.1 MiB → 23.5 MiB, and the whole run (including the materialized 100 MB PCM for export)
-peaked at **~613 MiB**. A `fixture + seed + journal` replay reproduced the 10,000-frame semantic
+was 7.1 MiB → 23.2 MiB, and the whole run (including the materialized 100 MB PCM for export)
+peaked at **~612 MiB**. A `fixture + seed + journal` replay reproduced the 10,000-frame semantic
 digest `b22330570bb7875f` with all **50 checkpoints** matching. The 650-frame checked performance
 exported a 35.8 MB PCM-hashed WAV (`3fd56c…`); the 10,000-frame final take exported a 100.5 MB WAV
 (`5496b5…`). All **20** capability cells (5 sizes × 4 depths) preserved incident state, the hot
