@@ -1,4 +1,5 @@
 use clap::Parser;
+use gibson::audio::buffer::StereoBlock;
 use gibson::audio::device::AudioDevice;
 use gibson::audio::human_music::{
     contract::CompositionGrammar,
@@ -10,11 +11,12 @@ use gibson::audio::human_music::{
     functor::Composition,
     policy::PerformanceProfile,
     reference_song::ReferenceSong,
+    score::Score,
     synth::HumanMusicSynth,
     world::MusicWorld,
 };
-use gibson::audio::render::{AudioSource, OfflineRenderer};
-use gibson::audio::time::SampleRate;
+use gibson::audio::render::{AudioSource, OfflineRenderer, RenderCtx};
+use gibson::audio::time::{SampleRate, SampleTime};
 use gibson::audio::wav::write_wav_i16;
 use gibson::cell::{Color, Style};
 use gibson::field::{plasma, radial_pulse};
@@ -51,6 +53,47 @@ enum AudioMode {
     PlayingSource,
 }
 
+/// Seamlessly loops an audio source indefinitely so the performance never abruptly stops.
+struct LoopingSynth {
+    score: Score,
+    world: MusicWorld,
+    sr: SampleRate,
+    synth: HumanMusicSynth,
+    loop_offset: u64,
+}
+
+impl LoopingSynth {
+    fn new(score: Score, world: MusicWorld, sr: SampleRate) -> Self {
+        let synth = HumanMusicSynth::new(&score, &world, sr);
+        Self {
+            score,
+            world,
+            sr,
+            synth,
+            loop_offset: 0,
+        }
+    }
+}
+
+impl AudioSource for LoopingSynth {
+    fn render(&mut self, out: &mut StereoBlock, ctx: &RenderCtx) {
+        let relative_start = ctx.start.0.saturating_sub(self.loop_offset);
+        let rel_ctx = RenderCtx {
+            sr: ctx.sr,
+            start: SampleTime(relative_start),
+        };
+        self.synth.render(out, &rel_ctx);
+        if self.synth.is_finished(SampleTime(relative_start + out.frames() as u64)) {
+            self.loop_offset = ctx.start.0 + out.frames() as u64;
+            self.synth = HumanMusicSynth::new(&self.score, &self.world, self.sr);
+        }
+    }
+
+    fn is_finished(&self, _at: SampleTime) -> bool {
+        false
+    }
+}
+
 struct Model {
     source: ReferenceSong,
     world: MusicWorld,
@@ -68,14 +111,14 @@ struct Model {
 }
 
 const AXIS_NAMES: [&str; 8] = [
-    "MOTIF       (Melodic Contour)",
-    "RIFF        (Secondary Hooks)",
-    "GROOVE      (Rhythmic Pocket)",
-    "H-CONTOUR   (Harmonic Path)  ",
-    "H-LOOP      (Cadence Cycle)  ",
-    "FORM        (AABA Structure) ",
-    "ORCHESTRA   (Voice Seating)  ",
-    "BASS        (Root Foundation)",
+    "MOTIF     [Lead Contour] ",
+    "RIFF      [Secondary Hook]",
+    "GROOVE    [Drum Pocket]  ",
+    "H-CONTOUR [Harmonic Path]",
+    "H-LOOP    [Cadence Cycle]",
+    "FORM      [AABA Phrasing]",
+    "ORCHESTRA [Timbre Map]   ",
+    "BASS      [Sub-Root Line]",
 ];
 
 fn stop_audio(model: &mut Model) {
@@ -87,39 +130,39 @@ fn stop_audio(model: &mut Model) {
 fn play_cover(model: &mut Model) {
     model.active_audio = None;
     if let Some(comp) = &model.cover_comp {
-        let synth = HumanMusicSynth::new(&comp.score, &model.world, SampleRate::STUDIO);
-        let source: Box<dyn AudioSource + Send> = Box::new(synth);
+        let looper = LoopingSynth::new(comp.score.clone(), model.world.clone(), SampleRate::STUDIO);
+        let source: Box<dyn AudioSource + Send> = Box::new(looper);
         match AudioDevice::play(source, SampleRate::STUDIO) {
             Ok(device) => {
                 model.active_audio = Some(device);
                 model.audio_mode = AudioMode::PlayingCover;
-                model.audio_status_msg = Some(format!("Streaming Cover [{}] @ 48kHz", model.world.name));
+                model.audio_status_msg = Some(format!("Streaming Cover [{}] (Looping @ 48kHz)", model.world.name));
             }
             Err(e) => {
                 model.audio_mode = AudioMode::Stopped;
-                model.audio_status_msg = Some(format!("Device play failed: {:?}", e));
+                model.audio_status_msg = Some(format!("Audio Device Error: {:?}", e));
             }
         }
     } else {
         model.audio_mode = AudioMode::Stopped;
-        model.audio_status_msg = Some("Cannot play: Cover generation refused".into());
+        model.audio_status_msg = Some("Cover refused by target world".into());
     }
 }
 
 fn play_source(model: &mut Model) {
     model.active_audio = None;
     if let Ok(score) = model.source.melody_score() {
-        let synth = HumanMusicSynth::new(&score, &model.world, SampleRate::STUDIO);
-        let source: Box<dyn AudioSource + Send> = Box::new(synth);
+        let looper = LoopingSynth::new(score, model.world.clone(), SampleRate::STUDIO);
+        let source: Box<dyn AudioSource + Send> = Box::new(looper);
         match AudioDevice::play(source, SampleRate::STUDIO) {
             Ok(device) => {
                 model.active_audio = Some(device);
                 model.audio_mode = AudioMode::PlayingSource;
-                model.audio_status_msg = Some("Auditioning Reference Melody (A/B Test)".into());
+                model.audio_status_msg = Some("Auditioning Source Melody (A/B Test)".into());
             }
             Err(e) => {
                 model.audio_mode = AudioMode::Stopped;
-                model.audio_status_msg = Some(format!("Device play failed: {:?}", e));
+                model.audio_status_msg = Some(format!("Audio Device Error: {:?}", e));
             }
         }
     }
@@ -139,7 +182,7 @@ fn export_wavs(model: &mut Model) {
     if let Ok(score) = model.source.melody_score() {
         let mut synth = HumanMusicSynth::new(&score, &model.world, SampleRate::STUDIO);
         let renderer = OfflineRenderer::new(SampleRate::STUDIO, 1024);
-        let result = renderer.render_seconds(&mut synth, score.total_beats * (60.0 / 120.0));
+        let result = renderer.render_seconds(&mut synth, score.total_beats * (60.0 / 100.0));
         let path = "/tmp/theseus_source.wav";
         if write_wav_i16(path, &result.audio, SampleRate::STUDIO).is_ok() {
             msgs.push(format!("Saved {}", path));
@@ -221,6 +264,58 @@ fn regenerate(model: &mut Model) {
             }
         }
     }
+}
+
+/// Renders a full-width real-time audio spectrum & waveform visualizer on HalfBlockCanvas.
+fn render_spectrum_banner(width: u16, time_secs: f32, tempo: f32, world_name: &str, _active_axes_count: usize) -> Element<()> {
+    let height = 3;
+    let mut canvas = HalfBlockCanvas::new(width, height);
+    let pw = canvas.pixel_width() as f32;
+    let ph = canvas.pixel_height() as f32;
+
+    let beat_phase = (time_secs * (tempo / 60.0) * std::f32::consts::PI * 2.0).sin().abs();
+
+    for x in 0..canvas.pixel_width() as i32 {
+        let x_norm = x as f32 / pw.max(1.0);
+        // Multi-harmonic spectrum bars
+        let f1 = (x_norm * 14.0 + time_secs * 3.0).sin();
+        let f2 = (x_norm * 28.0 - time_secs * 5.0).cos();
+        let f3 = (x_norm * 7.0 + time_secs * 1.5).sin();
+        let amp = ((f1 * 0.4 + f2 * 0.3 + f3 * 0.3).abs() * (0.6 + 0.4 * beat_phase)).clamp(0.05, 1.0);
+
+        let bar_h = (amp * ph).round() as i32;
+
+        for y in (canvas.pixel_height() as i32 - bar_h)..canvas.pixel_height() as i32 {
+            let y_norm = y as f32 / ph.max(1.0);
+            let rgb = match world_name {
+                "VAPOR95" => {
+                    // Sunset gradient: violet -> hot neon pink -> electric cyan
+                    let r = ((0.8 - y_norm * 0.5) * 255.0) as u8;
+                    let g = ((y_norm * 0.8) * 240.0) as u8;
+                    let b = ((0.5 + y_norm * 0.5) * 255.0) as u8;
+                    (r, g, b)
+                }
+                "BLACK_ICE" => {
+                    // Cryogenic stealth: slate -> electric laser blue -> ice white
+                    let r = ((y_norm * y_norm) * 160.0) as u8;
+                    let g = ((y_norm * 0.9) * 255.0) as u8;
+                    let b = 255;
+                    (r, g, b)
+                }
+                _ => {
+                    // SWISS_SIGNAL: pure international typographic red and crisp white
+                    if y_norm > 0.6 {
+                        (255, 255, 255)
+                    } else {
+                        (240, 20, 45)
+                    }
+                }
+            };
+            canvas.set_pixel(x, y, rgb);
+        }
+    }
+
+    raw(Node::rich_text_wrapped(canvas.to_rich_text(), WrapMode::NoWrap))
 }
 
 /// Renders a dynamic cybernetic plasma/energy field for the center quotient core.
@@ -313,8 +408,7 @@ fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &s
         }
     }
 
-    let node = Node::rich_text_wrapped(canvas.to_rich_text(), WrapMode::NoWrap);
-    raw(node)
+    raw(Node::rich_text_wrapped(canvas.to_rich_text(), WrapMode::NoWrap))
 }
 
 /// Renders a dynamic piano roll on BrailleCanvas for the notes in a track.
@@ -334,7 +428,7 @@ fn render_piano_roll_braille(
     let ph = canvas.pixel_height() as i32;
 
     let min_pitch = notes.iter().map(|n| n.2).min().unwrap_or(60).max(36);
-    let max_pitch = notes.iter().map(|n| n.2).max().unwrap_or(72).max(min_pitch + 12);
+    let max_pitch = notes.iter().map(|n| n.2).max().unwrap_or(74).max(min_pitch + 12);
     let pitch_range = (max_pitch - min_pitch).max(1) as f32;
 
     for note in notes {
@@ -362,15 +456,11 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
     let active_count = model.axes_on.iter().filter(|&&x| x).count();
     let pct_preserved = (active_count as f32 / 8.0) * 100.0;
 
-    // 1. TOP TELEMETRY BANNER
-    let world_badge = format!(" [WORLD: {}] ", model.world.name);
-    let fidelity_badge = format!(" [FIDELITY: {}] ", model.preset.label());
-    let seed_badge = format!(" [SEED: {}] ", model.seed);
-
+    // 1. SLEEK TOP METRIC TELEMETRY (Cyberpunk Console Header)
     let audio_badge = match model.audio_mode {
-        AudioMode::PlayingCover => format!(" 🔊 AUDIO: PLAYING COVER [{}] ", model.world.name),
-        AudioMode::PlayingSource => " 🔊 AUDIO: AUDITIONING REFERENCE (A/B) ".into(),
-        AudioMode::Stopped => " 🔇 AUDIO: MUTED [Press P to Play] ".into(),
+        AudioMode::PlayingCover => format!("▶ LIVE COVER [{}]", model.world.name),
+        AudioMode::PlayingSource => "▶ AUDITIONING REF".into(),
+        AudioMode::Stopped => "■ AUDIO MUTED".into(),
     };
     let audio_tone = match model.audio_mode {
         AudioMode::PlayingCover => Tone::Success,
@@ -378,24 +468,22 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         AudioMode::Stopped => Tone::Neutral,
     };
 
-    let header_card = card("◆ PROJECT THESEUS // RECOMBINANT QUOTIENT MACHINE ◆")
-        .child(
-            row()
-                .child(text(world_badge).tone(Tone::Accent).emphasis(Emphasis::Strong))
-                .child(text(fidelity_badge).tone(Tone::Info).emphasis(Emphasis::Strong))
-                .child(text(seed_badge).tone(Tone::Neutral).emphasis(Emphasis::Muted))
-                .child(text(audio_badge).tone(audio_tone).emphasis(Emphasis::Strong))
-                .child(spacer())
-                .child(
-                    text(format!("TIME: {:05.2}s ", time_s))
-                        .tone(Tone::Neutral)
-                        .emphasis(Emphasis::Faint),
-                ),
-        );
+    let header_line = row()
+        .child(text("◆ PROJECT THESEUS").tone(Tone::Accent).emphasis(Emphasis::Strong))
+        .child(text(" // HUMAN_MUSIC RECOMBINANT QUOTIENT ENGINE ").tone(Tone::Neutral).emphasis(Emphasis::Muted))
+        .child(spacer())
+        .child(text(format!("[{}] ", model.world.name)).tone(Tone::Accent).emphasis(Emphasis::Strong))
+        .child(text(format!("[FIDELITY: {}] ", model.preset.label())).tone(Tone::Info).emphasis(Emphasis::Strong))
+        .child(text(format!("[SEED: {}] ", model.seed)).tone(Tone::Neutral).emphasis(Emphasis::Muted))
+        .child(text(format!("[{}] ", audio_badge)).tone(audio_tone).emphasis(Emphasis::Strong));
 
-    // 2. THE THREE TIERS: (Reference) -> (CoverMap Quotient) -> (Fresh Cover)
+    // Full-width real-time spectrum banner
+    let spectrum_w = term_w.saturating_sub(2).min(100);
+    let spectrum_element = render_spectrum_banner(spectrum_w, time_s, model.world.tempo_bpm, model.world.name, active_count);
 
-    // --- TIER 1: REFERENCE PERFORMANCE ---
+    // 2. THE THREE TIERS: (Reference DNA) -> (CoverMap Quotient) -> (Fresh Cover)
+
+    // --- TIER 1: REFERENCE PERFORMANCE (Beethoven 64-beat Soprano) ---
     let ref_notes: Vec<(f32, f32, i32)> = model
         .source
         .voices
@@ -409,33 +497,23 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         .unwrap_or_default();
 
     let ref_beats = model.source.length.beats() as f32;
-    let ref_canvas_w = (term_w / 3).max(18).min(32);
+    let col_w = (term_w / 3).max(18).min(32);
     let ref_canvas = render_piano_roll_braille(
         &ref_notes,
         ref_beats,
-        ref_canvas_w,
+        col_w,
         3,
         Style::new().fg(Color::Rgb(0, 240, 255)),
     );
 
-    let ref_panel = card("1. REFERENCE (SOURCE DNA) [O: Audition]")
-        .child(text("Ode to Joy (Beethoven) // Monophonic Lead").tone(Tone::Accent))
+    let ref_col = column()
+        .child(text("1. REFERENCE SOURCE DNA").tone(Tone::Accent).emphasis(Emphasis::Strong))
+        .child(text("Ode to Joy (Beethoven) · 64b").tone(Tone::Neutral).emphasis(Emphasis::Muted))
         .child(ref_canvas)
-        .child(
-            text(format!(
-                "Meter: {}/{} | Length: {:.0}b | Notes: {}",
-                model.source.meter.0,
-                model.source.meter.1,
-                ref_beats,
-                ref_notes.len()
-            ))
-            .tone(Tone::Neutral)
-            .emphasis(Emphasis::Muted),
-        );
+        .child(text(format!("Meter 4/4 · D-Maj · {} Notes", ref_notes.len())).tone(Tone::Neutral).emphasis(Emphasis::Faint));
 
     // --- TIER 3: FRESH COVER PERFORMANCE ---
-    let cover_canvas_w = ref_canvas_w;
-    let (_cover_status_title, cover_panel) = if let Some(comp) = &model.cover_comp {
+    let cover_canvas = if let Some(comp) = &model.cover_comp {
         let cov_notes: Vec<(f32, f32, i32)> = comp
             .score
             .notes
@@ -443,63 +521,30 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
             .map(|n| (n.start_beat as f32, n.dur_beats, n.pitch))
             .collect();
         let cov_beats = comp.score.total_beats as f32;
-        let cov_canvas = render_piano_roll_braille(
+        render_piano_roll_braille(
             &cov_notes,
             cov_beats,
-            cover_canvas_w,
+            col_w,
             3,
             Style::new().fg(Color::Rgb(50, 255, 120)),
-        );
-
-        let p = card("3. FRESH COVER (GENERATED) [P: Play Live]")
-            .child(
-                text(format!(
-                    "Synthesized in {} @ {:.0} BPM",
-                    model.world.name, model.world.tempo_bpm
-                ))
-                .tone(Tone::Success),
-            )
-            .child(cov_canvas)
-            .child(
-                text(format!(
-                    "Total Notes: {} | Beats: {:.0} | Anchor: PASS",
-                    cov_notes.len(),
-                    cov_beats
-                ))
-                .tone(Tone::Success)
-                .emphasis(Emphasis::Strong),
-            );
-        ("STATUS: SYNTHESIZED", p)
+        )
     } else {
-        let refusal_alert = if let Some(adm) = &model.admission {
-            let failed_checks: Vec<String> = adm
-                .conformance
-                .checks
-                .iter()
-                .filter(|c| !c.passed)
-                .map(|c| format!("AXIS REJECTED: {:?} [{}]", c.axis, c.detail))
-                .collect();
+        render_piano_roll_braille(&[], 1.0, col_w, 3, Style::new().fg(Color::Rgb(255, 50, 50)))
+    };
 
-            let err_summary = failed_checks.join(" | ");
-            card("3. ⚡ LAWFUL REFUSAL // BRIDGE REJECTED ⚡")
-                .child(
-                    text("TARGET WORLD REJECTED IDENTITY CONSTRAINTS")
-                        .tone(Tone::Danger)
-                        .emphasis(Emphasis::Strong),
-                )
-                .child(
-                    text("Invariant collision: Cannot realize requested pins without compromise.")
-                        .tone(Tone::Danger),
-                )
-                .child(text(err_summary).tone(Tone::Warning).emphasis(Emphasis::Strong))
-        } else {
-            card("3. SYNTHESIS FAILURE")
-                .child(
-                    text(model.error_msg.clone().unwrap_or_else(|| "Unknown error".into()))
-                        .tone(Tone::Danger),
-                )
-        };
-        ("STATUS: REFUSED", refusal_alert)
+    let cover_col = if let Some(comp) = &model.cover_comp {
+        column()
+            .child(text(format!("3. FRESH COVER [{}]", model.world.name)).tone(Tone::Success).emphasis(Emphasis::Strong))
+            .child(text(format!("Synthesized @ {:.0} BPM · Looping", model.world.tempo_bpm)).tone(Tone::Success))
+            .child(cover_canvas)
+            .child(text(format!("Score: {} notes · Receipts: PASS", comp.score.notes.len())).tone(Tone::Neutral).emphasis(Emphasis::Faint))
+    } else {
+        let err_desc = model.error_msg.clone().unwrap_or_else(|| "World Refusal".into());
+        column()
+            .child(text("3. ⚡ LAWFUL REFUSAL ⚡").tone(Tone::Danger).emphasis(Emphasis::Strong))
+            .child(text("Target world rejected pins").tone(Tone::Danger))
+            .child(cover_canvas)
+            .child(text(err_desc).tone(Tone::Warning).emphasis(Emphasis::Strong))
     };
 
     // --- TIER 2: IDENTITY QUOTIENT (THE MIDDLE STAR) ---
@@ -509,15 +554,15 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
     let gauge_str = format!("[{}{}] {:.1}%", filled_bar, empty_bar, pct_preserved);
 
     let identity_state_desc = if active_count == 8 {
-        "CLASSICAL IDENTITY CONSERVED (ALL AXES PINNED)"
+        "CLASSICAL IDENTITY INTACT"
     } else if active_count >= 5 {
-        "SURFACE TRANSLATION // CORE IDENTIFIABLE"
+        "SURFACE TRANSLATION SHIFT"
     } else if active_count >= 2 {
-        "CRITICAL SHIP DRIFT // BORDERLINE FAMILIAR"
+        "CRITICAL IDENTITY DRIFT"
     } else if active_count == 1 {
-        "WTF THRESHOLD // SINGLE AXIS ISOLATION"
+        "WTF THRESHOLD (NEW MUSIC)"
     } else {
-        "TOTAL SHIP OF THESEUS EVAPORATION (NEW MUSIC)"
+        "TOTAL SHIP OF THESEUS DISSOLUTION"
     };
 
     let gauge_tone = if active_count >= 6 {
@@ -528,8 +573,8 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         Tone::Danger
     };
 
-    let reactor_w = (term_w.saturating_sub(6)).min(74);
-    let reactor_element = render_reactor_canvas(reactor_w, 4, time_s, model.world.name, active_count);
+    let reactor_w = (term_w.saturating_sub(4)).min(74);
+    let reactor_element = render_reactor_canvas(reactor_w, 3, time_s, model.world.name, active_count);
 
     let mut conduit_col = column();
     for i in 0..8 {
@@ -538,8 +583,8 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         let key_num = i + 1;
 
         let conduit_line = if is_on {
-            let anim_offset = ((time_s * 6.0) as usize + i * 3) % 20;
-            let mut wire = "════════════════════".chars().collect::<Vec<_>>();
+            let anim_offset = ((time_s * 7.0) as usize + i * 2) % 24;
+            let mut wire = "════════════════════════".chars().collect::<Vec<_>>();
             if anim_offset < wire.len() {
                 wire[anim_offset] = '◈';
             }
@@ -552,11 +597,11 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
                         .emphasis(Emphasis::Strong),
                 )
                 .child(
-                    text(format!(" ──»» {} »»── ", wire_str))
+                    text(format!(" ──▶▶ {} ▶▶── ", wire_str))
                         .tone(Tone::Success)
                         .emphasis(Emphasis::Strong),
                 )
-                .child(text(" [LOCKED / PRESERVED] ").tone(Tone::Success))
+                .child(text("PRESERVED").tone(Tone::Success).emphasis(Emphasis::Strong))
         } else {
             row()
                 .child(
@@ -565,20 +610,20 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
                         .emphasis(Emphasis::Faint),
                 )
                 .child(
-                    text(" ──⚡  ░░░░  [SEVERED // AXIS PURGED]  ░░░░  ⚡── ")
+                    text(" ──⚡ ░░░░░░ [SEVERED: PURGED] ░░░░░░ ⚡── ")
                         .tone(Tone::Danger)
                         .emphasis(Emphasis::Faint),
                 )
-                .child(text(" [DISASSEMBLED] ").tone(Tone::Neutral).emphasis(Emphasis::Faint))
+                .child(text("STRIPPED").tone(Tone::Neutral).emphasis(Emphasis::Faint))
         };
 
         conduit_col = conduit_col.child(conduit_line);
     }
 
-    let quotient_panel = panel("2. IDENTITY QUOTIENT // THE COVERMAP (THE BRIDGE)")
+    let middle_tier = column()
         .child(
             row()
-                .child(text("THESEUS INDEX: ").tone(Tone::Neutral).emphasis(Emphasis::Strong))
+                .child(text("THESEUS GAUGE: ").tone(Tone::Neutral).emphasis(Emphasis::Strong))
                 .child(text(gauge_str).tone(gauge_tone).emphasis(Emphasis::Strong))
                 .child(spacer())
                 .child(text(identity_state_desc).tone(gauge_tone).emphasis(Emphasis::Strong)),
@@ -586,46 +631,41 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         .child(reactor_element)
         .child(conduit_col);
 
-    // 3. INTERACTIVE CONTROL COCKPIT
-    let status_line = model
+    // 3. SLEEK CONTROL COCKPIT (Clean Keycaps, No 90s Boxes)
+    let status_text = model
         .audio_status_msg
         .as_ref()
         .map(|s| text(format!(">> {}", s)).tone(Tone::Accent))
-        .unwrap_or_else(|| text("Ready. Press P to Stream Cover, O to Audition Reference.").tone(Tone::Neutral));
+        .unwrap_or_else(|| text(">> Ready. Press P to Stream Cover, O to Audition Reference.").tone(Tone::Neutral));
 
-    let control_hud = panel("◆ RECOMBINANT CONTROL COCKPIT ◆")
-        .child(status_line)
+    let control_hud = column()
+        .child(status_text)
         .child(
             row()
-                .child(
-                    text("[P/Space] Play Cover ")
-                        .tone(Tone::Success)
-                        .emphasis(Emphasis::Strong),
-                )
-                .child(
-                    text("| [O] Audition Ref ")
-                        .tone(Tone::Accent)
-                        .emphasis(Emphasis::Strong),
-                )
-                .child(text("| [1-8] Toggle Axes ").tone(Tone::Info))
+                .child(text("[P/Space] Play Cover ").tone(Tone::Success).emphasis(Emphasis::Strong))
+                .child(text("| [O] Audition Ref ").tone(Tone::Accent).emphasis(Emphasis::Strong))
+                .child(text("| [1-8] Axes ").tone(Tone::Info))
                 .child(text("| [F] Fidelity ").tone(Tone::Info))
                 .child(text("| [W] World ").tone(Tone::Success))
-                .child(text("| [D] WTF Snap ").tone(Tone::Warning))
+                .child(text("| [D] WTF Snap ").tone(Tone::Warning).emphasis(Emphasis::Strong))
                 .child(text("| [E] Export WAV ").tone(Tone::Neutral))
                 .child(text("| [Q] Quit").tone(Tone::Danger)),
         );
 
-    // ASSEMBLE COMPLETE SCREEN
+    // ASSEMBLE CLEAN HIGH-TECH INTERFACE
     screen().child(
         column()
-            .child(header_card)
+            .child(header_line)
+            .child(spectrum_element)
             .child(
                 row()
-                    .child(ref_panel)
+                    .child(ref_col)
                     .child(spacer())
-                    .child(cover_panel),
+                    .child(cover_col),
             )
-            .child(quotient_panel)
+            .child(divider())
+            .child(middle_tier)
+            .child(divider())
             .child(control_hud),
     )
 }
@@ -742,7 +782,9 @@ fn main() -> io::Result<()> {
     let args = Args::parse();
 
     let tsv = std::fs::read_to_string(&args.fixture).unwrap_or_else(|_| "".into());
-    let ref_song = ReferenceSong::from_tsv(&tsv, "lead").expect("Failed to load reference TSV fixture");
+    let ref_song = ReferenceSong::from_tsv(&tsv, "sop")
+        .or_else(|_| ReferenceSong::from_tsv(&tsv, "lead"))
+        .expect("Failed to load reference TSV fixture");
 
     let initial_world = match args.world.to_uppercase().as_str() {
         "BLACK_ICE" => MusicWorld::black_ice(),
@@ -775,7 +817,7 @@ fn main() -> io::Result<()> {
 
     regenerate(&mut model);
 
-    // Auto-start live audio streaming of the freshly synthesized cover!
+    // Auto-start live looping audio stream of the freshly synthesized cover
     play_cover(&mut model);
 
     App::fullscreen().skin(skins::VAPOR95).run(model, update, view)?;

@@ -14,7 +14,7 @@ fn get_fixture() -> String {
 #[test]
 fn test_data_isolation() {
     let tsv = get_fixture();
-    let ref_song = ReferenceSong::from_tsv(&tsv, "lead").unwrap();
+    let ref_song = ReferenceSong::from_tsv(&tsv, "sop").unwrap();
     let profile = CoverFidelityProfile::preset(CoverFidelityPreset::Loose);
     let (map, _) = ref_song
         .extract_fidelity(&profile, Some(CoverFidelityPreset::Loose), None)
@@ -57,7 +57,7 @@ fn test_non_identity_mutation() {
 #[test]
 fn test_determinism() {
     let tsv = get_fixture();
-    let ref_song = ReferenceSong::from_tsv(&tsv, "lead").unwrap();
+    let ref_song = ReferenceSong::from_tsv(&tsv, "sop").unwrap();
 
     let profile = CoverFidelityProfile::preset(CoverFidelityPreset::Interpretive);
     let (map, _) = ref_song
@@ -90,7 +90,7 @@ fn test_determinism() {
 #[test]
 fn test_refusal_behavior() {
     let tsv = get_fixture();
-    let ref_song = ReferenceSong::from_tsv(&tsv, "lead").unwrap();
+    let ref_song = ReferenceSong::from_tsv(&tsv, "sop").unwrap();
 
     let profile = CoverFidelityProfile::preset(CoverFidelityPreset::Strict);
     let (map, _) = ref_song
@@ -115,7 +115,7 @@ fn test_refusal_behavior() {
 #[test]
 fn test_fidelity_nesting() {
     let tsv = get_fixture();
-    let ref_song = ReferenceSong::from_tsv(&tsv, "lead").unwrap();
+    let ref_song = ReferenceSong::from_tsv(&tsv, "sop").unwrap();
 
     let prof_loose = CoverFidelityProfile::preset(CoverFidelityPreset::Loose);
     let prof_strict = CoverFidelityProfile::preset(CoverFidelityPreset::Strict);
