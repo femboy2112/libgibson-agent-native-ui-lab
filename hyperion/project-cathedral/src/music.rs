@@ -342,10 +342,17 @@ impl MusicDirector {
         let frames = synth.total_samples();
         let out = OfflineRenderer::new(sr, block).render(&mut synth, frames);
         write_wav_i16(path, &out.audio, sr)?;
-        let mut bytes = Vec::with_capacity(out.audio.frames() * 8);
+        // Hash the exact 16-bit PCM written to the WAV — the same clamp/scale/round
+        // quantization `write_wav_i16` applies — so the receipt identifies the artifact and
+        // can be checked against the file's `data` chunk byte-for-byte.
+        #[inline]
+        fn to_i16(s: f32) -> i16 {
+            (s.clamp(-1.0, 1.0) * i16::MAX as f32).round() as i16
+        }
+        let mut bytes = Vec::with_capacity(out.audio.frames() * 4);
         for i in 0..out.audio.frames() {
-            bytes.extend_from_slice(&out.audio.left[i].to_le_bytes());
-            bytes.extend_from_slice(&out.audio.right[i].to_le_bytes());
+            bytes.extend_from_slice(&to_i16(out.audio.left[i]).to_le_bytes());
+            bytes.extend_from_slice(&to_i16(out.audio.right[i]).to_le_bytes());
         }
         Ok((out, sha256_hex(&bytes)))
     }

@@ -16,6 +16,14 @@ libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.4.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+[features]
+# Stream the score to the real output device through LibGibson's own backend
+# (`gibson::audio::device`, the crate's `audio-cpal` feature; cpal → ALSA on Linux).
+# On by default so `W`/`--play` are audible; `--no-default-features` builds a
+# device-free binary on hosts without audio libraries.
+default = ["device-audio"]
+device-audio = ["libgibson/audio-cpal"]
+
 [dev-dependencies]
 
 [profile.release]

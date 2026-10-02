@@ -18,6 +18,7 @@ No LibGibson source, patch, vendor copy or path dependency was used. `Cargo.lock
 | F-CATH-5 | Per-frame render accounting read directly. `Context::stats()`. | `dirty_cells`, `frame_bytes` and `history_insertions` are **absolute** counters; a consumer must diff successive snapshots. This is documented on `RenderStats`, so it is a naming/ergonomics wrinkle, not a gap. Workaround: keep `prev_stats` and saturating-subtract. | ERGONOMIC INCONVENIENCE |
 | F-CATH-6 | Read a frame as plain text. `Surface::to_visible_lines()`. | Works; this is how `--text` and the capability matrix inspect the surface without parsing ANSI. No workaround needed. | DELIBERATE SAFETY BOUNDARY |
 | F-CATH-7 | Verify application input delivery from receipts. Application-side telemetry. | The consumer app (by our design) emits no per-key input receipt, so a PTY probe can only observe action *side effects*. Workaround: assert on committed `◇ ACTION` scrollback lines. This is a harness gap, not a LibGibson gap. | HARNESS-SPECIFIC |
+| F-CATH-8 | Build the realtime `AudioSource` at the rate the device will actually use. `AudioDevice::play(source, SampleRate::STUDIO)` + `AudioDevice::sample_rate()`. | `play` consumes the boxed source and negotiates the rate *after* it is handed over, so the caller cannot read `sample_rate()` in time to construct a rate-correct `HumanMusicSynth`. If the device refuses 48 kHz the synth would run at the wrong rate. Workaround: hand `play` a small `AudioSource` wrapper that builds the synth lazily on the first `RenderCtx` (whose `sr` is the negotiated rate). Small, but it is the one bit of ceremony the API leaves to the caller. | ERGONOMIC INCONVENIENCE |
 
 ## Notes on the classifications
 
@@ -31,8 +32,8 @@ No LibGibson source, patch, vendor copy or path dependency was used. `Cargo.lock
   contracts; they are recorded so a future consumer knows they are intentional.
 - These entries come from a single implementation context. They are not independent evidence
   families and do not by themselves justify an upstream change. F-CATH-1 and F-CATH-3 were
-  filed as focused v0.4.0-consumer issues; F-CATH-2 and F-CATH-5 are recorded here without a
-  separate issue because the documented contract or a small local idiom resolves them.
+  filed as focused v0.4.0-consumer issues; F-CATH-2, F-CATH-5 and F-CATH-8 are recorded here without
+  a separate issue because the documented contract or a small local idiom resolves them.
 
 ## Issues and comments filed
 

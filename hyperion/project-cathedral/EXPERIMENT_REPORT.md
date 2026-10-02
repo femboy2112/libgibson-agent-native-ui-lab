@@ -8,8 +8,10 @@ Standalone package: `hyperion/project-cathedral/`.
 Dependency: `libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.4.0" }`.
 Resolved commit: `c2f6483d92fe2b351e6cd50936a97d8cdf73cb79` (also hard-coded as
 `LIBSIBSON_COMMIT` so a binary can report it without reading `Cargo.lock` at runtime).
-`Cargo.lock` is committed. No path override, no `[patch]`, no LibGibson source change, no new
-main dependency beyond `serde`/`serde_json` for the record file.
+`Cargo.lock` is committed. No path override, no `[patch]`, no LibGibson source change. The direct
+dependencies are LibGibson and `serde`/`serde_json` (for the record file). The default
+`device-audio` feature turns on LibGibson's own `audio-cpal` feature, which brings `cpal`/`rtrb`
+(and `alsa` on Linux) transitively for in-process playback; `--no-default-features` drops it.
 
 Host: Ubuntu (Linux), Rust 1.98.1 pinned by the repository's `rust-toolchain.toml`. Timings are
 host-specific and the headless runs are unpaced.
@@ -185,12 +187,16 @@ Implementation (`src/music.rs`):
   lengthening, so a 10,000-frame run does not grow the live-score cost without limit. The
   scripted incident lives well inside this window.
 - Offline export uses `HumanMusicSynth` + `OfflineRenderer` + `write_wav_i16`. The reported hash
-  is the SHA-256 of the **interleaved i16 PCM**, not of the WAV file; the two necessarily differ
-  because the latter includes the 44-byte RIFF header and any padding. Both are reported.
-- Audibility is **best-effort and outside LibGibson**: on `W` or `--play` the host spawns the
-  first player it finds (`ffplay`/`paplay`/`aplay`/`mpv`/`afplay`). The verified artifact remains
-  the WAV + PCM hash; playback is a convenience and its success depends on the host sound
-  device, so no claim is made that sound reached a speaker.
+  is the SHA-256 of the **interleaved 16-bit PCM** actually written (clamp → ×32767 → round), so
+  it can be recomputed as `sha256(wav[44:])`; the separate file SHA-256 covers the whole RIFF file
+  including the 44-byte header. Both are reported.
+- Audibility is **in-process and owned by LibGibson**: `gibson::audio::device::AudioDevice`
+  (the crate's `audio-cpal` feature; cpal → ALSA on Linux) streams the same `HumanMusicSynth`
+  the offline renderer uses to the default output device. No external process is spawned. The
+  verified artifact remains the WAV + PCM hash; whether a given host actually has a working
+  output device is outside the program's control, so no claim is made that sound reached a
+  speaker. The `device-audio` feature (on by default) gates the backend; a `--no-default-
+  features` build reports the missing backend and keeps the WAV.
 
 This is a hand-written response function, not comprehension. No claim is made that the music
 "knows" an incident is happening.
@@ -223,7 +229,7 @@ REPLAY OK: 10000 frames, 5 actions, 50 checkpoints, final sim b22330570bb7875f
 ```
 
 The semantic digest `b22330570bb7875f` and the recorded `music` form digest are reproduced
-exactly. Record-file SHA-256: `6f5e89cb…b1b4b34` (`sustain10k.json`).
+exactly. Record-file SHA-256: `c3509e7f…30d41914f` (`sustain10k.json`).
 
 A negative control is included in the integration suite: the same fixture and seed with the
 scripted incident **withheld** reaches a different digest at the same frame, so the journal —
@@ -244,25 +250,26 @@ Command (final binary, live music, WAV export, record):
 | metric | value |
 |---|---|
 | frames | 10,000 |
-| wall time (frame loop + WAV export) | 73.0 s |
-| mean frame time | 5.30 ms |
-| p95 frame time | 1.30 ms |
-| max frame time | 1.14 s (a music rebuild; profiler overhead included) |
-| mean LibGibson render | 0.60 ms/frame |
+| wall time (frame loop + WAV export) | 58.7 s |
+| mean frame time | 4.44 ms |
+| p95 frame time | 1.19 ms |
+| max frame time | 1.01 s (a music rebuild; profiler overhead included) |
+| mean LibGibson render | 0.48 ms/frame |
 | mean emitted bytes | 8,368.7 |
 | total emitted bytes | 83,687,096 (~79.8 MiB) |
 | mean affected / exact changed cells | 418.86 / 418.79 per frame |
 | history insertions | 11 (max 2 in one frame) |
-| RSS (frame loop) start → end → peak | 7,088 → 23,188 KiB |
+| RSS (frame loop) start → end → peak | 8,284 → 23,912 → 24,612 KiB |
 | music checked rebuilds | 51 |
-| music total / last rebuild cost | 41.77 s / 1.12 s |
+| music total / last rebuild cost | 35.22 s / 0.90 s |
 | checked-route rejections | 0 |
 | incident events / final phase | 11 / NORMAL |
-| export peak RSS (`/usr/bin/time -v`) | 612,604 KiB |
+| export peak RSS (`/usr/bin/time -v`, separate measure) | 612,604 KiB |
 
-Frame times vary a little run to run; an earlier identical run reported mean 4.59 ms, p95 1.29 ms and
-a 1.03 s worst frame while reproducing the same `b22330570bb7875f` semantic digest and the same PCM
-hash. The digest and audio are deterministic; the wall-clock outliers are host noise.
+Frame times vary a little run to run; two earlier identical runs reported mean 5.30 / 4.59 ms,
+p95 1.30 / 1.29 ms and a 1.14 s / 1.03 s worst frame while reproducing the same
+`b22330570bb7875f` semantic digest and the same PCM hash. The digest and audio are deterministic;
+the wall-clock outliers are host noise.
 
 Mean frame time is dominated by outlier music rebuilds (p95 is 1.30 ms). `--frames` is a
 headless, unpaced loop; these numbers are not a steady-state frame rate. The profiler adds
@@ -351,17 +358,31 @@ comment on the issue, not as a resolution.
 
 ## 9. Audio receipts and hashes
 
-Checked BAND performances, exported to interleaved i16 PCM.
+Checked BAND performances, exported to interleaved 16-bit PCM. The `PCM SHA-256` column is the
+program's `pcm_sha256`: a SHA-256 over the exact `i16` samples written to the WAV (clamp → ×32767
+→ round), i.e. the bytes in the file's `data` chunk, so it can be recomputed from the artifact
+alone. The `file SHA-256` column is over the whole RIFF file (header + data).
 
-| run | rebuilds | checked | WAV size | PCM SHA-256 | file SHA-256 |
+| run | rebuilds | checked | WAV size | PCM SHA-256 (data chunk) | file SHA-256 |
 |---|---:|---|---:|---|---|
-| 650-frame incident | 12 | true | 35,825,500 B | `3fd56c71368a7206c001f88b4cdae54f4d68cccec40b0ea453624b5ec8d343d4` | `83663a39f639324504b017d5ff67b21780f2c8e4147d2d56f08779a221b75a12` |
-| 10,000-frame final take | 51 | true | 100,494,588 B | `5496b5d0825b63b55ae7727a46378cc402e65ee28870c3d810e552142044a5b5` | `86b2b04650f5048d8cdec8db7cf1089c2b5b86074bcb605e6965c84a303ec4e3` |
+| 650-frame incident | 12 | true | 35,825,500 B | `b25533abda1c7f267b0f2403bd3238307f63e2b7a379b842cea2b2eca6bf26b3` | `83663a39f639324504b017d5ff67b21780f2c8e4147d2d56f08779a221b75a12` |
+| 10,000-frame final take | 51 | true | 100,494,588 B | `8fa04984a484cfcb7c2aed29db663c778f569e3d2d8f5a5d8510ed9b5a48cfe2` | `86b2b04650f5048d8cdec8db7cf1089c2b5b86074bcb605e6965c84a303ec4e3` |
+
+An earlier revision of this experiment reported a `PCM SHA-256` that was quietly the hash of the
+renderer's **interleaved `f32`** buffer, not the `i16` file; it never matched the WAV and is
+recorded as a corrected application defect (§11). The values above are recomputable:
+`sha256(wav[44:])` equals the `pcm_sha256` column for both files.
 
 `checked=true` means `PerformanceReceipt::measure_under(..., PerformanceProfile::BAND)` passed
 on the checked route; `music_rejections: 0` across every run. The 10,000-frame export holds the
 whole PCM buffer in memory and peaked at ~614 MiB RSS — a real scaling observation recorded in
 [FRICTION.md](FRICTION.md), not a defect claim.
+
+**Realtime device receipt.** The same take is streamed in-process by `gibson::audio::device`
+(the `audio-cpal` feature). A headless `--play --play-seconds=5` on the default device
+negotiated **48,000 Hz f32 stereo** and reported **0 underruns** at stop — the render thread kept
+the bounded ring ahead of the callback for the whole audition. This exercises the device path;
+it does not certify that a given host's speakers produced sound.
 
 WAVs are intentionally **not** committed (the package's `.gitignore` excludes `*.wav` and
 `/out/`); the hashes above are the artifact.
@@ -394,8 +415,8 @@ WAVs are intentionally **not** committed (the package's `.gitignore` excludes `*
 - No visual-quality claim; the capability check is semantic (labels present), not an aesthetic
   judgment.
 - Cross-platform behavior (non-Linux terminals), actual speaker output (the WAV and PCM hash are
-  verified; whether a host player emits sound is not), and production-scale topology were not
-  certified.
+  verified and the device accepted the stream with zero underruns; whether a host's speakers
+  emitted sound is not verified), and production-scale topology were not certified.
 
 ---
 
@@ -415,9 +436,6 @@ Recorded because they are consumer-side evidence, not upstream claims:
   utilization.
 - Open breakers originally fed the error-rate signal and retried rejected requests, preventing
   recovery; open breakers now reject without retry amplification.
-
-These are all local to Project Cathedral. No LibGibson source was modified.
-
 - The narrow-terminal footer welded the right-aligned music-axis string onto the left footer
   run, producing corrupt tokens such as `joTNeutral EMuted DSpacious LFlat` at every width up to
   ~95 (including the classic 80×24 default). `draw_footer` now reserves the right run's width
@@ -428,5 +446,19 @@ These are all local to Project Cathedral. No LibGibson source was modified.
   (measured: `crit=0.0037, degraded=1, mean_health≈0.9977` for hundreds of ticks), which reads as
   "the dynamic system is inert". The fault is still correct; the *affordance* was the problem.
   The footer now shows the focused service's blast radius (`focus #0·0↓`), the committed operator
-  line names it (`0 downstream dependents`), and `D` tie-breaks toward the keystone so a fault can
-  be placed where it propagates. The scripted incident is unchanged and still targets `#138`.
+  line names it (`0 downstream dependents`), and at rest `D` falls back to the keystone so a fault
+  can be placed where it propagates. The scripted incident is unchanged and still targets `#138`.
+- Audio playback first shelled out to `ffplay`/`aplay`. That was both needless and fragile:
+  LibGibson v0.4.0 already ships a realtime device backend (`gibson::audio::device`, behind its
+  `audio-cpal` feature → cpal → ALSA on Linux) that streams the same `HumanMusicSynth` the
+  offline renderer uses. Project Cathedral now enables that feature and drives the device
+  in-process. Receipt: the default device negotiated 48 kHz and reported **0 underruns** over a
+  5-second audition. The lesson is the consumer's, not upstream's — the capability was in the
+  released crate and the first pass failed to use it.
+- The exported `pcm_sha256` was a SHA-256 over the renderer's interleaved **`f32`** samples, not the
+  `i16` PCM actually written to the WAV, because `AudioBuffer` stores `f32` and `.to_le_bytes()`
+  silently took the float representation. The number never matched the artifact. `export` now
+  quantizes with the same clamp/×32767/round rule `write_wav_i16` uses and hashes those bytes, so
+  `sha256(wav[44:])` reproduces the reported hash exactly.
+
+These are all local to Project Cathedral. No LibGibson source was modified.

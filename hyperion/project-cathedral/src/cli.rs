@@ -30,9 +30,10 @@ MUSIC:
   --no-music             disable the music director
   --world=ice|vapor|swiss
   --music-out=DIR        render the final checked performance to DIR/cathedral.wav + hash
-  --play                 play the exported WAV with the first available player
-                         (ffplay/paplay/aplay/mpv/afplay); interactive mode
-                         autoplays the first take. W exports and replays.
+  --play                 stream the score to the default output device through
+                         libgibson's audio-cpal backend (ALSA on Linux); interactive
+                         mode autoplays the first take. W exports and plays.
+  --play-seconds=N       headless: audition only the first N seconds, then stop
 
 REPLAY:
   --record=PATH          write the action journal JSON
@@ -79,6 +80,7 @@ pub struct Options {
     pub world: String,
     pub music_out: Option<String>,
     pub play: bool,
+    pub play_seconds: Option<u32>,
     pub record: Option<String>,
     pub replay: Option<String>,
 }
@@ -102,6 +104,7 @@ impl Default for Options {
             world: "ice".into(),
             music_out: None,
             play: false,
+            play_seconds: None,
             record: None,
             replay: None,
         }
@@ -152,6 +155,9 @@ impl Options {
                 "--music" => o.music = true,
                 "--no-music" => o.music = false,
                 "--play" => o.play = true,
+                "--play-seconds" => {
+                    o.play_seconds = Some(num(val.as_deref(), "--play-seconds")?);
+                }
                 other if other.starts_with("--") => {
                     return Err(format!("unknown option: {other}"));
                 }

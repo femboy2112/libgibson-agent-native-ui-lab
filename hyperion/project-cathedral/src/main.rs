@@ -11,6 +11,7 @@
 
 mod action;
 mod app;
+mod audio_out;
 mod capability;
 mod cli;
 mod hash;
@@ -201,7 +202,7 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
         if app.music.take.is_some() {
             std::fs::create_dir_all(dir)?;
             let path = std::path::Path::new(dir).join("cathedral.wav");
-            let (_out, pcm_sha) = app.music.export(
+            let (out, pcm_sha) = app.music.export(
                 &path,
                 gibson::audio::SampleRate::STUDIO,
                 512,
@@ -220,7 +221,34 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
                     .unwrap_or(false)
             );
             if options.play {
-                play_blocking(&path);
+                let _ = io::stdout().flush();
+                match audio_out::LiveAudio::start(&app) {
+                    Ok(mut live) => {
+                        let sr = gibson::audio::SampleRate::STUDIO.get();
+                        let full = out.audio.frames() as f64 / sr as f64;
+                        let secs = options
+                            .play_seconds
+                            .map(|s| (s as f64).min(full))
+                            .unwrap_or(full);
+                        eprintln!(
+                            "cathedral: streaming to the default output device at {} Hz \
+                             for ~{:.0}s (device backend, no external player; Ctrl-C to stop)",
+                            live.sample_rate(),
+                            secs
+                        );
+                        std::thread::sleep(Duration::from_secs_f64(secs.max(0.0)));
+                        live.stop();
+                        eprintln!(
+                            "cathedral: playback stopped (underruns={}); WAV at {}",
+                            live.underruns(),
+                            path.display()
+                        );
+                    }
+                    Err(reason) => eprintln!(
+                        "cathedral: no audio device ({reason}); the WAV is at {}",
+                        path.display()
+                    ),
+                }
             }
         }
     }
@@ -305,55 +333,6 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
 // binary can report it without reading Cargo.lock at runtime.
 const LIBSIBSON_COMMIT: &str = "c2f6483d92fe2b351e6cd50936a97d8cdf73cb79";
 
-/// Spawn the first available audio player on `path`, returning the child if one was
-/// launched. Playback is best-effort and entirely outside LibGibson: a terminal UI
-/// engine does not own a sound device. The WAV is the artifact; this just tries to
-/// make it audible in the session.
-fn spawn_player(path: &std::path::Path) -> Option<std::process::Child> {
-    use std::process::{Command, Stdio};
-    let candidates: &[(&str, &[&str])] = &[
-        ("ffplay", &["-nodisp", "-autoexit", "-loglevel", "error"]),
-        ("paplay", &[]),
-        ("aplay", &["-q"]),
-        ("mpv", &["--no-video", "--really-quiet"]),
-        ("afplay", &[]),
-    ];
-    for (prog, args) in candidates {
-        match Command::new(prog)
-            .args(*args)
-            .arg(path)
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-        {
-            Ok(child) => return Some(child),
-            Err(_) => continue,
-        }
-    }
-    None
-}
-
-/// Blocking playback for headless `--play`.
-fn play_blocking(path: &std::path::Path) {
-    match spawn_player(path) {
-        Some(mut child) => {
-            // stderr is unbuffered, so the status is visible even when stdout is piped.
-            let _ = io::stdout().flush();
-            eprintln!(
-                "cathedral: playing {} (Ctrl-C to stop; the WAV is the artifact)",
-                path.display()
-            );
-            let _ = child.wait();
-        }
-        None => eprintln!(
-            "cathedral: no audio player found (tried ffplay/paplay/aplay/mpv/afplay); \
-             the WAV is at {}",
-            path.display()
-        ),
-    }
-}
-
 fn render_surface(app: &App, w: u16, h: u16, now_playing: &str, music_state: &str) -> Surface {
     let layout = &app.layout;
     let camera = &app.camera;
@@ -379,8 +358,8 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
     profile.color_depth = options.color.depth();
     let mut prev_stats = ctx.stats();
     let mut checkpointer = replay::Checkpointer::new(200);
-    // Best-effort audio: the exported WAV is the artifact, this just makes it audible.
-    let mut player: Option<std::process::Child> = None;
+    // In-process device playback (libgibson `audio-cpal` → ALSA on Linux).
+    let mut live: Option<audio_out::LiveAudio> = None;
     let mut autoplayed = false;
 
     while !app.should_quit {
@@ -457,27 +436,31 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
                     512,
                     &app.music.world,
                 )?;
-                if let Some(mut prev) = player.take() {
-                    let _ = prev.kill();
-                    let _ = prev.wait();
-                }
-                match spawn_player(&path) {
-                    Some(child) => {
-                        player = Some(child);
-                        app.message = format!("playing {} (W replays, Q stops)", path.display());
-                    }
-                    None => {
-                        app.message =
-                            format!("wrote {} — no player (ffplay/aplay/paplay)", path.display());
-                    }
+                if let Some(mut prev) = live.take() {
+                    prev.stop();
                 }
                 let short = &sha[..12.min(sha.len())];
-                ctx.insert_text_before_live(&format!(
-                    "♪ EXPORT {}  pcm_sha256={}  playing={}",
-                    path.display(),
-                    short,
-                    player.is_some()
-                ))?;
+                match audio_out::LiveAudio::start(&app) {
+                    Ok(l) => {
+                        let rate = l.sample_rate();
+                        live = Some(l);
+                        app.message = format!("playing @ {rate} Hz (W restarts, Q stops)");
+                        ctx.insert_text_before_live(&format!(
+                            "♪ PLAY  {}  pcm_sha256={}  device={} Hz",
+                            path.display(),
+                            short,
+                            rate
+                        ))?;
+                    }
+                    Err(reason) => {
+                        app.message = format!("wrote {} — no device", path.display());
+                        ctx.insert_text_before_live(&format!(
+                            "♪ EXPORT {}  pcm_sha256={}  device=unavailable ({reason})",
+                            path.display(),
+                            short
+                        ))?;
+                    }
+                }
                 profile.scrollback_entries += 1;
             } else {
                 app.message = "no performance to export yet".into();
@@ -496,18 +479,20 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
                 &app.music.world,
             )?;
             let short = &sha[..12.min(sha.len())];
-            match spawn_player(&path) {
-                Some(child) => {
-                    player = Some(child);
+            match audio_out::LiveAudio::start(&app) {
+                Ok(l) => {
+                    let rate = l.sample_rate();
+                    live = Some(l);
                     ctx.insert_text_before_live(&format!(
-                        "♪ AUTOPLAY {}  pcm_sha256={}  (press Q to stop)",
+                        "♪ AUTOPLAY {}  pcm_sha256={}  device={} Hz  (Q stops)",
                         path.display(),
-                        short
+                        short,
+                        rate
                     ))?;
                 }
-                None => {
+                Err(reason) => {
                     ctx.insert_text_before_live(&format!(
-                        "♪ EXPORTED {}  pcm_sha256={} — no audio player found",
+                        "♪ EXPORTED {}  pcm_sha256={}  device=unavailable ({reason})",
                         path.display(),
                         short
                     ))?;
@@ -524,9 +509,8 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
         }
     }
 
-    if let Some(mut p) = player.take() {
-        let _ = p.kill();
-        let _ = p.wait();
+    if let Some(mut l) = live.take() {
+        l.stop();
     }
     ctx.restore()?;
 

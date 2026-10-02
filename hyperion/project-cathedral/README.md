@@ -64,17 +64,20 @@ Interactive controls:
 | `A` | acknowledge (opens the diagnosis phase) |
 | `N` | annotate (cycles canned operator notes) |
 | `Space` | pause / resume |
-| `W` | export the current checked performance to `cathedral.wav` and play it |
+| `W` | export the current checked performance to `cathedral.wav` and stream it to the output device |
 | `H` / `?` | toggle help |
 | `Q` / `Esc` / `Ctrl-C` | quit and restore the terminal |
 
-**Audio is best-effort, and the WAV is the artifact.** The score is built and checked in memory;
-Project Cathedral then tries to make it audible by spawning the first available player it finds
-(`ffplay`, `paplay`, `aplay`, `mpv`, `afplay`). Press `W` to export *and play* the current take;
-`--play` autoplays the first checked take in interactive mode and plays the export in headless
-mode. If no player is found the app says so and leaves the file in place — copy it to a machine
-with a sound device. The footer's `Tone/Emphasis/Density/Elevation` axis is the score's semantic
-state, not a signal meter.
+**Audio is in-process, through LibGibson's own device backend.** The score is built and checked
+in memory, then streamed to the default output device by `gibson::audio::device::AudioDevice`
+(the crate's `audio-cpal` feature; cpal → **ALSA** on Linux). The exact same `HumanMusicSynth`
+the offline renderer uses is driven on a realtime thread and pushed out; nothing is spawned.
+Press `W` to export the WAV *and* start device playback; `--play` autoplays the first checked
+take (interactive) or plays the export (headless), and `--play-seconds=N` bounds a headless
+audition. If the host has no usable output device the command says so and the WAV remains the
+artifact. The default build enables the `device-audio` feature; `--no-default-features` builds a
+device-free binary on hosts without audio libraries. The footer's `Tone/Emphasis/Density/
+Elevation` axis is the score's semantic state, not a signal meter.
 
 **A fault only cascades if it has a blast radius.** The footer shows the focused service's
 downstream dependents (`focus #N·D↓`). The default focus `#0` is a leaf with `0↓`, so a fault
@@ -149,21 +152,22 @@ boundary that the app emits no per-key input receipt.
   journal; `src/music.rs` owns the HumanMusic mapping; `src/replay.rs` owns the record/replay
   receipt; `src/capability.rs` runs the size × depth matrix.
 - The package uses the public LibGibson `Context` (headless/fullscreen), `Node`, `Surface`,
-  capability quantization, input events and the released `story`, `audio::human_music` and
-  `audio::render`/`audio::wav` modules. It does not use `gibson::ui`, private modules, raw ANSI
-  or a path/patch override.
+  capability quantization, input events and the released `story`, `audio::human_music`,
+  `audio::render`/`audio::wav` and (under `device-audio`) `audio::device` modules. It does not use
+  `gibson::ui`, private modules, raw ANSI or a path/patch override.
 
 ## Results and limits
 
 On this Ubuntu host, a **10,000-frame** deterministic run with live checked-BAND music and a
-final WAV export completed in **73.0 s**. Mean frame **5.30 ms**, p95 **1.30 ms**, max **1.14 s**
+final WAV export completed in **58.7 s**. Mean frame **4.44 ms**, p95 **1.19 ms**, max **1.01 s**
 (a music rebuild), mean **8,369 emitted bytes/frame** and **419 exact changed cells/frame**;
 bounded history stayed at **11 scrollback insertions / max 2 per frame**; the frame loop's RSS
-was 7.1 MiB → 23.2 MiB, and the whole run (including the materialized 100 MB PCM for export)
+was 8.3 MiB → 23.9 MiB, and the whole run (including the materialized 100 MB PCM for export)
 peaked at **~612 MiB**. A `fixture + seed + journal` replay reproduced the 10,000-frame semantic
 digest `b22330570bb7875f` with all **50 checkpoints** matching. The 650-frame checked performance
-exported a 35.8 MB PCM-hashed WAV (`3fd56c…`); the 10,000-frame final take exported a 100.5 MB WAV
-(`5496b5…`). All **20** capability cells (5 sizes × 4 depths) preserved incident state, the hot
+exported a 35.8 MB WAV whose `pcm_sha256` (the 16-bit `data` chunk) is `b25533ab…`; the 10,000-frame
+final take exported a 100.5 MB WAV (`8fa04984…`). All **20** capability cells (5 sizes × 4 depths)
+preserved incident state, the hot
 cluster, the action affordance and the exit path. Three real-PTY probes exited 0 with the
 alternate screen restored; an observe-only probe watched the compact incident report commit to
 native scrollback while the live region animated. (Frame times vary a little run to run; the
