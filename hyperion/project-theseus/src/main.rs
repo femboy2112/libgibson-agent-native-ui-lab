@@ -1,4 +1,5 @@
 use clap::Parser;
+use gibson::audio::device::AudioDevice;
 use gibson::audio::human_music::{
     contract::CompositionGrammar,
     cover::{
@@ -9,8 +10,12 @@ use gibson::audio::human_music::{
     functor::Composition,
     policy::PerformanceProfile,
     reference_song::ReferenceSong,
+    synth::HumanMusicSynth,
     world::MusicWorld,
 };
+use gibson::audio::render::{AudioSource, OfflineRenderer};
+use gibson::audio::time::SampleRate;
+use gibson::audio::wav::write_wav_i16;
 use gibson::cell::{Color, Style};
 use gibson::field::{plasma, radial_pulse};
 use gibson::input::{Event, KeyCode};
@@ -39,6 +44,13 @@ struct Args {
     headless: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AudioMode {
+    Stopped,
+    PlayingCover,
+    PlayingSource,
+}
+
 struct Model {
     source: ReferenceSong,
     world: MusicWorld,
@@ -50,6 +62,9 @@ struct Model {
     cover_comp: Option<Composition>,
     error_msg: Option<String>,
     elapsed: Duration,
+    active_audio: Option<AudioDevice>,
+    audio_mode: AudioMode,
+    audio_status_msg: Option<String>,
 }
 
 const AXIS_NAMES: [&str; 8] = [
@@ -62,6 +77,76 @@ const AXIS_NAMES: [&str; 8] = [
     "ORCHESTRA   (Voice Seating)  ",
     "BASS        (Root Foundation)",
 ];
+
+fn stop_audio(model: &mut Model) {
+    model.active_audio = None;
+    model.audio_mode = AudioMode::Stopped;
+    model.audio_status_msg = Some("Audio Muted".into());
+}
+
+fn play_cover(model: &mut Model) {
+    model.active_audio = None;
+    if let Some(comp) = &model.cover_comp {
+        let synth = HumanMusicSynth::new(&comp.score, &model.world, SampleRate::STUDIO);
+        let source: Box<dyn AudioSource + Send> = Box::new(synth);
+        match AudioDevice::play(source, SampleRate::STUDIO) {
+            Ok(device) => {
+                model.active_audio = Some(device);
+                model.audio_mode = AudioMode::PlayingCover;
+                model.audio_status_msg = Some(format!("Streaming Cover [{}] @ 48kHz", model.world.name));
+            }
+            Err(e) => {
+                model.audio_mode = AudioMode::Stopped;
+                model.audio_status_msg = Some(format!("Device play failed: {:?}", e));
+            }
+        }
+    } else {
+        model.audio_mode = AudioMode::Stopped;
+        model.audio_status_msg = Some("Cannot play: Cover generation refused".into());
+    }
+}
+
+fn play_source(model: &mut Model) {
+    model.active_audio = None;
+    if let Ok(score) = model.source.melody_score() {
+        let synth = HumanMusicSynth::new(&score, &model.world, SampleRate::STUDIO);
+        let source: Box<dyn AudioSource + Send> = Box::new(synth);
+        match AudioDevice::play(source, SampleRate::STUDIO) {
+            Ok(device) => {
+                model.active_audio = Some(device);
+                model.audio_mode = AudioMode::PlayingSource;
+                model.audio_status_msg = Some("Auditioning Reference Melody (A/B Test)".into());
+            }
+            Err(e) => {
+                model.audio_mode = AudioMode::Stopped;
+                model.audio_status_msg = Some(format!("Device play failed: {:?}", e));
+            }
+        }
+    }
+}
+
+fn export_wavs(model: &mut Model) {
+    let mut msgs = Vec::new();
+    if let Some(comp) = &model.cover_comp {
+        let mut synth = HumanMusicSynth::new(&comp.score, &model.world, SampleRate::STUDIO);
+        let renderer = OfflineRenderer::new(SampleRate::STUDIO, 1024);
+        let result = renderer.render_seconds(&mut synth, comp.score.total_beats as f64 * (60.0 / model.world.tempo_bpm as f64));
+        let path = "/tmp/theseus_cover.wav";
+        if write_wav_i16(path, &result.audio, SampleRate::STUDIO).is_ok() {
+            msgs.push(format!("Saved {}", path));
+        }
+    }
+    if let Ok(score) = model.source.melody_score() {
+        let mut synth = HumanMusicSynth::new(&score, &model.world, SampleRate::STUDIO);
+        let renderer = OfflineRenderer::new(SampleRate::STUDIO, 1024);
+        let result = renderer.render_seconds(&mut synth, score.total_beats * (60.0 / 120.0));
+        let path = "/tmp/theseus_source.wav";
+        if write_wav_i16(path, &result.audio, SampleRate::STUDIO).is_ok() {
+            msgs.push(format!("Saved {}", path));
+        }
+    }
+    model.audio_status_msg = Some(msgs.join(" | "));
+}
 
 fn regenerate(model: &mut Model) {
     let mut profile = CoverFidelityProfile::preset(model.preset);
@@ -87,6 +172,8 @@ fn regenerate(model: &mut Model) {
         profile.bass = LineRelation::Free;
     }
 
+    let was_playing_cover = model.audio_mode == AudioMode::PlayingCover;
+
     match model.source.extract_fidelity(&profile, Some(model.preset), None) {
         Ok((map, _report)) => {
             model.quotient = Some(map.clone());
@@ -102,16 +189,25 @@ fn regenerate(model: &mut Model) {
                     model.cover_comp = Some(comp);
                     model.admission = None;
                     model.error_msg = None;
+                    if was_playing_cover {
+                        play_cover(model);
+                    }
                 }
                 Err(CoverError::Rejected(admission)) => {
                     model.cover_comp = None;
                     model.admission = Some(*admission);
                     model.error_msg = Some("Lawful Refusal: Invariant Violation In Target World".into());
+                    if was_playing_cover {
+                        stop_audio(model);
+                    }
                 }
                 Err(e) => {
                     model.cover_comp = None;
                     model.admission = None;
                     model.error_msg = Some(format!("{:?}", e));
+                    if was_playing_cover {
+                        stop_audio(model);
+                    }
                 }
             }
         }
@@ -120,6 +216,9 @@ fn regenerate(model: &mut Model) {
             model.cover_comp = None;
             model.admission = None;
             model.error_msg = Some(format!("Extraction error: {:?}", e));
+            if was_playing_cover {
+                stop_audio(model);
+            }
         }
     }
 }
@@ -130,7 +229,6 @@ fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &s
     let pw = canvas.pixel_width() as f32;
     let ph = canvas.pixel_height() as f32;
 
-    // Disassembly entropy increases as more axes are removed
     let entropy_factor = (8.0 - active_axes_count as f32) / 8.0;
     let turbulence = 1.0 + entropy_factor * 3.5;
 
@@ -145,7 +243,6 @@ fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &s
 
             let rgb = match world_name {
                 "VAPOR95" => {
-                    // Cyberpunk sunset: deep purple -> hot magenta -> neon cyan -> warm amber
                     if val < 0.25 {
                         let t = val / 0.25;
                         (
@@ -170,7 +267,6 @@ fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &s
                     }
                 }
                 "BLACK_ICE" => {
-                    // Cryogenic stealth: obsidian -> slate -> ice blue -> electric laser cyan
                     if val < 0.3 {
                         let t = val / 0.3;
                         (
@@ -195,7 +291,6 @@ fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &s
                     }
                 }
                 _ => {
-                    // SWISS_SIGNAL: stark international red -> crisp chalk white -> deep carbon
                     if val < 0.5 {
                         let t = val / 0.5;
                         (
@@ -224,7 +319,7 @@ fn render_reactor_canvas(width: u16, height: u16, time_secs: f32, world_name: &s
 
 /// Renders a dynamic piano roll on BrailleCanvas for the notes in a track.
 fn render_piano_roll_braille(
-    notes: &[(f32, f32, i32)], // (beat_start, dur, midi_pitch)
+    notes: &[(f32, f32, i32)],
     total_beats: f32,
     width: u16,
     height: u16,
@@ -238,7 +333,6 @@ fn render_piano_roll_braille(
     let pw = canvas.pixel_width() as i32;
     let ph = canvas.pixel_height() as i32;
 
-    // Pitch bounds
     let min_pitch = notes.iter().map(|n| n.2).min().unwrap_or(60).max(36);
     let max_pitch = notes.iter().map(|n| n.2).max().unwrap_or(72).max(min_pitch + 12);
     let pitch_range = (max_pitch - min_pitch).max(1) as f32;
@@ -254,7 +348,7 @@ fn render_piano_roll_braille(
         for x in x0..x1.min(pw) {
             canvas.set(x, y);
             if y > 0 {
-                canvas.set(x, y - 1); // Thick note bars
+                canvas.set(x, y - 1);
             }
         }
     }
@@ -273,12 +367,24 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
     let fidelity_badge = format!(" [FIDELITY: {}] ", model.preset.label());
     let seed_badge = format!(" [SEED: {}] ", model.seed);
 
+    let audio_badge = match model.audio_mode {
+        AudioMode::PlayingCover => format!(" 🔊 AUDIO: PLAYING COVER [{}] ", model.world.name),
+        AudioMode::PlayingSource => " 🔊 AUDIO: AUDITIONING REFERENCE (A/B) ".into(),
+        AudioMode::Stopped => " 🔇 AUDIO: MUTED [Press P to Play] ".into(),
+    };
+    let audio_tone = match model.audio_mode {
+        AudioMode::PlayingCover => Tone::Success,
+        AudioMode::PlayingSource => Tone::Accent,
+        AudioMode::Stopped => Tone::Neutral,
+    };
+
     let header_card = card("◆ PROJECT THESEUS // RECOMBINANT QUOTIENT MACHINE ◆")
         .child(
             row()
                 .child(text(world_badge).tone(Tone::Accent).emphasis(Emphasis::Strong))
                 .child(text(fidelity_badge).tone(Tone::Info).emphasis(Emphasis::Strong))
                 .child(text(seed_badge).tone(Tone::Neutral).emphasis(Emphasis::Muted))
+                .child(text(audio_badge).tone(audio_tone).emphasis(Emphasis::Strong))
                 .child(spacer())
                 .child(
                     text(format!("TIME: {:05.2}s ", time_s))
@@ -312,7 +418,7 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         Style::new().fg(Color::Rgb(0, 240, 255)),
     );
 
-    let ref_panel = card("1. REFERENCE PERFORMANCE (SOURCE DNA)")
+    let ref_panel = card("1. REFERENCE (SOURCE DNA) [O: Audition]")
         .child(text("Ode to Joy (Beethoven) // Monophonic Lead").tone(Tone::Accent))
         .child(ref_canvas)
         .child(
@@ -345,7 +451,7 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
             Style::new().fg(Color::Rgb(50, 255, 120)),
         );
 
-        let p = card("3. FRESH COVER (GENERATED FROM QUOTIENT ONLY)")
+        let p = card("3. FRESH COVER (GENERATED) [P: Play Live]")
             .child(
                 text(format!(
                     "Synthesized in {} @ {:.0} BPM",
@@ -397,7 +503,6 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
     };
 
     // --- TIER 2: IDENTITY QUOTIENT (THE MIDDLE STAR) ---
-    // Ship of Theseus Gauge
     let gauge_blocks = (pct_preserved / 5.0).round() as usize;
     let filled_bar = "█".repeat(gauge_blocks);
     let empty_bar = "░".repeat(20 - gauge_blocks);
@@ -423,11 +528,9 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         Tone::Danger
     };
 
-    // Animated Reactor Canvas (center visualizer)
     let reactor_w = (term_w.saturating_sub(6)).min(74);
     let reactor_element = render_reactor_canvas(reactor_w, 4, time_s, model.world.name, active_count);
 
-    // Conduits / Channels
     let mut conduit_col = column();
     for i in 0..8 {
         let is_on = model.axes_on[i];
@@ -435,7 +538,6 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         let key_num = i + 1;
 
         let conduit_line = if is_on {
-            // Pulse wave animation along conduit
             let anim_offset = ((time_s * 6.0) as usize + i * 3) % 20;
             let mut wire = "════════════════════".chars().collect::<Vec<_>>();
             if anim_offset < wire.len() {
@@ -485,20 +587,33 @@ fn view(model: &Model, cx: &BuildCx) -> Element<()> {
         .child(conduit_col);
 
     // 3. INTERACTIVE CONTROL COCKPIT
-    let control_hud = panel("◆ RECOMBINANT CONTROL COCKPIT ◆").child(
-        row()
-            .child(
-                text("[1-8] Toggle Axes ")
-                    .tone(Tone::Accent)
-                    .emphasis(Emphasis::Strong),
-            )
-            .child(text("| [F] Fidelity Preset ").tone(Tone::Info))
-            .child(text("| [W] Cycle Music World ").tone(Tone::Success))
-            .child(text("| [S] Mutate Seed ").tone(Tone::Neutral))
-            .child(text("| [D] WTF Snap/Drop ").tone(Tone::Warning).emphasis(Emphasis::Strong))
-            .child(text("| [R] Full Reset ").tone(Tone::Accent))
-            .child(text("| [Q] Quit").tone(Tone::Danger)),
-    );
+    let status_line = model
+        .audio_status_msg
+        .as_ref()
+        .map(|s| text(format!(">> {}", s)).tone(Tone::Accent))
+        .unwrap_or_else(|| text("Ready. Press P to Stream Cover, O to Audition Reference.").tone(Tone::Neutral));
+
+    let control_hud = panel("◆ RECOMBINANT CONTROL COCKPIT ◆")
+        .child(status_line)
+        .child(
+            row()
+                .child(
+                    text("[P/Space] Play Cover ")
+                        .tone(Tone::Success)
+                        .emphasis(Emphasis::Strong),
+                )
+                .child(
+                    text("| [O] Audition Ref ")
+                        .tone(Tone::Accent)
+                        .emphasis(Emphasis::Strong),
+                )
+                .child(text("| [1-8] Toggle Axes ").tone(Tone::Info))
+                .child(text("| [F] Fidelity ").tone(Tone::Info))
+                .child(text("| [W] World ").tone(Tone::Success))
+                .child(text("| [D] WTF Snap ").tone(Tone::Warning))
+                .child(text("| [E] Export WAV ").tone(Tone::Neutral))
+                .child(text("| [Q] Quit").tone(Tone::Danger)),
+        );
 
     // ASSEMBLE COMPLETE SCREEN
     screen().child(
@@ -523,7 +638,27 @@ fn update(model: &mut Model, event: AppEvent<()>) -> Control {
         }
         AppEvent::Input(Event::Key(k)) => {
             match k.code {
-                KeyCode::Char('q') | KeyCode::Esc => return Control::Quit,
+                KeyCode::Char('q') | KeyCode::Esc => {
+                    stop_audio(model);
+                    return Control::Quit;
+                }
+                KeyCode::Char('p') | KeyCode::Char(' ') => {
+                    if model.audio_mode == AudioMode::PlayingCover {
+                        stop_audio(model);
+                    } else {
+                        play_cover(model);
+                    }
+                }
+                KeyCode::Char('o') => {
+                    if model.audio_mode == AudioMode::PlayingSource {
+                        stop_audio(model);
+                    } else {
+                        play_source(model);
+                    }
+                }
+                KeyCode::Char('e') => {
+                    export_wavs(model);
+                }
                 KeyCode::Char('f') => {
                     model.preset = match model.preset {
                         CoverFidelityPreset::Loose => CoverFidelityPreset::Interpretive,
@@ -585,14 +720,13 @@ fn update(model: &mut Model, event: AppEvent<()>) -> Control {
                     regenerate(model);
                 }
                 KeyCode::Char('d') => {
-                    // WTF Moment: Drop to only Motif (or snap back if already dropped)
                     if model.axes_on.iter().filter(|&&x| x).count() > 1 {
                         model.axes_on = [false; 8];
-                        model.axes_on[0] = true; // only motif remains
+                        model.axes_on[0] = true;
                     } else if model.axes_on[0] {
-                        model.axes_on[0] = false; // drop even motif -> completely alien
+                        model.axes_on[0] = false;
                     } else {
-                        model.axes_on[0] = true; // snap motif back -> recognizability snaps!
+                        model.axes_on[0] = true;
                     }
                     regenerate(model);
                 }
@@ -634,9 +768,15 @@ fn main() -> io::Result<()> {
         cover_comp: None,
         error_msg: None,
         elapsed: Duration::ZERO,
+        active_audio: None,
+        audio_mode: AudioMode::Stopped,
+        audio_status_msg: None,
     };
 
     regenerate(&mut model);
+
+    // Auto-start live audio streaming of the freshly synthesized cover!
+    play_cover(&mut model);
 
     App::fullscreen().skin(skins::VAPOR95).run(model, update, view)?;
     Ok(())
