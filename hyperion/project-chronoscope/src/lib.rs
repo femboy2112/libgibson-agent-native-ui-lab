@@ -5,6 +5,7 @@ pub mod demo;
 pub mod director;
 pub mod driver;
 pub mod epoch;
+pub mod evidence;
 pub mod fixture;
 pub mod history;
 pub mod sem;

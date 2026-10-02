@@ -603,6 +603,10 @@ impl AudioStore {
 
     /// Ask for branch `b`'s performance. Inline when not threaded.
     pub fn request(&mut self, h: &mut History, b: BranchId) {
+        // a child's audible past *is* its ancestors' PCM, so the whole lineage is needed
+        if let Some(p) = h.branch(b).parent {
+            self.request(h, p);
+        }
         if self.perfs.contains_key(&b) || self.pending.contains(&b) {
             return;
         }
@@ -660,9 +664,18 @@ impl AudioStore {
 
     /// Evict least-recently-used performances (never `protect`) down to the byte budget.
     /// Eviction is *safe by construction*: a rebuild is bit-identical (counted + checked).
-    pub fn enforce_budget(&mut self, protect: &[BranchId]) {
+    pub fn enforce_budget(&mut self, h: &History, protect: &[BranchId]) {
+        // never evict the lineage of a protected branch: its audible past lives in its ancestors
+        let mut keep: Vec<BranchId> = protect.to_vec();
+        for &p in protect {
+            let mut cur = h.branch(p).parent;
+            while let Some(c) = cur {
+                keep.push(c);
+                cur = h.branch(c).parent;
+            }
+        }
         while self.bytes > self.budget_bytes {
-            let victim = self.lru.iter().copied().find(|b| !protect.contains(b));
+            let victim = self.lru.iter().copied().find(|b| !keep.contains(b));
             match victim {
                 Some(v) => {
                     self.lru.retain(|x| *x != v);

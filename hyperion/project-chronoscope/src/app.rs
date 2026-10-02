@@ -47,7 +47,9 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             world: WorldId::BlackIce,
-            strategy: Strategy::FutureOnly,
+            // measured (docs/evidence/audio.md): the whole-trace composition lands on the parent's
+            // chord at the fork far more often than a future-only piece does
+            strategy: Strategy::FullTrace,
             threaded_audio: true,
             audio: AudioMode::Play,
             seed: DEMO_SEED,
@@ -773,7 +775,7 @@ impl Model {
         let _ = self.audio.poll();
         if self.audio.resident_bytes() > self.audio.budget_bytes {
             let keep = [self.cur_b, self.audio_branch_now()];
-            self.audio.enforce_budget(&keep);
+            self.audio.enforce_budget(&self.hist, &keep);
         }
         self.sync_audio();
     }

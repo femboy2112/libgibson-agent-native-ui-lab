@@ -39,6 +39,25 @@ fn install_signal_flag() {
     }
 }
 
+/// `crossterm::event::poll` (which `Context::run_once` calls) never returns once the controlling
+/// terminal has hung up *and the process survived SIGHUP*: it spins at ~65% CPU forever (see
+/// docs/upstream/repro_hangup_spin.rs). A watchdog thread notices POLLHUP on stdin and exits.
+fn spawn_hangup_watchdog() {
+    std::thread::spawn(|| loop {
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        let mut p = libc::pollfd {
+            fd: 0,
+            events: 0,
+            revents: 0,
+        };
+        let r = unsafe { libc::poll(&mut p, 1, 0) };
+        if r > 0 && p.revents & (libc::POLLHUP | libc::POLLERR | libc::POLLNVAL) != 0 {
+            // the terminal is gone: there is nothing left to restore
+            unsafe { libc::_exit(129) };
+        }
+    });
+}
+
 struct Args {
     raw: Vec<String>,
 }
@@ -58,7 +77,7 @@ fn usage() {
     println!(
         "chronoscope — a debugger for alternate histories (LibGibson v0.4.0 consumer)\n\n\
          interactive:  chronoscope [--world=black-ice|vapor95|swiss-signal] [--seed=N] [--mute | --no-audio]\n\
-         \x20             [--audio-strategy=future|full] [--skin=black-ice|vapor95|swiss-signal]\n\
+         \x20             [--audio-strategy=full|future] [--skin=black-ice|vapor95|swiss-signal]\n\
          \x20             [--color=truecolor|ansi256|ansi16|mono] [--glyphs=braille|halfblock|block|ascii]\n\
          guided demo:  chronoscope --demo   (run to catastrophe, rewind, change one input, compare, A/B)
          capture:      chronoscope --capture --size=WxH --script=\"...\" [--ansi=FILE] [--png]\n\
@@ -100,8 +119,10 @@ fn options_from(a: &Args) -> Options {
     } else if a.has("--mute") {
         o.audio = AudioMode::Silent;
     }
-    if a.get("--audio-strategy=").as_deref() == Some("full") {
-        o.strategy = Strategy::FullTrace;
+    match a.get("--audio-strategy=").as_deref() {
+        Some("future") => o.strategy = Strategy::FutureOnly,
+        Some("full") => o.strategy = Strategy::FullTrace,
+        _ => {}
     }
     o
 }
@@ -314,6 +335,7 @@ fn interactive(a: &Args) -> i32 {
         ctx.set_color_depth(d);
     }
     install_signal_flag();
+    spawn_hangup_watchdog();
     ctx.set_max_fps(30);
     let skin = a
         .get("--skin=")
@@ -412,6 +434,14 @@ fn main() {
         sustained(&a)
     } else if let Some(dir) = a.get("--wav-out=") {
         wav_out(&a, &dir)
+    } else if let Some(kind) = a.get("--evidence=") {
+        match kind.as_str() {
+            "audio" => print!("{}", project_chronoscope::evidence::audio_evidence()),
+            "matrix" => print!("{}", project_chronoscope::evidence::matrix_evidence()),
+            "causal" => print!("{}", project_chronoscope::evidence::causal_evidence()),
+            other => eprintln!("unknown evidence kind {other}"),
+        }
+        0
     } else if let Some(dir) = a.get("--storyboard=") {
         storyboard(&a, &dir)
     } else if a.has("--capture") {

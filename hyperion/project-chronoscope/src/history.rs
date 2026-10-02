@@ -756,6 +756,13 @@ pub fn compare(h: &History, a: BranchId, b: BranchId) -> Option<Compare> {
     let mut rows = Vec::with_capacity(n as usize);
     let mut first_div = None;
     let mut diverged = vec![false; n as usize];
+    // the intervention is where the *scripts* differ (a changed/inserted/dropped command, an
+    // overridden decision) — which can be many steps before any event looks different
+    let (sa, sb) = (&h.branch(a).script, &h.branch(b).script);
+    let intervention_at = |s: u32| -> bool {
+        sa.cmd_at(s).map(|x| x.1) != sb.cmd_at(s).map(|x| x.1)
+            || sa.override_at(s) != sb.override_at(s)
+    };
     for s in 0..n {
         let ra = h.rec_at(a, s)?;
         let rb = h.rec_at(b, s)?;
@@ -768,40 +775,42 @@ pub fn compare(h: &History, a: BranchId, b: BranchId) -> Option<Compare> {
         ) || (ea.flags & (F_INPUT | F_OVERRIDDEN))
             != (eb.flags & (F_INPUT | F_OVERRIDDEN));
         diverged[s as usize] = dv;
-        if dv && first_div.is_none() {
+        // "first divergence" is the first step whose *state* or event differs
+        if (dv || ra.d_comp != rb.d_comp || intervention_at(s)) && first_div.is_none() {
             first_div = Some(s);
         }
     }
     // dimension relations need the states: use the per-step records' vars and codes for the
     // visual lanes, and the digests for the verdict.
+    let mut affected = vec![false; n as usize];
     for s in 0..n {
         let ra = h.rec_at(a, s)?;
         let rb = h.rec_at(b, s)?;
         let verdict = verdict(ra.d_full, rb.d_full, ra.d_comp, rb.d_comp, ra.sem, rb.sem);
         let rel = rel_from_recs(ra, rb);
-        // root classification
-        let mut root = None;
-        if diverged[s as usize] {
-            let dep_diverged = [&ra.ev, &rb.ev].iter().any(|e| {
-                [e.parents[0], e.parents[1], e.parents[2]].iter().any(|&p| {
-                    p != NONE
-                        && p & 0x8000_0000 == 0
-                        && (p as usize) < diverged.len()
-                        && diverged[p as usize]
-                })
-            });
-            if !dep_diverged {
-                let intervention = (ra.ev.flags | rb.ev.flags) & (F_INPUT | F_OVERRIDDEN) != 0
-                    && ((ra.ev.flags ^ rb.ev.flags) & (F_INPUT | F_OVERRIDDEN) != 0
-                        || ra.ev.after != rb.ev.after
-                        || ra.ev.flags & F_INPUT != 0);
-                root = Some(if intervention {
-                    RootKind::Intervention
-                } else {
-                    RootKind::Reorder
-                });
+        // `affected[x]` = step x lies in the causal cone of the intervention or of a diverged
+        // event (it diverged, was injected by a changed input, or has an affected parent — even if
+        // the event record itself looks identical, e.g. a register that now holds another value).
+        let parent_affected = |p: u32| -> bool {
+            if p == NONE {
+                false
+            } else if p & 0x8000_0000 != 0 {
+                intervention_at(p & 0x7fff_ffff)
+            } else {
+                (p as usize) < affected.len() && affected[p as usize]
             }
+        };
+        let any_parent_affected = [&ra.ev, &rb.ev]
+            .iter()
+            .any(|e| e.parents.iter().any(|&p| parent_affected(p)));
+        let mut root = None;
+        if intervention_at(s) {
+            root = Some(RootKind::Intervention);
+        } else if diverged[s as usize] && !any_parent_affected {
+            // diverged, yet nothing in its data-causal past was touched: a scheduler-order effect
+            root = Some(RootKind::Reorder);
         }
+        affected[s as usize] = intervention_at(s) || diverged[s as usize] || any_parent_affected;
         rows.push(CompareRow {
             verdict,
             rel,

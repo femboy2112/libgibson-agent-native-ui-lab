@@ -316,3 +316,59 @@ fn cmd_override_and_drop_edit_semantics() {
     assert_eq!(s.inputs.len(), 4);
     assert_eq!(s.inputs[0].at, 10);
 }
+
+#[test]
+fn a_replaced_command_is_the_intervention_root_even_though_its_effect_shows_later() {
+    let mut h = demo();
+    let f = h.fork(0, 50, Edit::ReplaceCmd(2)).unwrap();
+    h.run_to_end(f);
+    let cmp = compare(&h, 0, f).unwrap();
+    // the scripts differ at step 50 (BOOST vs THROTTLE): that is the cause, wherever the symptoms start
+    assert_eq!(cmp.rows[50].root, Some(RootKind::Intervention));
+    assert_eq!(
+        cmp.first_divergence,
+        Some(50),
+        "the *state* (the queued payload) differs from step 50 on"
+    );
+    let first_event_divergence = cmp.rows.iter().position(|r| r.diverged_event).unwrap() as u32;
+    assert!(first_event_divergence > 50, "no *event* looks different until the operator reads the command (step {first_event_divergence})");
+    let interventions = cmp
+        .rows
+        .iter()
+        .filter(|r| r.root == Some(RootKind::Intervention))
+        .count();
+    assert_eq!(interventions, 1, "one changed input, one intervention root");
+    // the first diverged event is explained by the intervention, not reported as a scheduler artefact
+    assert_ne!(
+        cmp.rows[first_event_divergence as usize].root,
+        Some(RootKind::Reorder)
+    );
+    let reorders = cmp
+        .rows
+        .iter()
+        .filter(|r| r.root == Some(RootKind::Reorder))
+        .count();
+    println!(
+        "ReplaceCmd@50: 1 intervention root, {reorders} reorder roots over {} aligned steps",
+        cmp.rows.len()
+    );
+}
+
+#[test]
+fn inserting_a_command_is_also_a_single_intervention() {
+    let mut h = demo();
+    let f = h.fork(0, 30, Edit::InsertCmd(2)).unwrap();
+    h.run_to_end(f);
+    let cmp = compare(&h, 0, f).unwrap();
+    assert_eq!(
+        cmp.rows
+            .iter()
+            .filter(|r| r.root == Some(RootKind::Intervention))
+            .count(),
+        1
+    );
+    assert_eq!(cmp.rows[30].root, Some(RootKind::Intervention));
+    assert!(cmp.rows[..30]
+        .iter()
+        .all(|r| r.verdict == Verdict::Identical && r.root.is_none()));
+}

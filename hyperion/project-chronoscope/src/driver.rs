@@ -152,6 +152,11 @@ impl Rig {
     /// A *full repaint* of the current state, as the bytes a freshly attached terminal would see.
     /// (Renders through a throwaway headless `Context` + `UiRuntime`; leaves this rig untouched.)
     pub fn snapshot_ansi(&mut self) -> io::Result<Vec<u8>> {
+        self.snapshot_full().map(|(b, _)| b)
+    }
+
+    /// Like [`Rig::snapshot_ansi`], plus the renderer's accounting for that full paint.
+    pub fn snapshot_full(&mut self) -> io::Result<(Vec<u8>, FrameInfo)> {
         let (w, h) = self.ctx.session.terminal_size();
         let mut ctx = Context::headless(RenderMode::Fullscreen, w, h);
         ctx.set_color_depth(self.depth);
@@ -162,8 +167,23 @@ impl Rig {
             .frame(&screen.tree, env, Duration::from_secs_f32(self.model.time))
             .map_err(io::Error::other)?;
         ctx.set_root(frame.node);
+        let t0 = std::time::Instant::now();
         ctx.render_now()?;
-        Ok(ctx.take_output().into_bytes())
+        let total_us = t0.elapsed().as_micros() as u64;
+        let rep = ctx.last_frame_report();
+        let info = FrameInfo {
+            bytes: rep.bytes_emitted,
+            exact_changed: rep.exact_changed_cells,
+            affected: rep.affected_cells,
+            total_cells: rep.total_cells,
+            full_repaint: rep.full_repaint,
+            gen_us: rep.generation_duration.as_micros() as u64,
+            write_us: rep.write_duration.as_micros() as u64,
+            segments: screen.segments,
+            plotted: screen.plotted,
+            build_us: total_us,
+        };
+        Ok((ctx.take_output().into_bytes(), info))
     }
 
     /// Run frames until the camera has settled and effects are quiescent.

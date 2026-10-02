@@ -296,6 +296,12 @@ fn gauge_line(name: &str, v: i32, hi: i32) -> Element<Action> {
 
 /// Build the whole screen for the current model state.
 pub fn build_screen(m: &mut Model, env: UiEnvironment) -> Screen {
+    // a terminal that reports 0×0 (it is going away) still gets a valid, tiny frame
+    let env = UiEnvironment {
+        width: env.width.max(1),
+        height: env.height.max(1),
+        ..env
+    };
     let lay = layout(env.width, env.height);
     let depth = env.color_depth;
     let comparing = m.compare.is_some();
@@ -594,7 +600,13 @@ pub fn build_screen(m: &mut Model, env: UiEnvironment) -> Screen {
         }
     }
     if let Some((t, _)) = &m.toast {
-        screen_el = screen_el.overlay(toast(fit(t, w.saturating_sub(6).max(8))).key("toast"));
+        // on a narrow screen the toast must stay one short line or it buries the timeline strip
+        let tw = if w < 60 {
+            26
+        } else {
+            w.saturating_sub(6).max(8)
+        };
+        screen_el = screen_el.overlay(toast(fit(t, tw)).key("toast"));
     }
     Screen {
         tree: screen_el,

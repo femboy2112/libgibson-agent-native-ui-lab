@@ -17,6 +17,14 @@ struct Session {
     reader: Option<std::thread::JoinHandle<()>>,
 }
 
+impl Drop for Session {
+    fn drop(&mut self) {
+        // a failing assertion must not leak the child process
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
 impl Session {
     fn start(cols: u16, rows: u16, args: &[&str]) -> Session {
         let pair = native_pty_system()
@@ -129,8 +137,6 @@ impl Session {
     fn finish(mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
-        drop(self.writer);
-        drop(self.master);
         if let Some(t) = self.reader.take() {
             let _ = t.join();
         }
@@ -414,6 +420,54 @@ fn sigkill_cannot_be_survived_and_that_is_documented() {
         "SIGKILL leaves the alternate screen up (nothing could have run)"
     );
     s.finish();
+}
+
+#[test]
+fn a_vanished_terminal_does_not_leave_a_spinning_orphan() {
+    // `nohup`-style: SIGHUP is ignored, so the process outlives its terminal. crossterm's poll
+    // then spins forever (docs/upstream/repro_hangup_spin.rs); the app's watchdog must end it.
+    let _g = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+    let pair = native_pty_system()
+        .openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .unwrap();
+    let mut cmd = CommandBuilder::new("sh");
+    cmd.args([
+        "-c",
+        "trap '' HUP; exec \"$0\" \"$@\"",
+        env!("CARGO_BIN_EXE_project-chronoscope"),
+        "--no-audio",
+    ]);
+    cmd.env("TERM", "xterm-256color");
+    let mut child = pair.slave.spawn_command(cmd).unwrap();
+    drop(pair.slave);
+    // no reader thread: a cloned master fd would keep the PTY alive and mask the hang-up
+    std::thread::sleep(Duration::from_millis(1200));
+    assert!(child.try_wait().unwrap().is_none(), "running");
+    drop(pair.master); // the terminal window disappears
+    let t0 = Instant::now();
+    let mut status = None;
+    while t0.elapsed() < Duration::from_secs(4) {
+        if let Some(st) = child.try_wait().unwrap() {
+            status = Some(st.exit_code());
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    if status.is_none() {
+        let _ = child.kill();
+    }
+    let _ = child.wait();
+    assert_eq!(
+        status,
+        Some(129),
+        "the watchdog ends a process whose terminal vanished (took {:?})",
+        t0.elapsed()
+    );
 }
 
 #[test]

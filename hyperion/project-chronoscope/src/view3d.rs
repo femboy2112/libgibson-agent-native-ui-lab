@@ -1569,7 +1569,8 @@ pub fn render_compare(s: &Snapshot, prm: Params) -> Frame {
         for (i, &d) in dims.iter().enumerate() {
             if let Some((sx, sy, _)) = proj.point(Vec3::new(x_of(i), -0.15, zc - 0.5)) {
                 let cx = (sx / 2.0).round() as i32 - 1;
-                let cy = (sy / 4.0).round() as i32;
+                // adjacent lanes are closer than a label is wide: stagger them over two rows
+                let cy = (sy / 4.0).round() as i32 + (i % 2) as i32;
                 let name = dim_short(d);
                 if cy >= 0 && cy < prm.ch as i32 {
                     for (k, chr) in name.chars().take(3).enumerate() {

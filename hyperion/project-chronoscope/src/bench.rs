@@ -133,11 +133,8 @@ impl Rng {
 pub fn run_sustained(cfg: &SustainedConfig) -> SustainedReport {
     let (w0, h0) = cfg.sizes[cfg.sizes.len() / 2];
     let opts = Options {
-        audio: if cfg.audio_every > 0 {
-            AudioMode::Silent
-        } else {
-            AudioMode::Off
-        },
+        // the model never asks for audio by itself here; real performances are sampled below
+        audio: AudioMode::Off,
         threaded_audio: false,
         ..Options::default()
     };
@@ -273,7 +270,7 @@ pub fn run_sustained(cfg: &SustainedConfig) -> SustainedReport {
             let b = rig.model.cur_b;
             let Model { hist, audio, .. } = &mut rig.model;
             audio.request(hist, b);
-            audio.enforce_budget(&[b]);
+            audio.enforce_budget(hist, &[b]);
         }
         let t = Instant::now();
         let info = rig.frame().expect("headless frame");

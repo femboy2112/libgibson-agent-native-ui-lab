@@ -120,9 +120,21 @@ fn byte_budget_evicts_lru_but_not_protected() {
     s.request(&mut h, 0);
     s.request(&mut h, f);
     s.budget_bytes = 1 << 20;
-    s.enforce_budget(&[f]);
-    assert!(s.get(f).is_some());
-    assert!(s.get(0).is_none());
+    s.enforce_budget(&h, &[f]);
+    // f's audible past is its parent's PCM: the lineage is protected, nothing may be evicted
+    assert!(s.get(f).is_some() && s.get(0).is_some());
+    assert_eq!(s.stats.evictions, 0);
+    // an unrelated branch is fair game
+    let other = h.fork(0, 62, Edit::DropCmd).unwrap();
+    h.run_to_end(other);
+    s.request(&mut h, other);
+    s.budget_bytes = 1 << 20;
+    s.enforce_budget(&h, &[f]);
+    assert!(s.get(f).is_some() && s.get(0).is_some());
+    assert!(
+        s.get(other).is_none(),
+        "the least-recently-used unprotected branch was evicted"
+    );
     assert_eq!(s.stats.evictions, 1);
 }
 
@@ -405,5 +417,29 @@ fn probe_compose_is_not_prefix_causal() {
         ra.left[..n8],
         rb.left[..n8],
         "the future changes the past: compose() is non-causal"
+    );
+}
+
+#[test]
+fn a_child_is_unplayable_without_its_parent_and_requesting_the_child_rebuilds_the_lineage() {
+    let (mut h, f) = demo_with_fork();
+    let mut s = AudioStore::new(WorldId::BlackIce, Strategy::FutureOnly, false);
+    s.request(&mut h, f);
+    assert!(
+        s.get(0).is_some(),
+        "asking for a child asks for its ancestors"
+    );
+    let before = s.get(0).unwrap().hash;
+    s.evict(0);
+    assert!(
+        s.fetch(&h, f, 0, 4800).is_none(),
+        "the child's past is the parent's PCM: no parent, no audio (and no pretending)"
+    );
+    s.request(&mut h, f);
+    assert!(s.fetch(&h, f, 0, 4800).is_some());
+    assert_eq!(
+        s.get(0).unwrap().hash,
+        before,
+        "the rebuilt parent is bit-identical"
     );
 }
