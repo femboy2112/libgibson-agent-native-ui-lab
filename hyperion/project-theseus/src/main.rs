@@ -93,33 +93,31 @@ fn view(model: &Model, _cx: &BuildCx) -> Element<()> {
         .tone(Tone::Accent)
         .emphasis(Emphasis::Strong);
 
-    let left = column()
-        .child(text("REFERENCE SOURCE").emphasis(Emphasis::Strong))
+    let left = card("REFERENCE SOURCE")
         .child(text(" [ Ode to Joy ] "))
         .child(text(format!(" Seed: {}", model.seed)));
 
     let right_status = if model.cover_comp.is_some() {
-        text("FRESH COVER (GENERATED)").tone(Tone::Success)
+        "FRESH COVER (GENERATED)"
     } else {
-        text("FRESH COVER (FAILED)").tone(Tone::Danger)
+        "FRESH COVER (FAILED)"
     };
-    let right = column()
-        .child(right_status)
+    let right = card(right_status)
         .child(text(format!(" Target: {}", model.world.name)));
 
     let top = row().child(left).child(spacer()).child(right);
 
-    let mut q_col = column().child(text("THE COVERMAP (IDENTITY QUOTIENT)").emphasis(Emphasis::Strong));
+    let mut q_col = panel("THE COVERMAP (IDENTITY QUOTIENT)");
     if let Some(_map) = &model.quotient {
-        let motif_view = if model.axes_on[0] { text("MOTIF: [======]") } else { text("MOTIF: [      ]") };
-        let riff_view = if model.axes_on[1] { text("RIFF : [======]") } else { text("RIFF : [      ]") };
-        let groove_view = if model.axes_on[2] { text("GROOV: [======]") } else { text("GROOV: [      ]") };
-        let harm_view = if model.axes_on[3] { text("HARMO: [======]") } else { text("HARMO: [      ]") };
-        let form_view = if model.axes_on[5] { text("FORM : [======]") } else { text("FORM : [      ]") };
+        let motif_view = if model.axes_on[0] { text("MOTIF: [======]").tone(Tone::Success) } else { text("MOTIF: [      ]").tone(Tone::Neutral).emphasis(Emphasis::Faint) };
+        let riff_view = if model.axes_on[1] { text("RIFF : [======]").tone(Tone::Success) } else { text("RIFF : [      ]").tone(Tone::Neutral).emphasis(Emphasis::Faint) };
+        let groove_view = if model.axes_on[2] { text("GROOV: [======]").tone(Tone::Success) } else { text("GROOV: [      ]").tone(Tone::Neutral).emphasis(Emphasis::Faint) };
+        let harm_view = if model.axes_on[3] { text("HARMO: [======]").tone(Tone::Success) } else { text("HARMO: [      ]").tone(Tone::Neutral).emphasis(Emphasis::Faint) };
+        let form_view = if model.axes_on[5] { text("FORM : [======]").tone(Tone::Success) } else { text("FORM : [      ]").tone(Tone::Neutral).emphasis(Emphasis::Faint) };
         
         q_col = q_col.child(motif_view).child(riff_view).child(groove_view).child(harm_view).child(form_view);
     } else {
-        q_col = q_col.child(text("NO QUOTIENT"));
+        q_col = q_col.child(text("NO QUOTIENT").tone(Tone::Warning));
     }
 
     if let Some(msg) = &model.error_msg {
@@ -133,13 +131,19 @@ fn view(model: &Model, _cx: &BuildCx) -> Element<()> {
         }
     }
 
-    let controls = column()
-        .child(text("CONTROL PANEL").emphasis(Emphasis::Strong))
-        .child(text(format!("Fidelity Preset (f): {}", model.preset.label())))
-        .child(text(format!("World (w): {}", model.world.name)))
+    let controls = panel("CONTROL PANEL")
+        .child(text(format!("Fidelity Preset (f): {}", model.preset.label())).tone(Tone::Accent))
+        .child(text(format!("World (w): {}", model.world.name)).tone(Tone::Accent))
         .child(text("Toggle axes: 1:Motif 2:Riff 3:Groove 4:HarmContour 5:HarmLoop 6:Form 7:Orchestration 8:BassFigure"));
 
-    column().child(top_bar).child(top).child(q_col).child(controls)
+    screen().child(
+        column()
+            .child(top_bar)
+            .child(top)
+            .child(q_col)
+            .child(controls)
+    )
+
 }
 
 fn update(model: &mut Model, event: AppEvent<()>) -> Control {
