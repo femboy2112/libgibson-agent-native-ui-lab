@@ -1,25 +1,44 @@
-# Project Theseus
+# Project Theseus // HumanMusic Quotient Machine
 
-An interactive terminal application built on LibGibson v0.4.0 that explores the "Ship of Theseus" paradox applied to music.
+An interactive, high-tech terminal application built on LibGibson v0.4.0 that explores the "Ship of Theseus" musical paradox through procedural invariant decomposition and synthesis.
 
-## Overview
-Project Theseus acts as a visual and acoustic machine that disassembles a piece of music into an "identity quotient" (`CoverMap`), allowing the user to progressively strip away preservation dimensions (Motif, Harmony, Groove, etc.). It then attempts to generate a fresh performance using **only** the surviving quotient in a target `MusicWorld`.
+## Concept
+Project Theseus acts as a cybernetic audio-visual machine that physically and perceptually disassembles the identity of a piece of music into an abstract quotient (`CoverMap`), allowing the user to strip away eight independent preservation dimensions. A fresh performance is then synthesized from **only** the surviving quotient in a target `MusicWorld` (Vapor95, Black Ice, or Swiss Signal).
 
-The core experience revolves around the "WTF Moment": as axes are removed, the music fundamentally changes until it's "new music". Restoring an axis snaps the recognizability back.
+## Visual Architecture
+- **Reference DNA Tier**: Subcell `BrailleCanvas` piano roll plotting the original melodic trajectory.
+- **Identity Quotient Tier (The Star)**:
+  - **Recombinant Energy Reactor**: Procedural `HalfBlockCanvas` plasma field responding dynamically to disassembly entropy.
+  - **Theseus Identity Index**: Real-time preservation gauge measuring what percentage of the original song survives.
+  - **Cybernetic Conduits**: 8 glowing, pulsing channels connecting Source -> Quotient -> Cover that physically rupture and fracture into severed warning nodes when an axis is stripped.
+- **Fresh Cover Tier**: Real-time synthesized score visualization and performance telemetry.
+- **Lawful Refusal HUD**: High-voltage collision telemetry rendered natively when target world invariants reject impossible pins.
 
-## Usage
-Run the application interactively:
+## Interactive Controls
+| Key | Action |
+|-----|--------|
+| `1` | Toggle **Motif** (Melodic Contour) |
+| `2` | Toggle **Riff** (Secondary Hooks) |
+| `3` | Toggle **Groove** (Rhythmic Pocket) |
+| `4` | Toggle **Harmonic Contour** (Harmonic Path) |
+| `5` | Toggle **Harmonic Loop** (Cadence Turnaround) |
+| `6` | Toggle **Form** (AABA Phrasing) |
+| `7` | Toggle **Orchestration** (Voice Topology) |
+| `8` | Toggle **Bass Figure** (Sub-bass Foundation) |
+| `F` | Cycle **Fidelity Regime** (`Loose` → `Interpretive` → `Faithful` → `Strict`) |
+| `W` | Cycle **Music World** (`VAPOR95` → `BLACK_ICE` → `SWISS_SIGNAL`) |
+| `S` | Mutate **Deterministic Seed** |
+| `D` | **WTF Moment**: Instant drop to single-axis threshold / Snap back |
+| `R` | Reset All Pins to Full Identity |
+| `Q` / `Esc` | Clean Quit and Terminal Restoration |
+
+## Running the App
 ```bash
 cargo run --bin project-theseus
 ```
 
-### Controls
-- **1-8**: Toggle preservation axes (Motif, Riff, Groove, HarmonicContour, HarmonicLoop, Form, Orchestration, BassFigure).
-- **f**: Cycle fidelity presets (Loose, Interpretive, Faithful, Strict).
-- **w**: Cycle target world (Vapor95, Black Ice, Swiss Signal).
-- **q / Esc**: Quit.
-
-## Design
-- **Strict Separation**: The source `ReferenceSong` is completely isolated from the `cover` generation step. 
-- **Lawful Refusal**: When the target world rejects constraints (e.g., Strict fidelity in an incompatible world), the typed refusal (`CoverAdmission`) is visualized natively in the UI.
-
+## Running the Tests
+```bash
+cargo test
+```
+Runs the 7 adversarial structural proofs and the real virtual PTY stress harness.

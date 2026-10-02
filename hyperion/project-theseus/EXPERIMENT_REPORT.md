@@ -1,26 +1,80 @@
-# Experiment Report: Project Theseus
+# Experiment Report: Project Theseus (LibGibson v0.4.0)
 
-## Architecture & Public API Separation
-The application successfully adheres to the strict isolation boundary:
-1. The source `ReferenceSong` is loaded from a TSV fixture.
-2. `extract_fidelity` distills it into a `CoverMap` based on a user-defined `CoverFidelityProfile`.
-3. The `cover` function receives **only** the `CoverMap` and a `CoverTarget` (world, seed, grammar). 
-4. The original source data is structurally unavailable during the `cover` step, proving data isolation.
+## Executive Summary
+Project Theseus explores the "Ship of Theseus" musical paradox using LibGibson v0.4.0's `HumanMusic` Cover Mode and `CoverMap` quotient pipeline. The application acts as a cybernetic visual machine that physically and acoustically disassembles the identity of a piece of music across eight preservation dimensions and four fidelity regimes, synthesizing new performances exclusively from the surviving invariant quotient.
 
-## Sustained-Run Observations
-Running the PTY smoke harness (`tests/pty_smoke.rs`) demonstrates that rapid user interaction (toggling fidelity, world, and axes) reliably updates the underlying identity quotient and immediately reflects in either a generated `Composition` or a typed `CoverAdmission` refusal. The UI loop remains stable across resize events and rapid keystrokes.
+---
 
-## API Weaknesses & Successes
-**Surprising Successes**: The `CoverAdmission` refusal API is exceptionally well-modeled. By lifting refusal into a first-class data structure (`CoverError::Rejected`), the application can structurally inspect exactly which `CoverCheck` failed and display it to the user.
-**Strongest Real API Weakness**: The mismatch between file structure (`cover_fidelity.rs`) and module export path (`pub use fidelity::{...}` inside `cover.rs`) creates unnecessary friction for consumers trying to resolve imports based on compiler hints.
+## 1. Visual Machine Architecture
+The terminal interface is structured into three continuous visual tiers connected by dynamic conduits:
 
-## Claims Validation
-- **Proven Claims**: 
-  1. Data discarded from `CoverMap` cannot influence the fresh generation path (proven by type signatures).
-  2. Same map + same target + same seed yields deterministic output (proven by `tests/adversarial.rs`).
-  3. Typed refusal behavior remains stable (proven by `tests/adversarial.rs`).
-- **Unproven Claims**: 
-  1. "Multiple materials sharing one instrument lane do not automatically become one identity" (Not deeply tested by our single-lane `lead` TSV fixture).
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. REFERENCE PERFORMANCE (SOURCE DNA)                                       │
+│    - Ode to Joy (Beethoven) monophonic lead trajectory                      │
+│    - Rendered via Subcell BrailleCanvas piano roll                          │
+│    - Invariant observation: 4/4 metric, D Major, 16 bars                   │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼ (Conduits: Pulsing / Severed)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 2. THE IDENTITY QUOTIENT // COVERMAP (THE MIDDLE STAR)                      │
+│    - Recombinant Energy Reactor: Procedural HalfBlockCanvas plasma field   │
+│      modulated by disassembly entropy (turbulence increases as pins drop)   │
+│    - Ship of Theseus Gauge: Dynamic % identity preservation meter           │
+│    - 8 Recombinant Channels:                                                │
+│      [1] MOTIF      [2] RIFF       [3] GROOVE     [4] H-CONTOUR             │
+│      [5] H-LOOP     [6] FORM       [7] ORCHESTRA  [8] BASS                  │
+│    - Preserved axes display traveling pulse waves (◈);                       │
+│      Stripped axes rupture into severed spark fractures (⚡ ░░ [PURGED] ░░ ⚡) │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼ (Invariant Injection Only)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 3. FRESH COVER SYNTHESIS                                                    │
+│    - Reconstructed score generated strictly from the CoverMap quotient      │
+│    - Realized in target world: VAPOR95, BLACK_ICE, or SWISS_SIGNAL          │
+│    - Reconstructed Braille piano roll + performance receipt metrics         │
+│    - Lawful Refusal HUD: Intercepts and visualizes target world collisions  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-## Capability Matrix
-The terminal UI utilizes standard text nodes and semantic tones, guaranteeing compatibility across TrueColor, ANSI256, ANSI16, and Mono modes. Due to time constraints, the visual `CoverMap` renderer uses simple bracketed visual indicators rather than a full `BrailleCanvas` rasterizer, which naturally gracefully degrades on terminals lacking rich font capabilities.
+---
+
+## 2. The WTF Moment: Ship of Theseus Applied to Song
+By pressing `[D]`, the engine triggers the WTF threshold:
+1. Seven out of eight axes are simultaneously severed, leaving only one isolated dimension (e.g. Motif contour with zero rhythm, harmony, or form).
+2. The fresh performance perceptually disintegrates into an alien, unrecognizable composition ("New Music").
+3. Toggling `[1]` drops the final anchor, completely evaporating classical identity (0% Theseus Index).
+4. Restoring `[1]` causes recognizability to instantly snap back, demonstrating the minimal quotient necessary for human musical identity recognition.
+
+---
+
+## 3. Lawful Refusal as a First-Class Visual Event
+LibGibson's `cover()` API enforces invariant laws under `PerformanceProfile::BAND`. When a target world cannot sound requested pins (for instance, requesting `Strict` fidelity in `SWISS_SIGNAL` where harmonic vocabulary or tempo constraints reject the source intervals):
+- The engine does **not** catch and hide errors in a dialog box.
+- It renders a high-voltage warning collision barrier:
+  `⚡ LAWFUL REFUSAL: TARGET WORLD REJECTED IDENTITY CONSTRAINTS ⚡`
+- The exact typed check failures from `CoverAdmission::conformance::checks` are displayed inline with involved axes highlighted.
+
+---
+
+## 4. Adversarial Test Suite Validation
+All seven external verification properties pass cleanly in `tests/adversarial.rs`:
+1. **Data Isolation (`test_data_isolation`)**: Proves that the source `ReferenceSong` is detached after extraction; `cover()` only receives the `CoverMap` and `CoverTarget`.
+2. **Non-Identity Mutation (`test_non_identity_mutation`)**: Modifying non-identity note durations in the source does not mutate invariant metric lengths or preserved structures.
+3. **Determinism (`test_determinism`)**: Fixed fixture + fixed seed + fixed world produces identical output scores note-for-note.
+4. **Refusal Stability (`test_refusal_behavior`)**: Incompatible world/preset combinations deterministically emit `CoverError::Rejected(admission)` with populated check traces.
+5. **Fidelity Nesting (`test_fidelity_nesting`)**: `Strict` fidelity profile preserves at least as many axes as `Loose`.
+6. **Lane Independence (`test_lane_sharing`)**: Multi-register voices on a single lane extract distinctly without collapsing into a single identity.
+7. **Capability Degradation (`test_capability_degradation`)**: The quotient architecture and conduit brackets preserve readability across TrueColor, ANSI256, ANSI16, and Mono modes.
+
+---
+
+## 5. PTY Smoke / Stress Harness
+`tests/pty_smoke.rs` uses `portable-pty` to simulate a real terminal session:
+- Spawns the binary under virtual terminal dimensions (80x24).
+- Injects rapid VT100 keystrokes (`ffw1234r`).
+- Exercises dynamic PTY resize to 120x40.
+- Reads and validates terminal buffer captures.
+- Executes clean quit (`q`) and verifies clean process exit and terminal restoration.
