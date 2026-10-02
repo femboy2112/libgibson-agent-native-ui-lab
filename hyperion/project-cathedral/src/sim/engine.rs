@@ -332,7 +332,8 @@ impl Engine {
                 let s = if ds.isolated {
                     1.0
                 } else {
-                    (1.0 - ds.health).max(ds.load_ratio(&self.fixture.services[d as usize]).min(1.0))
+                    (1.0 - ds.health)
+                        .max(ds.load_ratio(&self.fixture.services[d as usize]).min(1.0))
                 };
                 stress = stress.max(s);
             }
@@ -479,7 +480,10 @@ impl Engine {
     pub fn semantic_digest(&self) -> u64 {
         let mut h: u64 = 0xcbf2_9ce4_8422_2325;
         let mix = |h: &mut u64, v: u64| {
-            *h ^= v.wrapping_add(0x9E37_79B9_7F4A_7C15).wrapping_add(*h << 6).wrapping_add(*h >> 2);
+            *h ^= v
+                .wrapping_add(0x9E37_79B9_7F4A_7C15)
+                .wrapping_add(*h << 6)
+                .wrapping_add(*h >> 2);
         };
         for (i, s) in self.states.iter().enumerate() {
             let q = |x: f32| ((x * 1000.0).round() as i64) as u64;
@@ -545,8 +549,22 @@ mod tests {
         let mut peak_breakers = 0u32;
         for f in 0..900u32 {
             match f {
-                59 => e.apply(&Action::new(f, 1, ActionKind::InjectFault, target, 0.6, "x")),
-                300 => e.apply(&Action::new(f, 2, ActionKind::Acknowledge, target, 0.6, "x")),
+                59 => e.apply(&Action::new(
+                    f,
+                    1,
+                    ActionKind::InjectFault,
+                    target,
+                    0.6,
+                    "x",
+                )),
+                300 => e.apply(&Action::new(
+                    f,
+                    2,
+                    ActionKind::Acknowledge,
+                    target,
+                    0.6,
+                    "x",
+                )),
                 340 => e.apply(&Action::new(f, 3, ActionKind::Rollback, target, 0.6, "x")),
                 360 => e.apply(&Action::new(f, 4, ActionKind::Reroute, target, 0.6, "x")),
                 _ => {}
@@ -557,7 +575,10 @@ mod tests {
                 peak_breakers = peak_breakers.max(e.metrics.open_breakers);
             }
         }
-        assert!(peak_critical > 0.08, "cascade never formed: {peak_critical}");
+        assert!(
+            peak_critical > 0.08,
+            "cascade never formed: {peak_critical}"
+        );
         assert!(peak_breakers >= 1, "no breaker tripped during cascade");
         // Recovery.
         assert_eq!(e.metrics.frac_critical, 0.0, "did not recover: critical");

@@ -68,7 +68,14 @@ pub struct Action {
 }
 
 impl Action {
-    pub fn new(frame: u32, seq: u32, kind: ActionKind, target: ServiceId, magnitude: f32, note: &str) -> Self {
+    pub fn new(
+        frame: u32,
+        seq: u32,
+        kind: ActionKind,
+        target: ServiceId,
+        magnitude: f32,
+        note: &str,
+    ) -> Self {
         Action {
             frame,
             kind,

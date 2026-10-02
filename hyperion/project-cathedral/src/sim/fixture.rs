@@ -60,8 +60,8 @@ const CLUSTERS: [&str; 9] = [
 ];
 
 const ROLES: [&str; 12] = [
-    "gate", "relay", "index", "ledger", "cache", "queue", "auth", "render", "shard", "mail", "audit",
-    "clock",
+    "gate", "relay", "index", "ledger", "cache", "queue", "auth", "render", "shard", "mail",
+    "audit", "clock",
 ];
 
 impl Fixture {

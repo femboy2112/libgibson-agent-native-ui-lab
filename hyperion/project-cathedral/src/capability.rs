@@ -8,8 +8,8 @@ use gibson::Node;
 
 use crate::app::App;
 use crate::cli::Options;
-use crate::visual::{build_frame, Camera, Layout, Scale, ViewState};
 use crate::incident::Phase;
+use crate::visual::{build_frame, Camera, Layout, Scale, ViewState};
 
 pub const SIZES: [(u16, u16); 5] = [(42, 15), (60, 20), (80, 24), (120, 40), (160, 50)];
 pub const DEPTHS: [ColorDepth; 4] = [
@@ -77,7 +77,13 @@ pub fn matrix(app: &App, requested: &ColorDepth) -> Vec<CapabilityRow> {
 }
 
 /// Render one size×depth cell in a headless context and inspect the emitted bytes.
-pub fn render_cell(app: &App, w: u16, h: u16, depth: ColorDepth, _requested: &ColorDepth) -> CapabilityRow {
+pub fn render_cell(
+    app: &App,
+    w: u16,
+    h: u16,
+    depth: ColorDepth,
+    _requested: &ColorDepth,
+) -> CapabilityRow {
     let mut ctx = Context::headless(RenderMode::Fullscreen, w, h);
     ctx.set_color_depth(depth);
     let surface = render_surface(app, w, h);
@@ -120,7 +126,14 @@ fn render_surface(app: &App, w: u16, h: u16) -> gibson::surface::Surface {
     } else {
         app.scale
     };
-    camera.aim(&app.engine, &layout, scale, app.selected, w as f32, (h as f32 - 3.0).max(1.0));
+    camera.aim(
+        &app.engine,
+        &layout,
+        scale,
+        app.selected,
+        w as f32,
+        (h as f32 - 3.0).max(1.0),
+    );
     for _ in 0..40 {
         camera.update();
     }
@@ -174,7 +187,11 @@ pub fn world_id(s: &str) -> gibson::audio::human_music::world::WorldId {
 /// A stable, small smoke test used by the integration tests: the fixture is built
 /// and a handful of frames render at every size without panicking.
 pub fn smoke() -> usize {
-    let app = App::new(1, gibson::audio::human_music::world::WorldId::BlackIce, false);
+    let app = App::new(
+        1,
+        gibson::audio::human_music::world::WorldId::BlackIce,
+        false,
+    );
     let mut ok = 0;
     for &(w, h) in &SIZES {
         let row = render_cell(&app, w, h, ColorDepth::Mono, &ColorDepth::Mono);

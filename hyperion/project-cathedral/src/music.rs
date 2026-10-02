@@ -50,19 +50,79 @@ use gibson::audio::SampleRate;
 use crate::hash::sha256_hex;
 use crate::incident::{IncidentRecord, Phase};
 
+/// The live score reflects at most this many recent frames of incident history.
+/// Past this horizon the score stops lengthening, so live music cost stays
+/// bounded on arbitrarily long runs while still covering the whole scripted
+/// incident (which resolves in a few hundred frames).
+pub const MUSIC_HORIZON_FRAMES: u32 = 1400;
+
 /// The hand-written phase → semantic-state map. The single source of truth for the
 /// "document exactly how you map" claim in `EXPERIMENT_REPORT.md`.
 pub fn phase_semantics(phase: Phase) -> (SemanticState, EventKind) {
     let (tone, emphasis, density, elevation, kind) = match phase {
-        Phase::Normal => (Tone::Neutral, Emphasis::Muted, Density::Spacious, Elevation::Flat, EventKind::ActChanged),
-        Phase::Rising => (Tone::Info, Emphasis::Normal, Density::Normal, Elevation::Raised, EventKind::FocusAcquired),
-        Phase::Overload => (Tone::Warning, Emphasis::Strong, Density::Compact, Elevation::Raised, EventKind::ModalEntered),
-        Phase::LocalFault => (Tone::Warning, Emphasis::Strong, Density::Compact, Elevation::Raised, EventKind::Impact),
-        Phase::Cascade => (Tone::Danger, Emphasis::Strong, Density::Compact, Elevation::Overlay, EventKind::Impact),
-        Phase::Diagnosis => (Tone::Info, Emphasis::Normal, Density::Normal, Elevation::Overlay, EventKind::FocusAcquired),
-        Phase::Intervention => (Tone::Accent, Emphasis::Strong, Density::Compact, Elevation::Raised, EventKind::ActChanged),
-        Phase::PartialRecovery => (Tone::Success, Emphasis::Normal, Density::Normal, Elevation::Raised, EventKind::Confirmation),
-        Phase::Restored => (Tone::Success, Emphasis::Muted, Density::Spacious, Elevation::Flat, EventKind::SectionResolved),
+        Phase::Normal => (
+            Tone::Neutral,
+            Emphasis::Muted,
+            Density::Spacious,
+            Elevation::Flat,
+            EventKind::ActChanged,
+        ),
+        Phase::Rising => (
+            Tone::Info,
+            Emphasis::Normal,
+            Density::Normal,
+            Elevation::Raised,
+            EventKind::FocusAcquired,
+        ),
+        Phase::Overload => (
+            Tone::Warning,
+            Emphasis::Strong,
+            Density::Compact,
+            Elevation::Raised,
+            EventKind::ModalEntered,
+        ),
+        Phase::LocalFault => (
+            Tone::Warning,
+            Emphasis::Strong,
+            Density::Compact,
+            Elevation::Raised,
+            EventKind::Impact,
+        ),
+        Phase::Cascade => (
+            Tone::Danger,
+            Emphasis::Strong,
+            Density::Compact,
+            Elevation::Overlay,
+            EventKind::Impact,
+        ),
+        Phase::Diagnosis => (
+            Tone::Info,
+            Emphasis::Normal,
+            Density::Normal,
+            Elevation::Overlay,
+            EventKind::FocusAcquired,
+        ),
+        Phase::Intervention => (
+            Tone::Accent,
+            Emphasis::Strong,
+            Density::Compact,
+            Elevation::Raised,
+            EventKind::ActChanged,
+        ),
+        Phase::PartialRecovery => (
+            Tone::Success,
+            Emphasis::Normal,
+            Density::Normal,
+            Elevation::Raised,
+            EventKind::Confirmation,
+        ),
+        Phase::Restored => (
+            Tone::Success,
+            Emphasis::Muted,
+            Density::Spacious,
+            Elevation::Flat,
+            EventKind::SectionResolved,
+        ),
     };
     (
         SemanticState {
@@ -76,7 +136,11 @@ pub fn phase_semantics(phase: Phase) -> (SemanticState, EventKind) {
 }
 
 /// Build the semantic trace that drives the composer from the incident record.
-pub fn trace_for(records: &[IncidentRecord], beats_per_frame: f64, horizon_frame: u32) -> SemanticTrace {
+pub fn trace_for(
+    records: &[IncidentRecord],
+    beats_per_frame: f64,
+    horizon_frame: u32,
+) -> SemanticTrace {
     let mut events: Vec<SemanticEvent> = records
         .iter()
         .map(|r| {
@@ -97,7 +161,10 @@ pub fn trace_for(records: &[IncidentRecord], beats_per_frame: f64, horizon_frame
         });
     }
     let tail = 64.0;
-    let total_beats = (horizon_frame as f64 * beats_per_frame + tail).max(96.0);
+    let last_event = events.iter().map(|e| e.at_beat).fold(0.0f64, f64::max);
+    let total_beats = (horizon_frame as f64 * beats_per_frame + tail)
+        .max(last_event + tail)
+        .max(96.0);
     SemanticTrace::new(events, total_beats)
 }
 
@@ -135,7 +202,11 @@ impl MusicTake {
             self.notes,
             self.chords,
             sec,
-            if self.receipt_ok { " checked" } else { " UNCHECKED" }
+            if self.receipt_ok {
+                " checked"
+            } else {
+                " UNCHECKED"
+            }
         )
     }
 }
@@ -188,7 +259,10 @@ impl MusicDirector {
 
     fn build(&mut self, frame: u32, phase: Phase, records: &[IncidentRecord]) {
         let t0 = Instant::now();
-        let trace = trace_for(records, self.beats_per_frame, frame.max(1));
+        // Bound the score horizon so a live rebuild costs a bounded amount even on
+        // a 10,000+ frame run. The incident itself lives well inside this window.
+        let horizon = frame.clamp(1, MUSIC_HORIZON_FRAMES);
+        let trace = trace_for(records, self.beats_per_frame, horizon);
         let song = SongMap::build(&trace, self.seed, None);
         let opts = PerformanceOptions {
             language: MusicalLanguage::fusion_conversation(),
@@ -198,7 +272,11 @@ impl MusicDirector {
         let (score, receipt_ok, receipt_failures, checked_route) =
             match perform_checked(&song, &self.world, opts, PerformanceProfile::BAND) {
                 Ok(c) => {
-                    let r = PerformanceReceipt::measure_under(&c, &self.world, PerformanceProfile::BAND);
+                    let r = PerformanceReceipt::measure_under(
+                        &c,
+                        &self.world,
+                        PerformanceProfile::BAND,
+                    );
                     (c.score, r.passes(), r.failures(), true)
                 }
                 Err(rej) => {
@@ -287,7 +365,12 @@ mod tests {
     fn every_phase_maps_to_a_distinct_enough_state() {
         for p in Phase::ALL {
             let (s, k) = phase_semantics(p);
-            let _ = (s.pressure(), s.dynamic(), s.register_bias(), k.requires_event());
+            let _ = (
+                s.pressure(),
+                s.dynamic(),
+                s.register_bias(),
+                k.requires_event(),
+            );
         }
     }
 

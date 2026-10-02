@@ -21,7 +21,8 @@ VIEW:
 
 INCIDENT:
   --wtf                  drive the scripted deterministic catastrophic scenario
-  --seed=N               fixture/score seed (default 0xCA7EDBA5202604)
+  --seed=N               journal + score seed (default 0xCA7EDBA5202604; the
+                         topology fixture is fixed and deterministic)
   --fps=N                cadence for headless frame-time accounting (default 20)
 
 MUSIC:

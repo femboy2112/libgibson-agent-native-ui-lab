@@ -79,7 +79,11 @@ impl Profile {
         if self.frames == 0 {
             return 0.0;
         }
-        self.samples.iter().map(|s| s.frame_time_us as f64).sum::<f64>() / self.frames as f64
+        self.samples
+            .iter()
+            .map(|s| s.frame_time_us as f64)
+            .sum::<f64>()
+            / self.frames as f64
     }
 
     pub fn mean_render_us(&self) -> f64 {
@@ -90,7 +94,11 @@ impl Profile {
     }
 
     pub fn max_frame_us(&self) -> u64 {
-        self.samples.iter().map(|s| s.frame_time_us).max().unwrap_or(0)
+        self.samples
+            .iter()
+            .map(|s| s.frame_time_us)
+            .max()
+            .unwrap_or(0)
     }
 
     pub fn mean_bytes(&self) -> f64 {
@@ -118,7 +126,9 @@ impl Profile {
     pub fn absorb_stats(&mut self, stats: &RenderStats, prev: &RenderStats) {
         let bytes = stats.frame_bytes.saturating_sub(prev.frame_bytes);
         let dirty = stats.dirty_cells.saturating_sub(prev.dirty_cells);
-        let hist = stats.history_insertions.saturating_sub(prev.history_insertions);
+        let hist = stats
+            .history_insertions
+            .saturating_sub(prev.history_insertions);
         self.total_history_insertions += hist;
         self.max_history_insertions_per_frame = self.max_history_insertions_per_frame.max(hist);
         let _ = (bytes, dirty);
@@ -173,7 +183,11 @@ impl Profile {
             self.music_builds,
             self.music_last_us as f64 / 1000.0,
             self.music_total_us as f64 / 1000.0,
-            if self.music_builds > 0 { self.music_total_us as f64 / self.music_builds as f64 / 1000.0 } else { 0.0 },
+            if self.music_builds > 0 {
+                self.music_total_us as f64 / self.music_builds as f64 / 1000.0
+            } else {
+                0.0
+            },
         ));
         out
     }

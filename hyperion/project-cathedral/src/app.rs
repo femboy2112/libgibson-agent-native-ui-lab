@@ -67,7 +67,11 @@ const CANNED_NOTES: [&str; 5] = [
 ];
 
 impl App {
-    pub fn new(seed: u64, world: gibson::audio::human_music::world::WorldId, with_scenario: bool) -> App {
+    pub fn new(
+        seed: u64,
+        world: gibson::audio::human_music::world::WorldId,
+        with_scenario: bool,
+    ) -> App {
         let fixture = Fixture::cathedral();
         let engine = Engine::new(fixture);
         let layout = Layout::build(&engine);
@@ -146,7 +150,11 @@ impl App {
                     "◇ {:<12} t={:<6} target=#{:<3} {}",
                     a.kind.label().to_uppercase(),
                     a.frame,
-                    if a.target == u16::MAX { "—".to_string() } else { a.target.to_string() },
+                    if a.target == u16::MAX {
+                        "—".to_string()
+                    } else {
+                        a.target.to_string()
+                    },
                     a.note
                 ),
                 finalized: false,
@@ -185,7 +193,8 @@ impl App {
         // 5. Music responds to the semantic trajectory (bounded rebuild cadence).
         if self.enable_music {
             let phase = self.tracker.phase;
-            self.music.maybe_rebuild(self.frame, phase, &self.tracker.records);
+            self.music
+                .maybe_rebuild(self.frame, phase, &self.tracker.records);
         }
 
         // 6. Camera eases toward its semantic aim (fixed viewport for headless; the
@@ -202,8 +211,14 @@ impl App {
 
     /// Re-aim the camera for the current viewport.
     pub fn aim(&mut self, vw: f32, vh: f32) {
-        self.camera
-            .aim(&self.engine, &self.layout, self.scale, self.selected, vw, vh);
+        self.camera.aim(
+            &self.engine,
+            &self.layout,
+            self.scale,
+            self.selected,
+            vw,
+            vh,
+        );
     }
 
     fn incident_report(&self, rec: &IncidentRecord) -> ScrollEntry {
@@ -304,7 +319,12 @@ impl App {
                 true
             }
             KeyCode::Char('a') | KeyCode::Char('A') => {
-                self.enqueue(ActionKind::Acknowledge, u16::MAX, 0.0, "operator acknowledge");
+                self.enqueue(
+                    ActionKind::Acknowledge,
+                    u16::MAX,
+                    0.0,
+                    "operator acknowledge",
+                );
                 true
             }
             KeyCode::Char('n') | KeyCode::Char('N') => {
@@ -385,7 +405,11 @@ impl App {
             self.tracker.phase as u8,
             self.journal.len(),
             self.tracker.records.len(),
-            self.music.take.as_ref().map(|t| t.form_digest.clone()).unwrap_or_default()
+            self.music
+                .take
+                .as_ref()
+                .map(|t| t.form_digest.clone())
+                .unwrap_or_default()
         )
     }
 

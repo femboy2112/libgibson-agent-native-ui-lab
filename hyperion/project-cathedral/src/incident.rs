@@ -130,7 +130,8 @@ impl PhaseTracker {
             .filter(|s| s.bad_deploy || s.fault > 0.1 || s.isolated)
             .count();
 
-        let recent = |at: Option<u32>, window: u32| at.is_some_and(|f| frame.saturating_sub(f) <= window);
+        let recent =
+            |at: Option<u32>, window: u32| at.is_some_and(|f| frame.saturating_sub(f) <= window);
 
         let next = if recent(self.last_intervention, 80) && critical > 0.02 {
             Phase::Intervention

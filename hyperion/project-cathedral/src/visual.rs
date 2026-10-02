@@ -45,7 +45,9 @@ impl Scale {
     pub fn next(self, engine: &Engine, selected: ServiceId) -> Scale {
         let clusters = engine.fixture.clusters.len() as u8;
         match self {
-            Scale::Whole => Scale::Cluster(engine.fixture.services[selected as usize].cluster % clusters),
+            Scale::Whole => {
+                Scale::Cluster(engine.fixture.services[selected as usize].cluster % clusters)
+            }
             Scale::Cluster(_) => Scale::Chain(selected),
             Scale::Chain(_) => Scale::Service(selected),
             Scale::Service(_) => Scale::Whole,
@@ -95,7 +97,8 @@ impl Layout {
                 let k = tier_ids.len();
                 for (j, &id) in tier_ids.iter().enumerate() {
                     let jitter = crate::rng::Rng::hash01(0xC47_4ED, id as u64) - 0.5;
-                    let x = ox + (j as f32 - (k.saturating_sub(1) as f32) / 2.0) * COL_DX
+                    let x = ox
+                        + (j as f32 - (k.saturating_sub(1) as f32) / 2.0) * COL_DX
                         + jitter * 1.2;
                     let y = oy - t as f32 * TIER_DY + jitter * 0.8;
                     base[id as usize] = (x, y);
@@ -108,8 +111,12 @@ impl Layout {
                 base[id].0 += ISLAND_OFFSET;
             }
         }
-        let (mut min_x, mut min_y, mut max_x, mut max_y) =
-            (f32::INFINITY, f32::INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
+        let (mut min_x, mut min_y, mut max_x, mut max_y) = (
+            f32::INFINITY,
+            f32::INFINITY,
+            f32::NEG_INFINITY,
+            f32::NEG_INFINITY,
+        );
         for &(x, y) in &base {
             min_x = min_x.min(x - 3.0);
             max_x = max_x.max(x + 3.0);
@@ -133,7 +140,9 @@ impl Layout {
         let def = &engine.fixture.services[id as usize];
         let s = &engine.states[id as usize];
         let load = s.load_ratio(def);
-        3.0 + 10.0 * s.distress(def) + 5.0 * load + 2.0 * (s.latency / def.base_latency - 1.0).max(0.0)
+        3.0 + 10.0 * s.distress(def)
+            + 5.0 * load
+            + 2.0 * (s.latency / def.base_latency - 1.0).max(0.0)
     }
 }
 
@@ -160,7 +169,15 @@ impl Camera {
         }
     }
 
-    pub fn aim(&mut self, engine: &Engine, layout: &Layout, scale: Scale, _selected: ServiceId, vw: f32, vh: f32) {
+    pub fn aim(
+        &mut self,
+        engine: &Engine,
+        layout: &Layout,
+        scale: Scale,
+        _selected: ServiceId,
+        vw: f32,
+        vh: f32,
+    ) {
         let (min_x, min_y, max_x, max_y) = layout.bounds;
         let (mut cx, mut cy, mut zoom) = match scale {
             Scale::Whole => {
@@ -261,7 +278,10 @@ fn bridge_color(error: f32, flow_norm: f32) -> Color {
     let hot = Color::Rgb(240, 90, 60);
     let c = calm.lerp(hot, error.clamp(0.0, 1.0));
     // Low-flow bridges dim toward the masonry.
-    c.lerp(Color::Rgb(60, 70, 90), (1.0 - flow_norm.clamp(0.0, 1.0)) * 0.5)
+    c.lerp(
+        Color::Rgb(60, 70, 90),
+        (1.0 - flow_norm.clamp(0.0, 1.0)) * 0.5,
+    )
 }
 
 // ── painter ─────────────────────────────────────────────────────────────────
@@ -393,7 +413,12 @@ pub fn build_frame(view: &ViewState, width: u16, height: u16) -> Surface {
     let mut surface = Surface::new(width, height);
     let (w, h) = (width as i32, height as i32);
     let panel = if w >= 108 { PANEL_W } else { 0 };
-    let vp = Rect::new(0, HEADER_H as u16, (w - panel).max(1) as u16, (h - HEADER_H - FOOTER_H).max(1) as u16);
+    let vp = Rect::new(
+        0,
+        HEADER_H as u16,
+        (w - panel).max(1) as u16,
+        (h - HEADER_H - FOOTER_H).max(1) as u16,
+    );
 
     {
         let mut p = Painter::new(&mut surface);
@@ -411,7 +436,16 @@ pub fn build_frame(view: &ViewState, width: u16, height: u16) -> Surface {
     }
 
     if panel > 0 {
-        draw_panel(&mut surface, view, Rect::new((w - panel) as u16, HEADER_H as u16, panel as u16, (h - HEADER_H - FOOTER_H).max(1) as u16));
+        draw_panel(
+            &mut surface,
+            view,
+            Rect::new(
+                (w - panel) as u16,
+                HEADER_H as u16,
+                panel as u16,
+                (h - HEADER_H - FOOTER_H).max(1) as u16,
+            ),
+        );
     }
     draw_header(&mut surface, view, width);
     draw_footer(&mut surface, view, width, height);
@@ -479,17 +513,22 @@ fn draw_bridges(surface: &mut Surface, view: &ViewState, vp: Rect) {
         let flow_norm = (link.flow / 60.0).clamp(0.0, 1.0);
         let style = Style::new().fg(bridge_color(link.error, flow_norm));
         let thick = link.flow > 45.0;
-        p.line(ax.round() as i32, ay.round() as i32, bx.round() as i32, by.round() as i32, style, thick);
+        p.line(
+            ax.round() as i32,
+            ay.round() as i32,
+            bx.round() as i32,
+            by.round() as i32,
+            style,
+            thick,
+        );
 
         // Retry storm: echoing ghost spans, offset along the bridge, dimmer each.
         if link.error > 0.5 && link.flow > 1.0 {
             for e in 1..=2 {
                 let off = e as f32 * 0.07;
-                let ghost = style.fg(bridge_color(link.error, flow_norm).lerp(Color::Rgb(255, 170, 60), 0.6));
-                let dim = Style {
-                    dim: true,
-                    ..ghost
-                };
+                let ghost = style
+                    .fg(bridge_color(link.error, flow_norm).lerp(Color::Rgb(255, 170, 60), 0.6));
+                let dim = Style { dim: true, ..ghost };
                 let _ = off;
                 let mx = (ax + bx) / 2.0;
                 let my = (ay + by) / 2.0 + e as f32;
@@ -541,11 +580,21 @@ fn draw_towers(surface: &mut Surface, view: &ViewState, vp: Rect) {
                 let jag = (id as i32 + dx).rem_euclid(3);
                 let yy = base_y - jag;
                 if yy >= top_clip && yy < bot_clip {
-                    p.put(cx + dx, yy, "▁▂▃".chars().nth(jag as usize).unwrap_or('▁'), Style::new().fg(Color::Rgb(120, 60, 60)));
+                    p.put(
+                        cx + dx,
+                        yy,
+                        "▁▂▃".chars().nth(jag as usize).unwrap_or('▁'),
+                        Style::new().fg(Color::Rgb(120, 60, 60)),
+                    );
                 }
             }
             if s.isolated {
-                p.put(cx, base_y - 3, '✂', Style::new().fg(Color::Rgb(240, 120, 120)).bold());
+                p.put(
+                    cx,
+                    base_y - 3,
+                    '✂',
+                    Style::new().fg(Color::Rgb(240, 120, 120)).bold(),
+                );
             }
             continue;
         }
@@ -598,7 +647,12 @@ fn draw_towers(surface: &mut Surface, view: &ViewState, vp: Rect) {
             }
         }
         if !view.layout.isolated[id as usize] && s.bad_deploy {
-            p.put(cx, top_clip.max(top_y - 1), '!', Style::new().fg(Color::Rgb(255, 90, 90)).bold());
+            p.put(
+                cx,
+                top_clip.max(top_y - 1),
+                '!',
+                Style::new().fg(Color::Rgb(255, 90, 90)).bold(),
+            );
         }
     }
 }
@@ -627,15 +681,26 @@ fn draw_energy(surface: &mut Surface, view: &ViewState, vp: Rect) {
         let t = ((frame * speed + phase) % 1.0).abs();
         let x = ax + (bx - ax) * t;
         let y = ay + (by - ay) * t;
-        let bright = Color::Rgb(255, 250, 210).lerp(Color::Rgb(255, 120, 80), link.error.clamp(0.0, 1.0));
-        p.put(x.round() as i32, y.round() as i32, '●', Style::new().fg(bright));
+        let bright =
+            Color::Rgb(255, 250, 210).lerp(Color::Rgb(255, 120, 80), link.error.clamp(0.0, 1.0));
+        p.put(
+            x.round() as i32,
+            y.round() as i32,
+            '●',
+            Style::new().fg(bright),
+        );
         // Retry recursion: trailing echoes of the same request.
         if link.error > 0.35 {
             for e in 1..=3 {
                 let te = (t - e as f32 * 0.05).rem_euclid(1.0);
                 let ex = ax + (bx - ax) * te;
                 let ey = ay + (by - ay) * te;
-                p.put(ex.round() as i32, ey.round() as i32, '·', Style::new().fg(bright).dim());
+                p.put(
+                    ex.round() as i32,
+                    ey.round() as i32,
+                    '·',
+                    Style::new().fg(bright).dim(),
+                );
             }
         }
     }
@@ -667,7 +732,14 @@ fn draw_selection(p: &mut Painter, view: &ViewState, vp: Rect) {
             let bh = view.layout.tower_height(view.engine, b);
             let (sx0, sy0) = view.camera.project(ax, ay - ah, vp);
             let (sx1, sy1) = view.camera.project(bx2, by2 - bh, vp);
-            p.line(sx0.round() as i32, sy0.round() as i32, sx1.round() as i32, sy1.round() as i32, gold, false);
+            p.line(
+                sx0.round() as i32,
+                sy0.round() as i32,
+                sx1.round() as i32,
+                sy1.round() as i32,
+                gold,
+                false,
+            );
         }
     }
 }
@@ -725,7 +797,8 @@ fn worst_cluster(view: &ViewState) -> (u8, f32) {
     let n = view.engine.fixture.clusters.len();
     let mut sum = vec![0.0f32; n];
     for s in &view.engine.fixture.services {
-        let d = view.engine.states[s.id as usize].distress(&view.engine.fixture.services[s.id as usize]);
+        let d = view.engine.states[s.id as usize]
+            .distress(&view.engine.fixture.services[s.id as usize]);
         sum[s.cluster as usize] += d;
     }
     let mut best = (0u8, -1.0f32);
@@ -820,7 +893,9 @@ fn draw_panel(surface: &mut Surface, view: &ViewState, rect: Rect) {
     let w = rect.width as i32;
     let h = rect.height as i32;
     // Panel background.
-    let bg = Style::new().bg(Color::Rgb(14, 16, 28)).fg(Color::Rgb(150, 165, 200));
+    let bg = Style::new()
+        .bg(Color::Rgb(14, 16, 28))
+        .fg(Color::Rgb(150, 165, 200));
     for y in y0..y0 + h {
         p.text(x0, y, &" ".repeat(w as usize), bg);
     }
@@ -829,49 +904,136 @@ fn draw_panel(surface: &mut Surface, view: &ViewState, rect: Rect) {
         p.put(x0, y, '│', Style::new().fg(Color::Rgb(50, 58, 86)));
     }
     let mut y = y0 + 1;
-    p.text(x0 + 2, y, "FOCUS", Style::new().fg(Color::Rgb(255, 220, 120)).bold());
+    p.text(
+        x0 + 2,
+        y,
+        "FOCUS",
+        Style::new().fg(Color::Rgb(255, 220, 120)).bold(),
+    );
     y += 1;
     let id = view.selected;
     let def = &view.engine.fixture.services[id as usize];
     let s = &view.engine.states[id as usize];
-    p.text(x0 + 2, y, &format!("#{id} {}", def.name), Style::new().fg(Color::Rgb(210, 220, 245)));
+    p.text(
+        x0 + 2,
+        y,
+        &format!("#{id} {}", def.name),
+        Style::new().fg(Color::Rgb(210, 220, 245)),
+    );
     y += 1;
-    p.text(x0 + 2, y, &format!("district {}", view.engine.fixture.clusters[def.cluster as usize]), Style::new().fg(Color::Rgb(150, 165, 200)));
+    p.text(
+        x0 + 2,
+        y,
+        &format!(
+            "district {}",
+            view.engine.fixture.clusters[def.cluster as usize]
+        ),
+        Style::new().fg(Color::Rgb(150, 165, 200)),
+    );
     y += 2;
     // Integrity / queue / latency gauges.
-    gauge(&mut p, x0 + 2, y, w - 4, "integr", s.health, health_color(s.health, s.distress(def)));
+    gauge(
+        &mut p,
+        x0 + 2,
+        y,
+        w - 4,
+        "integr",
+        s.health,
+        health_color(s.health, s.distress(def)),
+    );
     y += 1;
-    gauge(&mut p, x0 + 2, y, w - 4, "queue", s.load_ratio(def).min(1.0), Color::Rgb(240, 190, 80));
+    gauge(
+        &mut p,
+        x0 + 2,
+        y,
+        w - 4,
+        "queue",
+        s.load_ratio(def).min(1.0),
+        Color::Rgb(240, 190, 80),
+    );
     y += 1;
-    gauge(&mut p, x0 + 2, y, w - 4, "error", s.error_rate.min(1.0), Color::Rgb(240, 90, 60));
+    gauge(
+        &mut p,
+        x0 + 2,
+        y,
+        w - 4,
+        "error",
+        s.error_rate.min(1.0),
+        Color::Rgb(240, 90, 60),
+    );
     y += 2;
-    p.text(x0 + 2, y, &format!("lat {:.1}t  rep {}  ver {}", s.latency, s.replicas, s.version), Style::new().fg(Color::Rgb(150, 165, 200)));
+    p.text(
+        x0 + 2,
+        y,
+        &format!(
+            "lat {:.1}t  rep {}  ver {}",
+            s.latency, s.replicas, s.version
+        ),
+        Style::new().fg(Color::Rgb(150, 165, 200)),
+    );
     y += 1;
     let bstate = match s.breaker {
         crate::sim::Breaker::Closed => "CLOSED",
         crate::sim::Breaker::Open => "OPEN",
         crate::sim::Breaker::HalfOpen => "HALF-OPEN",
     };
-    p.text(x0 + 2, y, &format!("breaker {bstate}  trips {}", s.trips), Style::new().fg(if s.breaker == crate::sim::Breaker::Open { Color::Rgb(240, 90, 60) } else { Color::Rgb(150, 165, 200) }));
+    p.text(
+        x0 + 2,
+        y,
+        &format!("breaker {bstate}  trips {}", s.trips),
+        Style::new().fg(if s.breaker == crate::sim::Breaker::Open {
+            Color::Rgb(240, 90, 60)
+        } else {
+            Color::Rgb(150, 165, 200)
+        }),
+    );
     y += 2;
-    p.text(x0 + 2, y, "DEPENDENCIES", Style::new().fg(Color::Rgb(255, 220, 120)).bold());
+    p.text(
+        x0 + 2,
+        y,
+        "DEPENDENCIES",
+        Style::new().fg(Color::Rgb(255, 220, 120)).bold(),
+    );
     y += 1;
     for &d in def.deps.iter().take(4) {
         let ds = &view.engine.states[d as usize];
-        p.text(x0 + 2, y, &format!("→ #{d} {:.2}", ds.health), Style::new().fg(health_color(ds.health, ds.distress(&view.engine.fixture.services[d as usize]))));
+        p.text(
+            x0 + 2,
+            y,
+            &format!("→ #{d} {:.2}", ds.health),
+            Style::new().fg(health_color(
+                ds.health,
+                ds.distress(&view.engine.fixture.services[d as usize]),
+            )),
+        );
         y += 1;
     }
     // Major affected cluster.
     y = y.max(rect.y as i32 + h / 2 + 2);
-    p.text(x0 + 2, y, "HOTSPOTS", Style::new().fg(Color::Rgb(255, 220, 120)).bold());
+    p.text(
+        x0 + 2,
+        y,
+        "HOTSPOTS",
+        Style::new().fg(Color::Rgb(255, 220, 120)).bold(),
+    );
     y += 1;
     let mut hot: Vec<(f32, ServiceId)> = (0..view.engine.len() as ServiceId)
-        .map(|i| (view.engine.states[i as usize].distress(&view.engine.fixture.services[i as usize]), i))
+        .map(|i| {
+            (
+                view.engine.states[i as usize].distress(&view.engine.fixture.services[i as usize]),
+                i,
+            )
+        })
         .collect();
     hot.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
     for &(d, id) in hot.iter().take(8) {
         let def = &view.engine.fixture.services[id as usize];
-        p.text(x0 + 2, y, &format!("{:>4.2} #{} {}", d, id, &def.name[..def.name.len().min(12)]), Style::new().fg(health_color(1.0 - d, d)));
+        p.text(
+            x0 + 2,
+            y,
+            &format!("{:>4.2} #{} {}", d, id, &def.name[..def.name.len().min(12)]),
+            Style::new().fg(health_color(1.0 - d, d)),
+        );
         y += 1;
         if y > rect.y as i32 + h - 1 {
             break;
@@ -883,7 +1045,12 @@ fn gauge(p: &mut Painter, x: i32, y: i32, w: i32, label: &str, value: f32, color
     let v = value.clamp(0.0, 1.0);
     let bar_w = (w - 9).max(4);
     let filled = (v * bar_w as f32).round() as i32;
-    p.text(x, y, &format!("{label:>6} "), Style::new().fg(Color::Rgb(150, 165, 200)));
+    p.text(
+        x,
+        y,
+        &format!("{label:>6} "),
+        Style::new().fg(Color::Rgb(150, 165, 200)),
+    );
     for i in 0..bar_w {
         let ch = if i < filled { '█' } else { '·' };
         p.put(x + 7 + i, y, ch, Style::new().fg(color));
@@ -898,13 +1065,20 @@ fn draw_help(surface: &mut Surface, width: u16, height: u16) {
     let bh = 16.min(h - 4);
     let x0 = (w - bw) / 2;
     let y0 = (h - bh) / 2;
-    let bg = Style::new().bg(Color::Rgb(18, 20, 34)).fg(Color::Rgb(215, 225, 250));
+    let bg = Style::new()
+        .bg(Color::Rgb(18, 20, 34))
+        .fg(Color::Rgb(215, 225, 250));
     for y in y0..y0 + bh {
         p.text(x0, y, &" ".repeat(bw as usize), bg);
     }
     for x in x0..x0 + bw {
         p.put(x, y0, '─', Style::new().fg(Color::Rgb(120, 135, 170)));
-        p.put(x, y0 + bh - 1, '─', Style::new().fg(Color::Rgb(120, 135, 170)));
+        p.put(
+            x,
+            y0 + bh - 1,
+            '─',
+            Style::new().fg(Color::Rgb(120, 135, 170)),
+        );
     }
     let lines = [
         "CATHEDRAL — controls",

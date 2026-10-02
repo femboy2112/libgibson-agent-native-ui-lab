@@ -190,3 +190,29 @@ pub fn choose_target(engine: &Engine) -> ServiceId {
     }
     best
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Observed v0.4.0 behaviour, recorded so the incident harness cannot silently
+    /// regress: `Story::start()` is the obvious entry point and does **not** validate
+    /// the start beat. An unknown id yields an already-finished director with no
+    /// error, so a typo is indistinguishable from a completed story. `validate()`
+    /// names the problem, but nothing routes `start()` through it. Project Cathedral
+    /// hit this with a wrong start-beat id (the scenario ran zero beats).
+    #[test]
+    fn unknown_start_beat_finishes_silently() {
+        let story = Story::new("typo-does-not-exist");
+        assert!(
+            story.validate().is_err(),
+            "validate should name the bad start"
+        );
+        let director = story.start();
+        assert!(
+            director.is_finished(),
+            "unknown start must currently finish silently (the friction)"
+        );
+        assert_eq!(director.current_beat(), "typo-does-not-exist");
+    }
+}

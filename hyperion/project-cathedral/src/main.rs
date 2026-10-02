@@ -64,8 +64,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(path) = &options.replay {
         let rec = replay::read_record(path).map_err(io::Error::other)?;
-        let report = replay::run_replay(&rec, world_id(&options.world))
-            .map_err(io::Error::other)?;
+        let report =
+            replay::run_replay(&rec, world_id(&options.world)).map_err(io::Error::other)?;
         println!("{report}");
         return Ok(());
     }
@@ -136,9 +136,7 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
     app.enable_music = options.music;
     app.color_depth = options.color.depth();
 
-    let frames = options
-        .at
-        .unwrap_or_else(|| options.frames.unwrap_or(1));
+    let frames = options.at.unwrap_or_else(|| options.frames.unwrap_or(1));
     let mut profile = Profile::new();
     profile.color_depth = options.color.depth();
     let mut checkpointer = replay::Checkpointer::new(200);
@@ -199,9 +197,12 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
         if app.music.take.is_some() {
             std::fs::create_dir_all(dir)?;
             let path = std::path::Path::new(dir).join("cathedral.wav");
-            let (_out, sha) = app
-                .music
-                .export(&path, gibson::audio::SampleRate::STUDIO, 512, &app.music.world)?;
+            let (_out, sha) = app.music.export(
+                &path,
+                gibson::audio::SampleRate::STUDIO,
+                512,
+                &app.music.world,
+            )?;
             wav_sha = Some(sha.clone());
             println!(
                 "WAV {}  sha256={}  rebuilds={}  checked={}",
@@ -253,6 +254,9 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
             "CATHEDRAL_METRICS {}",
             serde_json::json!({
                 "frames": profile.frames,
+                "services": app.engine.len(),
+                "edges": app.engine.fixture.edges().len(),
+                "clusters": app.engine.fixture.clusters.len(),
                 "mean_frame_us": profile.mean_frame_us(),
                 "p95_frame_us": profile.percentile_us(0.95),
                 "max_frame_us": profile.max_frame_us(),
@@ -268,12 +272,21 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
                 "rss_end_kib": profile.rss_end_kib,
                 "rss_peak_kib": profile.rss_peak_kib,
                 "music_builds": profile.music_builds,
+                "music_rejections": app.music.rejections.len(),
+                "music_last_us": profile.music_last_us,
                 "music_total_us": profile.music_total_us,
                 "final_digest": app.digest(),
                 "journal_digest": app.journal.digest(),
                 "actions": app.journal.len(),
                 "incident_events": app.tracker.records.len(),
                 "phase": app.tracker.phase.label(),
+                "phases": app
+                    .tracker
+                    .records
+                    .iter()
+                    .map(|r| serde_json::json!([r.frame, r.phase.label()]))
+                    .collect::<Vec<_>>(),
+                "music_checked": app.music.take.as_ref().map(|t| t.receipt_ok),
                 "wav_sha256": wav_sha,
             })
         );
@@ -314,7 +327,9 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
     while !app.should_quit {
         // Drain pending input without blocking the animation clock.
         loop {
-            let wait = next.saturating_duration_since(Instant::now()).min(Duration::from_millis(8));
+            let wait = next
+                .saturating_duration_since(Instant::now())
+                .min(Duration::from_millis(8));
             match ctx.poll_event(wait)? {
                 Some(Event::Key(k)) => {
                     app.handle_key(k);
@@ -377,9 +392,12 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
             if app.music.take.is_some() {
                 std::fs::create_dir_all(&dir)?;
                 let path = std::path::Path::new(&dir).join("cathedral.wav");
-                let (_o, sha) =
-                    app.music
-                        .export(&path, gibson::audio::SampleRate::STUDIO, 512, &app.music.world)?;
+                let (_o, sha) = app.music.export(
+                    &path,
+                    gibson::audio::SampleRate::STUDIO,
+                    512,
+                    &app.music.world,
+                )?;
                 app.message = format!("wrote {} sha {}", path.display(), &sha[..12]);
             } else {
                 app.message = "no performance to export yet".into();

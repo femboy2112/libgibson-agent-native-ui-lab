@@ -55,7 +55,10 @@ pub fn run_replay(
     world: gibson::audio::human_music::world::WorldId,
 ) -> Result<String, String> {
     if rec.journal.fixture != "cathedral" {
-        return Err(format!("unknown fixture in journal: {}", rec.journal.fixture));
+        return Err(format!(
+            "unknown fixture in journal: {}",
+            rec.journal.fixture
+        ));
     }
     let mut app = App::new(rec.journal.seed, world, false);
     // The music digest is part of the recorded digest, so replay must reproduce the
@@ -106,11 +109,7 @@ pub fn run_replay(
         }
     }
     let final_sim = app.engine.semantic_digest();
-    let expected_sim = rec
-        .checkpoints
-        .last()
-        .map(|(_, d)| *d)
-        .unwrap_or(0);
+    let expected_sim = rec.checkpoints.last().map(|(_, d)| *d).unwrap_or(0);
     let _ = expected_sim;
     let digest = app.digest();
     if rec.final_digest != digest {
