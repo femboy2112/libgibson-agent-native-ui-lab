@@ -30,6 +30,9 @@ MUSIC:
   --no-music             disable the music director
   --world=ice|vapor|swiss
   --music-out=DIR        render the final checked performance to DIR/cathedral.wav + hash
+  --play                 play the exported WAV with the first available player
+                         (ffplay/paplay/aplay/mpv/afplay); interactive mode
+                         autoplays the first take. W exports and replays.
 
 REPLAY:
   --record=PATH          write the action journal JSON
@@ -75,6 +78,7 @@ pub struct Options {
     pub music: bool,
     pub world: String,
     pub music_out: Option<String>,
+    pub play: bool,
     pub record: Option<String>,
     pub replay: Option<String>,
 }
@@ -97,6 +101,7 @@ impl Default for Options {
             music: true,
             world: "ice".into(),
             music_out: None,
+            play: false,
             record: None,
             replay: None,
         }
@@ -146,6 +151,7 @@ impl Options {
                 "--wtf" => o.wtf = true,
                 "--music" => o.music = true,
                 "--no-music" => o.music = false,
+                "--play" => o.play = true,
                 other if other.starts_with("--") => {
                     return Err(format!("unknown option: {other}"));
                 }

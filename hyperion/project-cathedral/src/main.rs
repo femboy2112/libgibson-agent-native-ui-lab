@@ -191,23 +191,27 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
     profile.music_last_us = app.music.last_cost.as_micros() as u64;
     profile.music_total_us = app.music.cumulative_cost.as_micros() as u64;
 
-    // Music artifact + hash.
+    // Music artifact + hash. `--play` implies an export to DIR or the cwd.
+    let export_dir = options
+        .music_out
+        .clone()
+        .or_else(|| options.play.then(|| ".".to_string()));
     let mut wav_sha = None;
-    if let Some(dir) = &options.music_out {
+    if let Some(dir) = &export_dir {
         if app.music.take.is_some() {
             std::fs::create_dir_all(dir)?;
             let path = std::path::Path::new(dir).join("cathedral.wav");
-            let (_out, sha) = app.music.export(
+            let (_out, pcm_sha) = app.music.export(
                 &path,
                 gibson::audio::SampleRate::STUDIO,
                 512,
                 &app.music.world,
             )?;
-            wav_sha = Some(sha.clone());
+            wav_sha = Some(pcm_sha.clone());
             println!(
-                "WAV {}  sha256={}  rebuilds={}  checked={}",
+                "WAV {}  pcm_sha256={}  rebuilds={}  checked={}",
                 path.display(),
-                sha,
+                pcm_sha,
                 app.music.rebuilds,
                 app.music
                     .take
@@ -215,6 +219,9 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
                     .map(|t| t.receipt_ok)
                     .unwrap_or(false)
             );
+            if options.play {
+                play_blocking(&path);
+            }
         }
     }
 
@@ -298,6 +305,55 @@ fn run_headless(options: &Options) -> Result<(), Box<dyn std::error::Error>> {
 // binary can report it without reading Cargo.lock at runtime.
 const LIBSIBSON_COMMIT: &str = "c2f6483d92fe2b351e6cd50936a97d8cdf73cb79";
 
+/// Spawn the first available audio player on `path`, returning the child if one was
+/// launched. Playback is best-effort and entirely outside LibGibson: a terminal UI
+/// engine does not own a sound device. The WAV is the artifact; this just tries to
+/// make it audible in the session.
+fn spawn_player(path: &std::path::Path) -> Option<std::process::Child> {
+    use std::process::{Command, Stdio};
+    let candidates: &[(&str, &[&str])] = &[
+        ("ffplay", &["-nodisp", "-autoexit", "-loglevel", "error"]),
+        ("paplay", &[]),
+        ("aplay", &["-q"]),
+        ("mpv", &["--no-video", "--really-quiet"]),
+        ("afplay", &[]),
+    ];
+    for (prog, args) in candidates {
+        match Command::new(prog)
+            .args(*args)
+            .arg(path)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+        {
+            Ok(child) => return Some(child),
+            Err(_) => continue,
+        }
+    }
+    None
+}
+
+/// Blocking playback for headless `--play`.
+fn play_blocking(path: &std::path::Path) {
+    match spawn_player(path) {
+        Some(mut child) => {
+            // stderr is unbuffered, so the status is visible even when stdout is piped.
+            let _ = io::stdout().flush();
+            eprintln!(
+                "cathedral: playing {} (Ctrl-C to stop; the WAV is the artifact)",
+                path.display()
+            );
+            let _ = child.wait();
+        }
+        None => eprintln!(
+            "cathedral: no audio player found (tried ffplay/paplay/aplay/mpv/afplay); \
+             the WAV is at {}",
+            path.display()
+        ),
+    }
+}
+
 fn render_surface(app: &App, w: u16, h: u16, now_playing: &str, music_state: &str) -> Surface {
     let layout = &app.layout;
     let camera = &app.camera;
@@ -323,6 +379,9 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
     profile.color_depth = options.color.depth();
     let mut prev_stats = ctx.stats();
     let mut checkpointer = replay::Checkpointer::new(200);
+    // Best-effort audio: the exported WAV is the artifact, this just makes it audible.
+    let mut player: Option<std::process::Child> = None;
+    let mut autoplayed = false;
 
     while !app.should_quit {
         // Drain pending input without blocking the animation clock.
@@ -398,10 +457,64 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
                     512,
                     &app.music.world,
                 )?;
-                app.message = format!("wrote {} sha {}", path.display(), &sha[..12]);
+                if let Some(mut prev) = player.take() {
+                    let _ = prev.kill();
+                    let _ = prev.wait();
+                }
+                match spawn_player(&path) {
+                    Some(child) => {
+                        player = Some(child);
+                        app.message = format!("playing {} (W replays, Q stops)", path.display());
+                    }
+                    None => {
+                        app.message =
+                            format!("wrote {} — no player (ffplay/aplay/paplay)", path.display());
+                    }
+                }
+                let short = &sha[..12.min(sha.len())];
+                ctx.insert_text_before_live(&format!(
+                    "♪ EXPORT {}  pcm_sha256={}  playing={}",
+                    path.display(),
+                    short,
+                    player.is_some()
+                ))?;
+                profile.scrollback_entries += 1;
             } else {
                 app.message = "no performance to export yet".into();
             }
+        }
+
+        // `--play`: start the first available checked take, once.
+        if options.play && !autoplayed && app.music.take.is_some() {
+            let dir = options.music_out.clone().unwrap_or_else(|| ".".into());
+            std::fs::create_dir_all(&dir)?;
+            let path = std::path::Path::new(&dir).join("cathedral.wav");
+            let (_o, sha) = app.music.export(
+                &path,
+                gibson::audio::SampleRate::STUDIO,
+                512,
+                &app.music.world,
+            )?;
+            let short = &sha[..12.min(sha.len())];
+            match spawn_player(&path) {
+                Some(child) => {
+                    player = Some(child);
+                    ctx.insert_text_before_live(&format!(
+                        "♪ AUTOPLAY {}  pcm_sha256={}  (press Q to stop)",
+                        path.display(),
+                        short
+                    ))?;
+                }
+                None => {
+                    ctx.insert_text_before_live(&format!(
+                        "♪ EXPORTED {}  pcm_sha256={} — no audio player found",
+                        path.display(),
+                        short
+                    ))?;
+                }
+            }
+            profile.scrollback_entries += 1;
+            autoplayed = true;
         }
 
         next += tick;
@@ -411,6 +524,10 @@ fn run_interactive(options: &Options) -> Result<(), Box<dyn std::error::Error>> 
         }
     }
 
+    if let Some(mut p) = player.take() {
+        let _ = p.kill();
+        let _ = p.wait();
+    }
     ctx.restore()?;
 
     profile.music_builds = app.music.rebuilds;

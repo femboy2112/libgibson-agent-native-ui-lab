@@ -187,6 +187,10 @@ Implementation (`src/music.rs`):
 - Offline export uses `HumanMusicSynth` + `OfflineRenderer` + `write_wav_i16`. The reported hash
   is the SHA-256 of the **interleaved i16 PCM**, not of the WAV file; the two necessarily differ
   because the latter includes the 44-byte RIFF header and any padding. Both are reported.
+- Audibility is **best-effort and outside LibGibson**: on `W` or `--play` the host spawns the
+  first player it finds (`ffplay`/`paplay`/`aplay`/`mpv`/`afplay`). The verified artifact remains
+  the WAV + PCM hash; playback is a convenience and its success depends on the host sound
+  device, so no claim is made that sound reached a speaker.
 
 This is a hand-written response function, not comprehension. No claim is made that the music
 "knows" an incident is happening.
@@ -389,8 +393,9 @@ WAVs are intentionally **not** committed (the package's `.gitignore` excludes `*
 - No claim that libgibson#15 is fixed, or that one PTY probe proves input correctness.
 - No visual-quality claim; the capability check is semantic (labels present), not an aesthetic
   judgment.
-- Cross-platform behavior (non-Linux terminals), physical audio playback, and production-scale
-  topology were not certified.
+- Cross-platform behavior (non-Linux terminals), actual speaker output (the WAV and PCM hash are
+  verified; whether a host player emits sound is not), and production-scale topology were not
+  certified.
 
 ---
 

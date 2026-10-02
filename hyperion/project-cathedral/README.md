@@ -64,14 +64,17 @@ Interactive controls:
 | `A` | acknowledge (opens the diagnosis phase) |
 | `N` | annotate (cycles canned operator notes) |
 | `Space` | pause / resume |
-| `W` | export the current checked performance to `cathedral.wav` |
+| `W` | export the current checked performance to `cathedral.wav` and play it |
 | `H` / `?` | toggle help |
 | `Q` / `Esc` / `Ctrl-C` | quit and restore the terminal |
 
-**There is no live audio.** The score is built and checked in memory; nothing is sent to a sound
-device. Press `W` (or run with `--music-out=DIR`) to write `cathedral.wav`, then play it with
-`ffplay cathedral.wav`, `aplay cathedral.wav`, or any audio player. The footer's
-`Tone/Emphasis/Density/Elevation` axis shows the score's current semantic state, not sound.
+**Audio is best-effort, and the WAV is the artifact.** The score is built and checked in memory;
+Project Cathedral then tries to make it audible by spawning the first available player it finds
+(`ffplay`, `paplay`, `aplay`, `mpv`, `afplay`). Press `W` to export *and play* the current take;
+`--play` autoplays the first checked take in interactive mode and plays the export in headless
+mode. If no player is found the app says so and leaves the file in place — copy it to a machine
+with a sound device. The footer's `Tone/Emphasis/Density/Elevation` axis is the score's semantic
+state, not a signal meter.
 
 **A fault only cascades if it has a blast radius.** The footer shows the focused service's
 downstream dependents (`focus #N·D↓`). The default focus `#0` is a leaf with `0↓`, so a fault
