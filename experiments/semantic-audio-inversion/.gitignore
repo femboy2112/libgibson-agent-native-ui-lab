@@ -1,0 +1,9 @@
+# Independent experiment workspace: its own build dir must not be picked up by
+# the root repository's `/target/` rule (that only covers the root target).
+/target/
+
+# Python cache / test artifacts.
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
