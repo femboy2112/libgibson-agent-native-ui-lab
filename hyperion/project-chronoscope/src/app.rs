@@ -18,7 +18,8 @@ use gibson::audio::human_music::WorldId;
 use gibson::story::StoryDirector;
 use std::time::Duration;
 
-pub const STEPS_PER_SEC_1X: f64 = 88.0 * STEPS_PER_BEAT / 60.0;
+/// A player that exits sooner than this after starting is treated as unusable.
+pub const PLAYER_MIN_LIFE_SECS: f32 = 1.5;
 pub const SPEEDS: [f64; 4] = [1.0, 2.0, 4.0, 16.0];
 
 /// How much of HumanMusic the session uses.
@@ -160,6 +161,10 @@ pub struct Model {
     pub options: Options,
     audio_dirty: bool,
     audio_branch: Option<BranchId>,
+    /// Presentation time at which the external player was last started.
+    player_started_at: Option<f32>,
+    /// The player exited immediately (no sound server?): stop retrying until `m` is pressed.
+    pub audio_broken: bool,
     last_pick: Option<BranchId>,
     pub story_dir: StoryDirector,
     pub story_key: (BranchId, u32),
@@ -237,6 +242,8 @@ impl Model {
             options,
             audio_dirty: true,
             audio_branch: None,
+            player_started_at: None,
+            audio_broken: false,
             last_pick: None,
             story_dir,
             story_key: (0, 0),
@@ -260,8 +267,14 @@ impl Model {
         self.hist.branch(self.cur_b).end()
     }
 
+    /// The selected world's tempo: the audio clock, and therefore the 1× playback rate.
     pub fn world_tempo(&self) -> f64 {
-        88.0
+        gibson::audio::human_music::MusicWorld::from_id(self.options.world).tempo_bpm as f64
+    }
+
+    /// Steps per second at 1×: locked to the audio (`tempo × STEPS_PER_BEAT / 60`).
+    pub fn steps_per_sec_1x(&self) -> f64 {
+        self.world_tempo() * STEPS_PER_BEAT / 60.0
     }
 
     pub fn rec_here(&self) -> Option<&Rec> {
@@ -647,7 +660,9 @@ impl Model {
             Cmd::DoFork(i) => {
                 if let Modal::Fork(opts) = self.modal.clone() {
                     if let Some((_, e)) = opts.get(i) {
-                        let _ = self.fork_with(e.clone());
+                        if let Err(err) = self.fork_with(e.clone()) {
+                            self.toast(format!("cannot fork there: {err}"));
+                        }
                     }
                 }
             }
@@ -685,6 +700,7 @@ impl Model {
             }
             Cmd::ToggleMute => {
                 self.mute = !self.mute;
+                self.audio_broken = false;
                 self.audio_dirty = true;
             }
             Cmd::Inspect => {
@@ -756,7 +772,7 @@ impl Model {
             self.spread = target;
         }
         if self.playing && self.modal == Modal::None {
-            let rate = STEPS_PER_SEC_1X * SPEEDS[self.speed];
+            let rate = self.steps_per_sec_1x() * SPEEDS[self.speed];
             self.frac += d * rate;
             while self.frac >= 1.0 && self.cursor < self.end() {
                 self.frac -= 1.0;
@@ -773,6 +789,8 @@ impl Model {
         // camera: critically damped glide toward the cursor (presentation time only)
         self.glide(d as f32);
         let _ = self.audio.poll();
+        self.audio.touch(self.cur_b);
+        self.audio.touch(self.audio_branch_now());
         if self.audio.resident_bytes() > self.audio.budget_bytes {
             let keep = [self.cur_b, self.audio_branch_now()];
             self.audio.enforce_budget(&self.hist, &keep);
@@ -790,23 +808,28 @@ impl Model {
 
     fn glide(&mut self, dt: f32) {
         let (tz, tx, ty) = self.cam_target();
-        let omega = 9.0f32;
-        let dz = tz - self.cam.z;
-        // critically damped spring (semi-implicit): deterministic for a fixed dt
-        let ax = omega * omega * dz - 2.0 * omega * self.cam.vz;
-        self.cam.vz += ax * dt;
-        self.cam.z += self.cam.vz * dt;
+        // closed-form critically damped spring: unconditionally stable for any frame time (the
+        // old semi-implicit Euler integrator diverged above ~92 ms per frame), deterministic for
+        // a given dt, and time here is *presentation* time only
+        let dt = dt.clamp(0.0, 0.25);
+        spring(&mut self.cam.z, &mut self.cam.vz, tz, 9.0, dt);
         let tyaw = if self.facing_back {
             std::f32::consts::PI
         } else {
             0.0
         };
-        let dyaw = tyaw - self.cam.yaw;
-        let ay = 14.0 * dyaw - 2.0 * 3.7 * self.cam.vyaw;
-        self.cam.vyaw += ay * dt;
-        self.cam.yaw += self.cam.vyaw * dt;
+        spring(&mut self.cam.yaw, &mut self.cam.vyaw, tyaw, 3.74, dt);
         self.cam.x += (tx - self.cam.x) * (dt * 6.0).min(1.0);
         self.cam.y += (ty - self.cam.y) * (dt * 6.0).min(1.0);
+        let finite = self.cam.z.is_finite()
+            && self.cam.yaw.is_finite()
+            && self.cam.x.is_finite()
+            && self.cam.y.is_finite();
+        if !finite {
+            self.settle();
+        }
+        // the view window arithmetic assumes the camera is near the recorded range
+        self.cam.z = self.cam.z.clamp(-8.0, MAX_STEPS as f32 + 8.0);
     }
 
     /// Snap the camera to the cursor (deterministic capture / tests).
@@ -830,6 +853,7 @@ impl Model {
     fn sync_audio(&mut self) {
         let want = self.options.audio == AudioMode::Play
             && !self.mute
+            && !self.audio_broken
             && self.playing
             && self.speed == 0
             && self.modal == Modal::None;
@@ -838,6 +862,7 @@ impl Model {
                 self.player.stop();
             }
             self.audio_branch = None;
+            self.player_started_at = None;
             return;
         }
         let b = self.audio_branch_now();
@@ -845,7 +870,20 @@ impl Model {
         if self.audio.get(b).is_none() {
             return;
         }
-        if self.audio_dirty || self.audio_branch != Some(b) || !self.player.is_playing() {
+        let same = self.audio_branch == Some(b) && !self.audio_dirty;
+        if same && !self.player.is_playing() {
+            // The player ended by itself. Reaching the end of the PCM is fine (nothing to
+            // restart); dying within a moment of starting means there is no usable sound server,
+            // and restarting every frame would write a ~20 MB WAV and spawn a process 30×/s.
+            if let Some(t0) = self.player_started_at.take() {
+                if self.time - t0 < PLAYER_MIN_LIFE_SECS {
+                    self.audio_broken = true;
+                    self.toast("the audio player exited immediately: audio off (m retries)");
+                }
+            }
+            return;
+        }
+        if !same {
             if self.cursor >= self.end().min(self.hist.branch(b).end()) {
                 return;
             }
@@ -856,9 +894,15 @@ impl Model {
                 self.audio
                     .fetch(&self.hist, b, start, end.saturating_sub(start) as usize)
             {
+                let spawned = self.player.spawned;
                 self.player.play(pcm);
+                if self.player.spawned == spawned {
+                    self.audio_broken = true;
+                    self.toast("could not start the audio player: audio off (m retries)");
+                }
                 self.audio_branch = Some(b);
                 self.audio_dirty = false;
+                self.player_started_at = Some(self.time);
             }
         }
     }
@@ -1014,6 +1058,15 @@ impl Model {
             spread: self.spread,
         }
     }
+}
+
+/// Exact step of a critically damped spring `x'' = -ω²(x - target) - 2ω x'` over `dt`.
+pub fn spring(x: &mut f32, v: &mut f32, target: f32, omega: f32, dt: f32) {
+    let d = *x - target;
+    let e = (-omega * dt).exp();
+    let c2 = *v + omega * d;
+    *x = target + (d + c2 * dt) * e;
+    *v = (*v - omega * c2 * dt) * e;
 }
 
 /// Lane centre (x, y) of branch `b` at step `z`, shared by the camera and the renderer so

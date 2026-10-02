@@ -51,6 +51,9 @@ pub fn epoch_of_beat(id: &str) -> Epoch {
 pub struct Ids {
     pub viewport: SceneId,
     pub banner: SceneId,
+    /// The compare label lives on its own entity: nothing in the story targets it, so an
+    /// input-flash reveal at the cursor's step cannot blink it out.
+    pub compare: SceneId,
 }
 
 /// A shake that *settles*: `Effect::Shake` ignores its `duration` and never stops (see
@@ -221,7 +224,9 @@ pub struct Atmosphere {
     pub scene: Scene,
     pub ids: Ids,
     story: Story,
-    ckpts: BTreeMap<(BranchId, u32), StoryDirector>,
+    /// Checkpoints with a last-used stamp (evicted least-recently-used, never by branch id).
+    ckpts: BTreeMap<(BranchId, u32), (StoryDirector, u64)>,
+    clock: u64,
     pub stats: DirectorStats,
 }
 
@@ -238,7 +243,22 @@ impl Atmosphere {
                 .tag("hud")
                 .z(5),
         );
-        let ids = Ids { viewport, banner };
+        let compare = scene.add(
+            SceneEntity::new(
+                "compare",
+                Node::text(" COMPARE ", Style::new().bold().reverse()),
+            )
+            .tag("hud")
+            .z(6),
+        );
+        if let Some(e) = scene.entity_mut(compare) {
+            e.visible = false;
+        }
+        let ids = Ids {
+            viewport,
+            banner,
+            compare,
+        };
         let story = build_story(ids);
         story.validate().expect("story is well-formed");
         Atmosphere {
@@ -246,6 +266,7 @@ impl Atmosphere {
             ids,
             story,
             ckpts: BTreeMap::new(),
+            clock: 0,
             stats: DirectorStats::default(),
         }
     }
@@ -267,11 +288,16 @@ impl Atmosphere {
         }
         let want = pos - pos % STORY_CKPT_EVERY;
         // nearest checkpoint at or below `pos` on this branch, else the fork point's parent state
+        self.clock += 1;
+        let stamp = self.clock;
         let start = self
             .ckpts
-            .range((b, br.fork_at)..=(b, pos))
+            .range_mut((b, br.fork_at)..=(b, pos))
             .next_back()
-            .map(|(k, d)| (k.1, d.clone()));
+            .map(|(k, (d, used))| {
+                *used = stamp;
+                (k.1, d.clone())
+            });
         let (mut at, mut d) = match start {
             Some((p, d)) => {
                 self.stats.checkpoint_hits += 1;
@@ -296,13 +322,18 @@ impl Atmosphere {
                 && at <= want.max(pos)
                 && !self.ckpts.contains_key(&(b, at))
             {
-                self.ckpts.insert((b, at), d.clone());
+                self.ckpts.insert((b, at), (d.clone(), stamp));
                 self.stats.checkpoints += 1;
                 self.stats.clones += 1;
-                // bounded: drop the oldest branches' checkpoints first (they are rebuilt by replay)
+                // bounded: least-recently-used first (a checkpoint is only a cache of replay)
                 while self.ckpts.len() > MAX_STORY_CKPTS {
-                    let k = *self.ckpts.keys().next().unwrap();
-                    self.ckpts.remove(&k);
+                    let victim = self
+                        .ckpts
+                        .iter()
+                        .min_by_key(|(_, (_, used))| *used)
+                        .map(|(k, _)| *k)
+                        .expect("non-empty");
+                    self.ckpts.remove(&victim);
                     self.stats.evicted += 1;
                 }
             }
@@ -336,6 +367,7 @@ impl Atmosphere {
         d: &StoryDirector,
         viewport: Arc<Surface>,
         banner: &str,
+        comparing: bool,
         w: u16,
         h: u16,
     ) -> (Node, Presentation) {
@@ -349,7 +381,12 @@ impl Atmosphere {
         );
         if let Some(e) = self.scene.entity_mut(self.ids.banner) {
             e.offset = (bx.max(0), 0);
-            e.visible = !banner.is_empty();
+            e.visible = !banner.is_empty() && !comparing;
+        }
+        const COMPARE_LABEL: &str = " COMPARE ";
+        if let Some(e) = self.scene.entity_mut(self.ids.compare) {
+            e.offset = ((w as i32 - COMPARE_LABEL.chars().count() as i32) / 2, 0);
+            e.visible = comparing;
         }
         let node = self.scene.to_node(&p, w as f32, h as f32);
         (node, p)
@@ -362,10 +399,7 @@ impl Default for Atmosphere {
     }
 }
 
-pub fn banner_for(e: Epoch, facts_forked: bool, comparing: bool) -> String {
-    if comparing {
-        return " COMPARE ".into();
-    }
+pub fn banner_for(e: Epoch, facts_forked: bool) -> String {
     match e {
         Epoch::Deadlock => " DEADLOCK ".into(),
         Epoch::Contradiction => " CONTRADICTION ".into(),

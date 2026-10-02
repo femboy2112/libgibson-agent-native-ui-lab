@@ -74,7 +74,7 @@ cargo run --release -- --sustained --frames=12000     # the long deterministic w
 cargo run --release -- --evidence=audio               # HumanMusic measurements (docs/evidence/audio.md)
 cargo run --release -- --evidence=matrix              # 5 sizes × 4 colour depths × 6 scenes
 cargo run --release -- --wav-out=/tmp/wavs --script="end; goto 50; fork replace2"   # every branch's audio
-cargo test --release                                  # 80+ tests (release: HumanMusic is ~50× slower in debug)
+cargo test --release                                  # 104 tests + 1 opt-in (release: HumanMusic is ~50× slower in debug)
 ```
 
 Fixed program + fixed seed + fixed action sequence + fixed virtual time ⇒ identical bytes on the wire
@@ -91,7 +91,7 @@ Fixed program + fixed seed + fixed action sequence + fixed virtual time ⇒ iden
 | **Audio** | one deterministic HumanMusic *performance per branch future*; the **past is immutable scrollback** (a child keeps the parent's PCM bit-for-bit up to the fork), the future is a new composition crossfaded in over 0.35 s *after* the fork. No fake seeking. | `src/audio.rs` |
 | **Atmosphere** | LibGibson `Story` + `Scene` driven by *history time*: the director at any `(branch, position)` is rebuilt from a cloned checkpoint + replay of recorded updates. | `src/director.rs` |
 | **View** | depth-tested Braille wireframe (own projection from the public `Camera`) + half-block filled channel via the public `Rasterizer`; chase/inside cameras that face where time is going. | `src/view3d.rs` |
-| **UI** | `gibson::ui` chrome, keyed focus, modals, toasts; headless rig shares every code path with the real loop. | `src/ui.rs`, `src/app.rs`, `src/driver.rs` |
+| **UI** | `gibson::ui` chrome, keyed focus, modals, toasts; the headless rig shares `Model`, `build_screen`, `UiRuntime::frame` and `route_event` with the real loop (the terminal I/O, signal handling and audio player are PTY-tested separately). | `src/ui.rs`, `src/app.rs`, `src/driver.rs` |
 
 ### Two clocks, never mixed
 
@@ -104,25 +104,29 @@ history time must never be fed to it.
 Easy going **forward**, painful going **backward** — details and evidence in
 [`EXPERIMENT_REPORT.md`](EXPERIMENT_REPORT.md) and [`FRICTION.md`](FRICTION.md):
 
-* `HumanMusicSynth` cannot seek and `compose` is not prefix-causal (changing the future changes the audio
-  from beat 0) → audio had to become *whole performances per branch, immutable past, crossfaded future*.
-* `StoryDirector`/`Scene` have no restore, no seek, no entity removal → history-time rebuild by checkpoint +
+* `HumanMusicSynth` cannot seek and `compose` is not prefix-causal (measured: the raw whole-trace performances of a
+  parent and its fork differ from the very first frame, `docs/evidence/audio.md`) → audio had to become
+  *whole performances per branch, immutable past, crossfaded future*.
+* `StoryDirector` has no restore or seek and `Scene` has no entity removal → history-time rebuild by checkpoint +
   replay (cheap: ~11–18 µs per snapshot) and a settling-shake workaround, because `Effect::Shake` never settles.
 * Keyed focus survives rebuilding historical trees and modal capture/restore works; it does *not* survive a
-  keyed control disappearing and reappearing (responsive layout).
+  keyed control disappearing and reappearing (responsive layout; asserted in `tests/ui.rs`, restorable with
+  `UiRuntime::set_focus`).
 * The composed frame is readable by an outsider only as *text*; colours/attributes need a VT emulator.
 
 ## Not claimed
 
 Windows/macOS/tmux/SSH/other terminals; real audio-device playback (the player path spawns `pw-play`/`paplay`/
-`aplay` on a WAV and was not asserted beyond argv and file integrity); any perceptual or musical quality
+`aplay` on a WAV; `tests/pty_audio.rs` asserts the lifecycle with a *fake* `pw-play` on `PATH`: argv, WAV integrity,
+stop/replace, an instantly-exiting player, orphan cleanup — no sound reached a device); any perceptual or musical quality
 claim (nobody *listened* in this run); any claim about LibGibson beyond the pinned v0.4.0 tag.
 
 ## Layout
 
 ```
 src/        vm fixture history epoch sem audio director view3d ui app driver demo bench evidence main
-tests/      core vm audio story render ui capability pty pty_resize_collision(ignored) sustained demo
+tests/      core vm audio story render ui capability pty pty_audio pty_resize_collision(ignored) sustained demo
+examples/   tune.rs (the fixture-tuning search; see EXPERIMENT_REPORT §1.1)
 docs/       evidence/ (measured), img/ (previews), upstream/ (minimal repros filed against LibGibson)
 tools/      ansi_to_png.py (preview aid)
 ```

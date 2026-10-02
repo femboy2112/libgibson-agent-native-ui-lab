@@ -1,15 +1,15 @@
-frames: 12000  wall: 51.7s  (232 frames/s)
-frame total µs: p50 2027 · p90 5035 · p99 9384 · max 19529 · mean 2520
-view build µs: p50 1292 · p90 3478 · p99 7368 · max 13705 · mean 1704
-renderer generation µs: p50 462 · p90 1537 · p99 2301 · max 9007 · mean 716
-renderer write µs: p50 1 · p90 4 · p99 10 · max 737 · mean 2
-bytes/frame: p50 8999 · p90 27938 · p99 48413 · max 71390 · mean 12267   total 147198060 B (12266.5 B/frame mean)
-exact changed cells/frame: p50 555 · p90 1963 · p99 4800 · max 8000 · mean 881
-full repaints: 101   wire segments/frame: p50 1139 · p90 4006 · p99 8572 · max 16396 · mean 1804
-branches: 518 (517 forks made, 0 refused)   resizes: 133
-history: peak resident recs 30000  end 29473  ≈5342 KiB   fossilized 1583  rehydrated 1168
-vm steps executed 159949   replay steps 365200   story replays 7070 (293664 updates, 600 checkpoints retained)
-audio: 12 performances built (576.0s audio, 20558 ms render)  resident 10 ≈82679 KiB
-RSS (kB) by frame: 0:4828/4828 1:6224/6224 1001:25720/46552 2001:58476/94860 3001:92364/94860 4001:100668/100668 5001:111396/111396 6001:118416/118416 7001:118544/159952 8001:139920/159952 9001:143140/159952 10001:174024/174024 11001:184120/192180 12000:167124/192180 
-actions: {"close": 63, "collapse": 148, "compare": 234, "compare-next": 83, "end": 72, "fork": 517, "goto": 324, "inspect": 191, "jump": 477, "open-fork": 75, "play": 260, "resize": 133, "speed": 161, "step": 737, "switch": 375, "turn": 118}
-determinism digest: 6be204247db154d8
+frames: 12000  wall: 374.4s  (32 frames/s)
+frame total µs: p50 1986 · p90 4685 · p99 7676 · max 85207 · mean 2392
+view build µs: p50 1222 · p90 3278 · p99 6006 · max 84713 · mean 1603
+renderer generation µs: p50 443 · p90 1524 · p99 2005 · max 6806 · mean 699
+renderer write µs: p50 1 · p90 4 · p99 9 · max 402 · mean 2
+bytes/frame: p50 9319 · p90 28330 · p99 47184 · max 74907 · mean 12548   total 150574290 B (12547.9 B/frame mean)
+exact changed cells/frame: p50 574 · p90 1977 · p99 4746 · max 8000 · mean 887
+full repaints: 101   wire segments/frame: p50 1148 · p90 4020 · p99 7745 · max 13876 · mean 1786
+branches: 510 (509 forks made, 0 refused)   resizes: 133
+history: peak resident recs 29998  end 29674  ≈5367 KiB   fossilized 1651  rehydrated 1221
+vm steps executed 165268   replay steps 417105   story replays 4754 (109348 updates, 600 checkpoints retained)
+audio: 162 performances built (10299.7s audio, 329989 ms render)  resident 8 ≈92610 KiB
+RSS (kB) by frame: 0:4556/4556 1:5896/5896 1001:71636/71636 2001:170092/170092 3001:261188/261188 4001:185528/260732 5001:225108/260732 6001:488160/488160 7001:302600/487676 8001:483560/487676 9001:210080/487676 10001:267160/487676 11001:486404/487676 12000:278428/494772 
+actions: {"close": 63, "collapse": 148, "compare": 234, "compare-next": 83, "end": 72, "fork": 509, "goto": 324, "inspect": 191, "jump": 477, "open-fork": 75, "play": 260, "resize": 133, "speed": 161, "step": 737, "switch": 375, "turn": 118}
+determinism digest: 2fe59f0462afb6f2

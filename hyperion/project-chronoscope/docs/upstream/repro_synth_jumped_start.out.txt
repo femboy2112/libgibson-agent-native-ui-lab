@@ -1,0 +1,2 @@
+block at beat 20 equals the sequentially rendered audio: false
+active voices after the jump: 21 (sequential render peaks at 13)

@@ -464,8 +464,10 @@ impl History {
             .inputs
             .iter()
             .copied()
-            // decision overrides keyed to parent steps at/after the fork are meaningless after divergence
-            .filter(|i| i.at < at || matches!(i.kind, InputKind::Cmd(_)))
+            // decision overrides keyed to parent steps *after* the fork are meaningless after
+            // divergence; one at the fork step itself belongs to the shared prefix (inputs apply
+            // before scheduling) and must survive an unrelated edit
+            .filter(|i| i.at <= at || matches!(i.kind, InputKind::Cmd(_)))
             .collect();
         match edit {
             Edit::None => {}
@@ -523,7 +525,7 @@ impl History {
         if parent as usize >= self.branches.len() {
             return Err(HistoryError::NoSuchBranch);
         }
-        if self.branches.len() >= self.retention.max_branches {
+        if self.branches.len() >= self.retention.max_branches.min(BranchId::MAX as usize) {
             return Err(HistoryError::BranchBudget);
         }
         if at > self.branches[parent as usize].end() {
@@ -656,8 +658,10 @@ pub fn landmarks(h: &History, b: BranchId) -> Vec<Landmark> {
         let ev = &r.ev;
         if ev.flags & F_INPUT != 0 {
             let cmd = br.script.cmd_at(s).map(|(_, c)| cmd_name(c)).unwrap_or("?");
+            // a landmark at the position *before* the step: standing there, `fork` can still drop,
+            // replace or insert at this very input
             out.push(Landmark {
-                pos,
+                pos: s,
                 kind: LandmarkKind::Input,
                 text: format!("input {cmd}"),
                 epoch: r.epoch,
@@ -672,7 +676,7 @@ pub fn landmarks(h: &History, b: BranchId) -> Vec<Landmark> {
             };
             if let Some(w) = what {
                 out.push(Landmark {
-                    pos,
+                    pos: s,
                     kind: LandmarkKind::Fate,
                     text: format!("fate: {w}"),
                     epoch: r.epoch,

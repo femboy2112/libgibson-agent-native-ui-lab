@@ -222,8 +222,8 @@ fn full_session_drives_step_scrub_fork_switch_resize_modal_rapid_input_and_quit(
     // rewind far, fork at the earlier decision with the keyboard
     s.send("0");
     s.wait_for(" 0/344", Duration::from_secs(5));
-    s.send("g"); // next input (BOOST at 50)
-    s.wait_for(" 51/344", Duration::from_secs(5));
+    s.send("g"); // next input: stands at position 50, just before the BOOST is injected
+    s.wait_for(" 50/344", Duration::from_secs(5));
     s.send("f");
     s.wait_for("FORK", Duration::from_secs(5));
     s.send("\t\r"); // Tab to the next option, Enter
@@ -338,7 +338,7 @@ fn full_session_drives_step_scrub_fork_switch_resize_modal_rapid_input_and_quit(
         final_screen.contains("recorded reactor-colony"),
         "the session journal is printed to the normal screen:\n{final_screen}"
     );
-    assert!(final_screen.contains("fork B from A@51"), "{final_screen}");
+    assert!(final_screen.contains("fork B from A@50"), "{final_screen}");
     s.finish();
 }
 

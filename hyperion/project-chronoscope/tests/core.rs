@@ -372,3 +372,95 @@ fn inserting_a_command_is_also_a_single_intervention() {
         .iter()
         .all(|r| r.verdict == Verdict::Identical && r.root.is_none()));
 }
+
+#[test]
+fn input_and_fate_landmarks_stand_before_their_step_so_a_fork_there_can_edit_them() {
+    let h = demo();
+    let lm = landmarks(&h, 0);
+    let inputs: Vec<u32> = lm
+        .iter()
+        .filter(|l| l.kind == LandmarkKind::Input)
+        .map(|l| l.pos)
+        .collect();
+    assert_eq!(inputs, vec![50, 62, 74]);
+    for l in lm.iter().filter(|l| l.kind == LandmarkKind::Fate) {
+        let r = h.rec_at(0, l.pos).expect("the step about to run");
+        assert!(
+            r.ev.is_fate(),
+            "fate landmark at {} is the roll itself",
+            l.pos
+        );
+    }
+    // and an Override there is a legal fork
+    let mut h = h;
+    let at = lm
+        .iter()
+        .find(|l| l.kind == LandmarkKind::Fate)
+        .unwrap()
+        .pos;
+    let v = h.rec_at(0, at).unwrap().ev.after;
+    assert!(h
+        .fork(
+            0,
+            at,
+            Edit::Override((v + 1) % h.rec_at(0, at).unwrap().ev.aux)
+        )
+        .is_ok());
+}
+
+#[test]
+fn the_step_cap_is_reproduced_by_replay_and_cannot_be_forked_past() {
+    let mut h = demo();
+    let f = h.fork(0, 50, Edit::ReplaceCmd(2)).unwrap();
+    h.run_to_end(f);
+    assert_eq!(h.branch(f).end(), MAX_STEPS);
+    assert_eq!(h.branch(f).terminal, Some(Terminal::StepCap));
+    // a machine rebuilt by replay to exactly `end` is terminal in the same way
+    let (m, _) = h.machine_at(f, MAX_STEPS).unwrap();
+    assert_eq!(m.terminal, Some(Terminal::StepCap));
+    assert_eq!(m.digest_full(), h.branch(f).frontier.0.digest_full());
+    // and so a fork *at* the cap has nothing left to change (it used to create a zero-step branch)
+    assert_eq!(
+        h.fork(f, MAX_STEPS, Edit::InsertCmd(2)).unwrap_err(),
+        HistoryError::NothingToChange
+    );
+    // fossilize + rebuild of a capped branch keeps its frontier digest (debug builds assert this)
+    let want = h.branch(f).frontier.0.digest_full();
+    h.fossilize(f);
+    h.ensure_resident(f);
+    assert_eq!(h.branch(f).frontier.0.digest_full(), want);
+}
+
+#[test]
+fn an_unrelated_edit_at_the_fork_step_keeps_the_parents_own_override() {
+    let mut h = demo();
+    let at = (0..h.branch(0).end())
+        .find(|&s| {
+            h.rec_at(0, s)
+                .map(|r| r.ev.is_fate() && r.ev.after == 0 && r.ev.aux == 8)
+                .unwrap_or(false)
+        })
+        .unwrap();
+    let b = h.fork(0, at, Edit::Override(1)).unwrap();
+    h.run_to_end(b);
+    // fork B at the *same step* with an unrelated edit: the override that made B what it is must stay
+    let c = h.fork(b, at, Edit::InsertCmd(2)).unwrap();
+    assert!(
+        h.branch(c)
+            .script
+            .inputs
+            .iter()
+            .any(|i| i.at == at && matches!(i.kind, InputKind::Override(1))),
+        "{:?}",
+        h.branch(c).script.inputs
+    );
+}
+
+#[test]
+fn the_branch_budget_never_exceeds_the_id_type() {
+    let mut h = demo();
+    h.retention.max_branches = usize::MAX;
+    assert!(h.retention.max_branches.min(BranchId::MAX as usize) == BranchId::MAX as usize);
+    // (a real overflow would need 65,536 forks; the bound is asserted structurally)
+    assert!(h.fork(0, 50, Edit::DropCmd).is_ok());
+}

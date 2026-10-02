@@ -1,0 +1,4 @@
+# hangup probe: which loop spins? (SIGHUP ignored, PTY master closed after 1 s, ps after 2 s more; 'wd' lines are a poll(events=0) watchdog)
+poll    -> 3353370 Rsl  67.0 | log lines 55 | tail: ['wd fd0: r=1 revents=0x18 (HUP=0x10 ERR=0x8 NVAL=0x20)', 'wd fd1: r=1 revents=0x18 (HUP=0x10 ERR=0x8 NVAL=0x20)', 'wd fd2: r=1 revents=0x18 (HUP=0x10 ERR=0x8 NVAL=0x20)']
+render  -> 3353374 Zs    0.0 | log lines 14 | tail: ['wd fd2: r=1 revents=0x18 (HUP=0x10 ERR=0x8 NVAL=0x20)', 'render #63: Err(Uncategorized)', 'loop exited']
+write   -> 3353388 Zs    0.0 | log lines 14 | tail: ['wd fd2: r=1 revents=0x18 (HUP=0x10 ERR=0x8 NVAL=0x20)', 'write err after 63: Err(Uncategorized)', 'loop exited']

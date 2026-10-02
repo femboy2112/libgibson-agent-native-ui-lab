@@ -59,63 +59,65 @@ pub fn audio_evidence() -> String {
             }
         }
     }
-    // determinism + immutable past + seam
-    let mut s = AudioStore::new(WorldId::BlackIce, Strategy::FutureOnly, false);
-    s.request(&mut h, 0);
-    s.request(&mut h, f);
-    let first = s.get(f).unwrap().hash;
-    s.evict(f);
-    s.request(&mut h, f);
-    out += &format!(
-        "\n**Rebuild after eviction**: first hash `{first:016x}`, rebuilt `{:016x}` → {}\n",
-        s.get(f).unwrap().hash,
-        if first == s.get(f).unwrap().hash {
-            "bit-identical"
-        } else {
-            "DIFFERENT"
-        }
-    );
-    let fork_s = s.clock.sample_of(50) as usize;
-    let pa = s.fetch(&h, 0, 0, fork_s).unwrap();
-    let pb = s.fetch(&h, f, 0, fork_s).unwrap();
-    out += &format!(
-        "**Immutable past**: {} samples before the fork sample: parent == child → {}\n",
-        fork_s,
-        pa == pb
-    );
-    // after-fork divergence: how long until the child no longer equals the parent?
-    let n = 48_000 * 6;
-    let ca = s.fetch(&h, 0, fork_s as u64, n).unwrap();
-    let cb = s.fetch(&h, f, fork_s as u64, n).unwrap();
-    let first_diff = ca
-        .iter()
-        .zip(cb.iter())
-        .position(|(a, b)| a != b)
-        .map(|i| i / 2);
-    out += &format!(
-        "**Divergence after the fork**: first differing frame at +{:?} frames ({:?} ms)\n",
-        first_diff,
-        first_diff.map(|d| d as f64 / 48.0)
-    );
-    let win = 2400;
-    let seam = s
-        .fetch(&h, f, (fork_s - win) as u64, 2 * win + 24_000)
-        .unwrap();
-    let max_step = seam
-        .chunks(2)
-        .zip(seam.chunks(2).skip(1))
-        .map(|(a, b)| (a[0] as i32 - b[0] as i32).abs())
-        .max()
-        .unwrap();
-    let base_step = {
-        let q = s.fetch(&h, 0, (fork_s - 40_000) as u64, 24_000).unwrap();
-        q.chunks(2)
-            .zip(q.chunks(2).skip(1))
+    // determinism + immutable past + seam, for BOTH strategies (FullTrace is the app default)
+    for strat in [Strategy::FutureOnly, Strategy::FullTrace] {
+        out += &format!("\n#### Strategy {strat:?}\n");
+        let mut s = AudioStore::new(WorldId::BlackIce, strat, false);
+        s.request(&mut h, 0);
+        s.request(&mut h, f);
+        let first = s.get(f).unwrap().hash;
+        s.evict(f);
+        s.request(&mut h, f);
+        out += &format!(
+            "\n**Rebuild after eviction**: first hash `{first:016x}`, rebuilt `{:016x}` → {}\n",
+            s.get(f).unwrap().hash,
+            if first == s.get(f).unwrap().hash {
+                "bit-identical"
+            } else {
+                "DIFFERENT"
+            }
+        );
+        let fork_s = s.clock.sample_of(50) as usize;
+        let pa = s.fetch(&h, 0, 0, fork_s).unwrap();
+        let pb = s.fetch(&h, f, 0, fork_s).unwrap();
+        out += &format!(
+            "**Immutable past**: {} samples before the fork sample: parent == child → {}\n",
+            fork_s,
+            pa == pb
+        );
+        // after-fork divergence: how long until the child no longer equals the parent?
+        let n = 48_000 * 6;
+        let ca = s.fetch(&h, 0, fork_s as u64, n).unwrap();
+        let cb = s.fetch(&h, f, fork_s as u64, n).unwrap();
+        let first_diff = ca
+            .iter()
+            .zip(cb.iter())
+            .position(|(a, b)| a != b)
+            .map(|i| i / 2);
+        out += &format!(
+            "**Divergence after the fork**: first differing frame at +{:?} frames ({:?} ms)\n",
+            first_diff,
+            first_diff.map(|d| d as f64 / 48.0)
+        );
+        let win = 2400;
+        let seam = s
+            .fetch(&h, f, (fork_s - win) as u64, 2 * win + 24_000)
+            .unwrap();
+        let max_step = seam
+            .chunks(2)
+            .zip(seam.chunks(2).skip(1))
             .map(|(a, b)| (a[0] as i32 - b[0] as i32).abs())
             .max()
-            .unwrap()
-    };
-    out += &format!(
+            .unwrap();
+        let base_step = {
+            let q = s.fetch(&h, 0, (fork_s - 40_000) as u64, 24_000).unwrap();
+            q.chunks(2)
+                .zip(q.chunks(2).skip(1))
+                .map(|(a, b)| (a[0] as i32 - b[0] as i32).abs())
+                .max()
+                .unwrap()
+        };
+        out += &format!(
         "**Seam** (crossfade {:.2} s after the fork): max sample step across the seam window {} / 32767 (a pure-parent window of equal length: {}); RMS before {:.4}, after {:.4}\n",
         XFADE_SECS,
         max_step,
@@ -123,6 +125,29 @@ pub fn audio_evidence() -> String {
         rms(&seam[..2 * win]),
         rms(&seam[2 * win + 24_000..])
     );
+        if strat == Strategy::FullTrace {
+            // Is the *raw* child performance (not the stitched fetch) equal to the parent's before the
+            // fork? FullTrace composes the whole trace, so any difference here is the prefix instability.
+            let (pr, cr) = (&s.get(0).unwrap().pcm, &s.get(f).unwrap().pcm);
+            let n = pr.len().min(cr.len());
+            let first = pr[..n]
+                .iter()
+                .zip(cr[..n].iter())
+                .position(|(a, b)| a != b)
+                .map(|i| i / 2);
+            out += &format!(
+            "**Prefix causality (raw FullTrace performances)**: parent and child raw PCM first differ at frame {:?} ({:?} s); the fork is at frame {} ({:.2} s)\n",
+            first,
+            first.map(|d| d as f64 / 48_000.0),
+            fork_s,
+            fork_s as f64 / 48_000.0
+        );
+        }
+    }
+    // the sections below (seek, memory) are measured on a FutureOnly store
+    let mut s = AudioStore::new(WorldId::BlackIce, Strategy::FutureOnly, false);
+    s.request(&mut h, 0);
+    s.request(&mut h, f);
     // harmonic continuity at the fork, from the public Score chords
     {
         use gibson::audio::human_music::{compose, MusicWorld};
@@ -221,11 +246,13 @@ pub fn audio_evidence() -> String {
     let spec = spec_for(&h, 0, WorldId::BlackIce, Strategy::FutureOnly);
     let score = gibson::audio::human_music::compose(&spec.trace, &world, spec.seed);
     let mut rec = Vec::new();
-    for secs in [10.0f64, 20.0, 40.0, 80.0] {
+    for secs in [10.0f64, 20.0, 40.0, f64::INFINITY] {
         let t = Instant::now();
         let mut syn = gibson::audio::human_music::HumanMusicSynth::new(&score, &world, SR);
         let mut sink = gibson::audio::StereoBlock::new(512);
-        let target = (secs * 48_000.0) as u64;
+        // the root performance is ~63 s long: the last point is its end, labelled as such
+        let target = ((secs * 48_000.0).min(syn.total_samples() as f64)) as u64;
+        let secs = target as f64 / 48_000.0;
         let mut pos = 0u64;
         while pos < target.min(syn.total_samples()) {
             sink.clear();
@@ -243,7 +270,7 @@ pub fn audio_evidence() -> String {
     }
     out += &format!("\n**Seek**: PCM offset fetch of 4096 frames = {fetch_us:.1} µs. Honest reconstruction (fresh synth, render-and-discard the prefix): ");
     for (secs, ms) in rec {
-        out += &format!("to {secs:.0} s = {ms:.0} ms; ");
+        out += &format!("to {secs:.1} s = {ms:.0} ms; ");
     }
     out += "\n";
     out += &format!(

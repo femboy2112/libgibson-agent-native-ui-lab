@@ -214,13 +214,23 @@ fn landmark_jumps_land_on_the_documented_events() {
     r.settle().unwrap();
     run_script(&mut r, "jump next-input").unwrap();
     assert_eq!(
-        r.model.cursor, 51,
-        "first BOOST is injected at step 50, visible at position 51"
+        r.model.cursor, 50,
+        "the landmark stands *before* the step that injects the first BOOST, so `f` can edit it"
     );
     run_script(&mut r, "jump next-input; jump next-input").unwrap();
-    assert_eq!(r.model.cursor, 75);
+    assert_eq!(r.model.cursor, 74);
     run_script(&mut r, "jump prev-input").unwrap();
-    assert_eq!(r.model.cursor, 63);
+    assert_eq!(r.model.cursor, 62);
+    // standing on an input landmark, the fork menu offers to drop/replace *that* command
+    let opts = r.model.fork_options();
+    assert!(
+        opts.iter()
+            .any(|(_, e)| *e == project_chronoscope::history::Edit::DropCmd),
+        "{opts:?}"
+    );
+    assert!(opts
+        .iter()
+        .any(|(_, e)| matches!(e, project_chronoscope::history::Edit::ReplaceCmd(2))));
     run_script(&mut r, "end; jump prev-epoch").unwrap();
     assert!(r.model.cursor < 344);
     let e = r.model.epoch_here();
@@ -257,4 +267,138 @@ fn compare_requires_two_histories_and_collapse_rejoin_animates() {
         r.frame().unwrap();
     }
     assert!(r.model.spread > 0.98, "rejoin unfolds the lanes again");
+}
+
+#[test]
+fn playback_rate_is_locked_to_the_selected_worlds_tempo() {
+    // 1× must equal the audio clock for *every* world, not only the 88 BPM one
+    use gibson::audio::human_music::WorldId;
+    for (w, bpm) in [
+        (WorldId::BlackIce, 88.0),
+        (WorldId::Vapor95, 84.0),
+        (WorldId::SwissSignal, 118.0),
+    ] {
+        let mut o = opts();
+        o.world = w;
+        o.audio = project_chronoscope::app::AudioMode::Silent;
+        let m = Model::new(o);
+        let steps_per_sec = m.steps_per_sec_1x();
+        assert!(
+            (m.world_tempo() - bpm).abs() < 1e-6,
+            "{w:?} tempo {}",
+            m.world_tempo()
+        );
+        // one second of 1× playback advances `steps_per_sec` steps = that many steps' worth of audio samples
+        let samples_per_step = m.audio.clock.sample_of(1000) as f64 / 1000.0;
+        let samples_for_those_steps = steps_per_sec * samples_per_step;
+        assert!(
+            (samples_for_those_steps - 48_000.0).abs() < 48_000.0 * 0.01,
+            "{w:?}: {steps_per_sec} steps/s vs {samples_for_those_steps} samples"
+        );
+    }
+}
+
+#[test]
+fn the_camera_spring_is_stable_for_any_frame_time() {
+    // semi-implicit Euler with ω = 9 diverged above ~92 ms; the closed-form step cannot
+    for dt in [0.001f32, 0.016, 0.033, 0.092, 0.12, 0.25, 0.5, 2.0] {
+        let (mut x, mut v) = (1000.0f32, 0.0f32);
+        let mut last = x.abs();
+        for i in 0..(8.0 / dt).ceil() as usize {
+            project_chronoscope::app::spring(&mut x, &mut v, 0.0, 9.0, dt);
+            assert!(x.is_finite() && v.is_finite(), "dt {dt}");
+            assert!(
+                x.abs() <= last + 1e-3 || i == 0,
+                "dt {dt}: |x| grew {last} -> {}",
+                x.abs()
+            );
+            last = x.abs();
+        }
+        assert!(x.abs() < 1.0, "dt {dt}: converged to {x}");
+    }
+    // and the model's own glide: a 250 ms-per-frame session never flings the camera
+    let mut m = Model::new(opts());
+    m.do_cmd(project_chronoscope::app::Cmd::GoTo(300));
+    for _ in 0..200 {
+        m.tick(std::time::Duration::from_millis(250));
+    }
+    assert!(
+        m.cam.z.is_finite() && (m.cam.z - 300.0).abs() < 1.0,
+        "cam.z = {}",
+        m.cam.z
+    );
+    assert!(m.cam.yaw.is_finite());
+}
+
+#[test]
+fn a_refused_fork_from_the_modal_says_why() {
+    let mut r = rig(120, 40, ColorDepth::TrueColor);
+    run_script(&mut r, "end; goto 50; openfork; settle").unwrap();
+    r.model.hist.retention.max_branches = 1; // the budget is exhausted
+    r.code(KeyCode::Enter);
+    r.frame().unwrap();
+    let toast = r.model.toast.clone().map(|t| t.0).unwrap_or_default();
+    assert!(toast.contains("cannot fork there"), "{toast:?}");
+}
+
+#[test]
+fn the_timeline_strip_makes_every_row_it_draws_resident() {
+    let mut r = rig(50, 40, ColorDepth::TrueColor);
+    run_script(&mut r, "end; goto 50; fork replace2; goto 62; fork drop; goto 74; fork drop; goto 30; fork insert2; goto 90; fork insert2").unwrap();
+    for b in 0..r.model.hist.branches.len() as u16 {
+        r.model.hist.fossilize(b);
+    }
+    let ids = r.model.visible_branches(4);
+    let _ = project_chronoscope::ui::strip_surface(&mut r.model, 50, 5, ColorDepth::TrueColor);
+    for b in ids {
+        assert_eq!(
+            r.model.hist.branch(b).residency,
+            project_chronoscope::history::Residency::Resident,
+            "branch {b} drawn from fossil"
+        );
+    }
+}
+
+#[test]
+fn the_compare_label_cannot_be_blinked_out_by_an_input_flash() {
+    // stepping onto a step that carries an input mounts a banner reveal that starts at 0
+    // opacity; the COMPARE label used to share that entity and vanished for the step
+    let mut r = rig(100, 32, ColorDepth::TrueColor);
+    run_script(&mut r, "end; goto 50; fork replace2; branch 0; compare").unwrap();
+    for _ in 0..4 {
+        r.model.do_cmd(project_chronoscope::app::Cmd::Step(1));
+        r.frame().unwrap();
+        let text = r.lines().join("\n");
+        assert!(
+            text.contains("COMPARE"),
+            "cursor {}: no COMPARE label\n{text}",
+            r.model.cursor
+        );
+    }
+}
+
+#[test]
+fn focus_is_lost_when_its_keyed_control_vanishes_and_can_be_restored_by_set_focus() {
+    // backs FRICTION G (responsive layout): at 42x15 the history rows are not built, so the
+    // focused `branch.1` disappears; widening again does not bring the focus back.
+    let mut r = fresh_fork();
+    r.code(KeyCode::Tab);
+    r.frame().unwrap();
+    assert_eq!(r.focus().as_deref(), Some("branch.1"));
+    r.resize(42, 15);
+    r.frame().unwrap();
+    r.frame().unwrap();
+    let narrow = r.focus();
+    assert_ne!(narrow.as_deref(), Some("branch.1"), "the control is gone");
+    r.resize(120, 40);
+    r.frame().unwrap();
+    r.frame().unwrap();
+    assert_ne!(
+        r.focus().as_deref(),
+        Some("branch.1"),
+        "focus does not return by itself (observed v0.4.0 behaviour)"
+    );
+    // the application can restore it through the public API
+    assert!(r.rt.set_focus(&gibson::ui::Key::from("branch.1")));
+    assert_eq!(r.focus().as_deref(), Some("branch.1"));
 }

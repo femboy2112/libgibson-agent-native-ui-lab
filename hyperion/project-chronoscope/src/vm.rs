@@ -756,6 +756,12 @@ impl Machine {
             e.flags |= F_CATASTROPHE;
             return Some(e);
         }
+        // the cap is a property of the state *after* the last permitted step, so replaying exactly
+        // `end` steps reproduces the terminal (a later call used to discover it, which made replay
+        // and checkpoint clones at position MAX_STEPS non-terminal)
+        if self.step >= MAX_STEPS && self.terminal.is_none() {
+            self.terminal = Some(Terminal::StepCap);
+        }
         Some(ev)
     }
 

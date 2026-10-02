@@ -1,15 +1,15 @@
-frames: 12000  wall: 31.9s  (376 frames/s)
-frame total µs: p50 2126 · p90 5232 · p99 9253 · max 16913 · mean 2622
-view build µs: p50 1332 · p90 3406 · p99 7144 · max 14325 · mean 1689
-renderer generation µs: p50 460 · p90 2055 · p99 2682 · max 3757 · mean 823
-renderer write µs: p50 1 · p90 4 · p99 9 · max 69 · mean 1
-bytes/frame: p50 8988 · p90 27921 · p99 48367 · max 71390 · mean 12256   total 147076641 B (12256.4 B/frame mean)
-exact changed cells/frame: p50 555 · p90 1963 · p99 4800 · max 8000 · mean 880
-full repaints: 101   wire segments/frame: p50 1139 · p90 4006 · p99 8572 · max 16396 · mean 1804
-branches: 518 (517 forks made, 0 refused)   resizes: 133
-history: peak resident recs 30000  end 29473  ≈5342 KiB   fossilized 1583  rehydrated 1168
-vm steps executed 159949   replay steps 365200   story replays 7070 (293664 updates, 600 checkpoints retained)
+frames: 12000  wall: 29.9s  (401 frames/s)
+frame total µs: p50 1968 · p90 4920 · p99 7649 · max 15509 · mean 2455
+view build µs: p50 1238 · p90 3181 · p99 5805 · max 13074 · mean 1543
+renderer generation µs: p50 447 · p90 2015 · p99 2712 · max 3743 · mean 813
+renderer write µs: p50 1 · p90 4 · p99 9 · max 328 · mean 2
+bytes/frame: p50 9259 · p90 28058 · p99 46915 · max 74893 · mean 12449   total 149391426 B (12449.3 B/frame mean)
+exact changed cells/frame: p50 573 · p90 1976 · p99 4746 · max 8000 · mean 886
+full repaints: 101   wire segments/frame: p50 1148 · p90 4020 · p99 7745 · max 13876 · mean 1786
+branches: 510 (509 forks made, 0 refused)   resizes: 133
+history: peak resident recs 29998  end 29674  ≈5367 KiB   fossilized 1651  rehydrated 1221
+vm steps executed 165268   replay steps 417105   story replays 4754 (109348 updates, 600 checkpoints retained)
 audio: 0 performances built (0.0s audio, 0 ms render)  resident 0 ≈0 KiB
-RSS (kB) by frame: 0:4872/4872 1:6196/6196 1001:17052/17052 2001:32668/32836 3001:34788/35100 4001:35436/36392 5001:36904/37844 6001:37356/37880 7001:36976/38740 8001:38448/39388 9001:38908/40664 10001:39304/41068 11001:40088/41376 12000:41352/42404 
-actions: {"close": 63, "collapse": 148, "compare": 234, "compare-next": 83, "end": 72, "fork": 517, "goto": 324, "inspect": 191, "jump": 477, "open-fork": 75, "play": 260, "resize": 133, "speed": 161, "step": 737, "switch": 375, "turn": 118}
-determinism digest: 2e29f172fdfbf5d8
+RSS (kB) by frame: 0:4648/4648 1:5996/5996 1001:16860/17068 2001:31556/32064 3001:34568/34912 4001:35992/36960 5001:38344/38548 6001:37668/38548 7001:37720/39280 8001:38568/40396 9001:39496/40396 10001:40256/41540 11001:40320/41724 12000:40628/41780 
+actions: {"close": 63, "collapse": 148, "compare": 234, "compare-next": 83, "end": 72, "fork": 509, "goto": 324, "inspect": 191, "jump": 477, "open-fork": 75, "play": 260, "resize": 133, "speed": 161, "step": 737, "switch": 375, "turn": 118}
+determinism digest: a27b3774d0745af2

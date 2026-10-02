@@ -905,21 +905,31 @@ impl Player {
             block.right[i] = pcm[2 * i + 1] as f32 / 32768.0;
         }
         self.counter += 1;
-        let path = std::env::temp_dir().join(format!(
-            "chronoscope-{}-{}.wav",
-            std::process::id(),
-            self.counter
-        ));
+        let dir = process_dir();
+        if std::fs::create_dir_all(&dir).is_err() {
+            return;
+        }
+        let path = dir.join(format!("{}.wav", self.counter));
         if gibson::audio::wav::write_wav_i16(&path, &block, SR).is_err() {
             return;
         }
-        let child = std::process::Command::new(&bin)
+        let mut command = std::process::Command::new(&bin);
+        command
             .args(&args)
             .arg(&path)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .spawn();
+            .stderr(std::process::Stdio::null());
+        // the player must never outlive the app (a watchdog `_exit` skips Drop): ask the kernel
+        // to kill it when this process dies
+        unsafe {
+            use std::os::unix::process::CommandExt;
+            command.pre_exec(|| {
+                libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL);
+                Ok(())
+            });
+        }
+        let child = command.spawn();
         if let Ok(c) = child {
             self.child = Some(c);
             self.file = Some(path);
@@ -933,7 +943,18 @@ impl Player {
 impl Drop for Player {
     fn drop(&mut self) {
         self.stop();
+        let _ = std::fs::remove_dir(process_dir());
     }
+}
+
+/// Where this process keeps its temporary player WAVs.
+pub fn process_dir() -> PathBuf {
+    std::env::temp_dir().join(format!("chronoscope-{}", std::process::id()))
+}
+
+/// Best-effort removal of this process's WAV directory (used by the hang-up watchdog before `_exit`).
+pub fn cleanup_process_dir() {
+    let _ = std::fs::remove_dir_all(process_dir());
 }
 
 /// Write interleaved PCM to a WAV through the public `gibson::audio::wav` writer.

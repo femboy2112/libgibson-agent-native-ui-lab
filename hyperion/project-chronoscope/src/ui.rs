@@ -124,6 +124,10 @@ pub fn strip_surface(m: &mut Model, w: u16, h: u16, depth: ColorDepth) -> Surfac
         }
     }
     let ids = m.visible_branches(h.saturating_sub(1).max(1) as usize);
+    // the strip may show one more ghost than the view protects: make every row readable
+    for &b in &ids {
+        m.hist.ensure_chain(b);
+    }
     let max_end = ids
         .iter()
         .map(|b| m.hist.branch(*b).end())
@@ -322,11 +326,12 @@ pub fn build_screen(m: &mut Model, env: UiEnvironment) -> Screen {
     let epoch = m.epoch_here();
     let director = m.director();
     let forked = director.facts().bool("forked");
-    let banner = crate::director::banner_for(epoch, forked, comparing);
+    let banner = crate::director::banner_for(epoch, forked);
     let (vp_node, _p) = m.atmo.compose(
         &director,
         Arc::new(frame.surface),
         &banner,
+        comparing,
         lay.view_w,
         lay.view_h,
     );

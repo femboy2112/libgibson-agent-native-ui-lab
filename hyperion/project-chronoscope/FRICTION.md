@@ -34,7 +34,7 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
 
 | # | bug | how it was found | status |
 |---|---|---|---|
-| A1 | `Model` asked for HumanMusic performances on every fork/switch/compare **even when audio was off**, rendering ~4 s of DSP each, and never enforced the audio byte budget: first 1,500-frame trial = 72 performances, **744 MiB resident, RSS 890 MB** | first `--sustained` trial (RSS series 18 → 554 → 890 MB) | **fixed**: `AudioMode::{Off,Silent,Play}`, `want_audio()`, `enforce_budget` in `tick` (now 41.6 MB RSS after 12,000 frames) |
+| A1 | `Model` asked for HumanMusic performances on every fork/switch/compare **even when audio was off**, rendering ~4 s of DSP each, and never enforced the audio byte budget: first 1,500-frame trial = 72 performances, **744 MiB resident, RSS 890 MB** | first `--sustained` trial (RSS series 18 → 554 → 890 MB) | **fixed**: `AudioMode::{Off,Silent,Play}`, `want_audio()`, `enforce_budget` in `tick` (40.6 MB RSS after 12,000 frames without audio; with audio see A12) |
 | A2 | The catastrophe beat used `Effect::Shake`; it **never stops** (→ P1 below). The meltdown banner would have shaken for the rest of the beat | `tests/story.rs` settle assertion failed | **fixed**: `settling_shake` composed from `Effect::translate` ending at (0,0) |
 | A3 | Arrow keys did nothing in the real PTY (but worked headless): with any keyed control on screen the UI layer spends arrows on focus traversal | PTY session; headless rig had no side panel at 80×24 | **fixed**: the viewport is a keyed `on_event` sink (see E3) |
 | A4 | Quitting while a HumanMusic performance was rendering **blocked until the render finished** (`Drop` joined the worker; `OfflineRenderer::render` has no cancel — G4) | `tests/pty.rs::quit_does_not_wait_for_an_in_flight_music_render` design | **fixed**: worker is detached on drop |
@@ -42,8 +42,19 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
 | A6 | The guided demo rewound to step 51 and the "change one input" fork was refused (the input lives at step **50**) | storyboard stopped after 4 frames | **fixed** |
 | A7 | PTY harness raced: resizing the emulator *after* the PTY made frames for the new size parse at the old one (phantom "renderer corruption") | `tests/pty.rs` | **fixed**: emulator first, then PTY. (Palimpsest met the same trap class, #48 E-02.) |
 | A8 | After the terminal vanished the app **spun at ~70–90% CPU forever** (22+ minutes observed on three leaked test children) | `ps` after a failed PTY test | **fixed with a watchdog thread**; root cause is not mine (P3 below) |
-| A9 | `StoryDirector` checkpoints grew without bound | code review during the sustained run | **fixed**: capped (`MAX_STORY_CKPTS`), oldest branches dropped |
-| A10 | **RSS grows ≈ linearly with branch count** (≈ 11 KB per retained branch skeleton; +28 MB from frame 2k to 60k as branches went 100 → 2,604) and p90 frame time rose 6.8 → 18.7 ms at 60k (rehydration churn + O(branches) scans). Fossilization bounds resident *records*, not branches | `docs/evidence/sustained-60000.md` | **open**: only `max_branches = 4096` bounds it; skeleton eviction and a parent index are the obvious fixes, not done |
+| A9 | `StoryDirector` checkpoints grew without bound | code review during the sustained run | **fixed**: capped (`MAX_STORY_CKPTS` = 600) with least-recently-used eviction (the first cap dropped the *oldest-branch* checkpoints, which are exactly the ones a rewound user revisits) |
+| A10 | **RSS grows ≈ linearly with branch count** (≈ 11 KB per retained branch skeleton — an estimate from two RSS readings; +27 MB from frame 2k to 60k as branches went ≈ 90 → 2,606) and p90 frame time rose 4.9 → 17.4 ms at 60k (rehydration churn + O(branches) scans). Fossilization bounds resident *records*, not branches | `docs/evidence/sustained-60000.md` | **open**: only `max_branches = 4096` bounds it; skeleton eviction and a parent index are the obvious fixes, not done |
+| A11 | If the external player exited at once (a box with `pw-play` installed and no sound server) the app **rewrote a ~20 MB WAV and spawned a process every frame (≈30×/s)** | red-team review of the player path; reproduced with a fake player that exits immediately | **fixed**: a player that dies within 1.5 s disables audio with a toast (`m` re-arms); `pty_audio::an_instantly_exiting_player_…` |
+| A12 | **With audio, RSS far exceeds the PCM budget**: `--sustained --audio-every=40` peaked at **488 MB** (HWM 495 MB, 278 MB at the end) against a 96 MiB resident-PCM budget; 162 performances were built for 510 branches because a child's past is its ancestors' PCM. The earlier run of the same command reported 12 performances / 192 MB; code changed in between and the cause of the difference was **not isolated** | `docs/evidence/sustained-12000-audio.md` | **open**: the budget bounds resident PCM, not the transient `StereoBlock` of `OfflineRenderer::render` (≈ 39 MB per 100 s, LibGibson #74) nor allocator retention |
+| A13 | The machine did not mark the step cap terminal itself: the cap was *discovered by the next call*, so replaying exactly `end` steps (and checkpoint clones at position `MAX_STEPS`) was non-terminal | debug-build assertion in `core`/`vm` tests; review | **fixed** in `Machine::step`; verified with `cargo test --test core --test vm` in **debug** and release |
+| A14 | Input/decision **landmarks sat one step too late**: `g` then `f` stood *after* the step that applies the input, so the fork modal could not drop/replace/insert that very input (the same off-by-one class as A6) | review of A6 | **fixed**: landmarks are at `pos = s`; `core` landmark tests |
+| A15 | A decision override *at the fork step itself* was dropped by an unrelated edit (the filter used `<` where inputs apply before scheduling) | review | **fixed** (`i.at <= at`); `core` test |
+| A16 | The 1× playback rate was hard-wired to 88 BPM while the world (and thus the audio clock) is selectable: **Vapor95/SwissSignal drifted from their own audio** | review | **fixed**: tempo-locked (`ui::playback_rate_is_locked_to_the_selected_worlds_tempo`) |
+| A17 | The camera spring was semi-implicit Euler with ω = 9: **unstable above ≈ 92 ms per frame**, so a slow terminal/SSH link could fling the camera out of the recorded range | review of the integrator | **fixed**: closed-form critically damped step, `dt` clamped, camera clamped to the recorded range; `ui::the_camera_spring_is_stable_for_any_frame_time` |
+| A18 | A hang-up `_exit` (the watchdog) skipped `Drop`: the **player and its WAV directory outlived the app** (also on SIGKILL); a library `eprintln!` or a panic message from the background composer **painted over the TUI** | review | **fixed**: `PR_SET_PDEATHSIG`, WAV directory removed by the watchdog, fd 2 redirected to a file and reported on exit; `pty_audio` ×3 |
+| A19 | The timeline strip could draw a fossilized branch's rows **without making it resident**; a refused fork from the modal was **silent**; branch ids could overflow `u16` at the budget cap | review | **fixed** (`ensure_chain`, toast, `min(BranchId::MAX)`); `ui` tests |
+| A20 | The **COMPARE label blinked out** on any step that carries an input: it shared the banner entity, and the input flash's reveal starts at 0 opacity | `tests/pty.rs` timed out waiting for it after the landmark fix (A14) moved the test's cursor onto an input step; deterministic 6/6 | **fixed**: its own scene entity; `ui::the_compare_label_cannot_be_blinked_out_by_an_input_flash` (not run against the pre-fix code: the PTY test is the discriminator that failed before and passes after) |
+| A21 | Audio budget enforcement could evict an *ancestor* of a branch being played, although a child's past is its parent's PCM (a child is unplayable without it) | review | **fixed earlier in the session**: `request()` recurses over parents, `enforce_budget` protects the lineage; `audio::byte_budget_evicts_lru_but_not_protected`, `audio::a_child_is_unplayable_without_its_parent_…` |
 
 ## ERGONOMIC INCONVENIENCES (cost paid by a consumer; nothing is *wrong*)
 
@@ -71,10 +82,10 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
 ## GENERIC ERGONOMIC GAPS
 
 * **G-focus — focus memory is dropped when a keyed control disappears and not restored when it returns.**
-  Responsive layouts remove the history list below 100 columns; after widening again focus returns to the
-  *first* control, not the one the user had. UI_LAYER.md says "an absent key is not retained forever" — a
-  choice, but there is no opt-in "remember last focus for this scope". Proven (`tests/ui.rs`, probe in the
-  session log). Not filed (documented design).
+  Responsive layouts remove the history list below 100 columns; after widening again focus is **not** restored to
+  the control the user had (it stays on another control). UI_LAYER.md says "an absent key is not retained forever" — a
+  choice, but there is no opt-in "remember last focus for this scope". Proven (`tests/ui.rs::focus_is_lost_when_its_keyed_control_vanishes_and_can_be_restored_by_set_focus`); the app can
+  restore it with `UiRuntime::set_focus`. Not filed (documented design).
 * **G-inspect — the composed frame's *styles* are not inspectable.** `last_frame_lines()` (text),
   `last_frame_report()`, `stats()` and `last_dirty_cells()` are good; foreground/background/attributes are not
   readable, so colour-depth assertions parse the wire with a VT emulator. Proven (`tests/capability.rs`).
@@ -95,11 +106,12 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
   entity per branch grows without bound. Proven. **Filed** (see table).
 * **P-music-continue — no incremental or continuation composition.** `compose(trace, world, seed)` plans the
   *whole* trace; two traces identical for 48 beats differ in audio from beat **0** (probe: first 8 beats
-  differ). There is no "continue this score", no stable prefix, no checkpointable plan. Proven
+  differ; and the raw whole-trace performances of a parent and its fork, fork at 8.5 s, first differ at **frame 0** —
+  `docs/evidence/audio.md`). There is no "continue this score", no stable prefix, no checkpointable plan. Proven
   (`tests/audio.rs::probe_compose_is_not_prefix_causal`). Not a defect (the docs describe a global planning
   pipeline); it is what forced the architecture.
-* **P-music-seek — `HumanMusicSynth` has no seek or checkpoint.** Reaching 20 s costs 0.62 s of
-  render-and-discard at ~30× realtime; 80 s costs 2.0 s (`docs/evidence/audio.md`). Proven.
+* **P-music-seek — `HumanMusicSynth` has no seek or checkpoint.** Reaching 20 s costs ≈ 0.34–0.38 s of
+  render-and-discard (two runs); the end of the 63 s root performance costs 1.1–1.3 s (`docs/evidence/audio.md`). Proven.
 * **P-cancel — no cooperative cancellation for `OfflineRenderer::render`.** A 100 s performance is one
   uninterruptible ~4 s call. Quitting had to detach the worker (A4). Related to, but distinct from, #74 (streaming).
   Commented on #74.
@@ -113,8 +125,10 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
   The variant docs say Shake overrides position "for `duration`"; `eval` (src/scene.rs:816-830) never reads
   it. At t = 60 s a 500 ms shake still displaces the entity. Every other finite effect clamps progress and
   settles. Inside `Sequence` the shake's "final contribution" is therefore a non-zero offset forever.
-  **PROVEN** (`tests/capability.rs::finite_shake_and_jitter_never_settle`, `docs/upstream/repro_shake_duration.rs`).
-  **Filed.**
+  The *behaviour* is **PROVEN** (`tests/capability.rs::finite_shake_and_jitter_never_settle`,
+  `docs/upstream/repro_shake_duration.rs`; source scene.rs:816-830 for `Shake`, ~709-725 for `Jitter`). Whether it is a
+  *defect* is **open**: the variant doc says "for `duration`", but DESIGN.md §40 calls `Shake` "legacy" with "absolute
+  placement semantics" and discusses "persistent effects" — so the filed issue asks, rather than asserts. **Filed.**
 * **P2 — `HumanMusicSynth::render` with a non-contiguous `RenderCtx::start` silently plays every skipped
   event in one sample and returns audio that is not the audio at that position** (21–22 simultaneous voices
   right after the jump vs a sequential peak of 13–16, depending on the trace; block hashes differ). `AudioSource::render` is documented as "fill `out` with audio for
@@ -126,8 +140,12 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
   terminal has hung up and the process survived SIGHUP.** Isolated to `crossterm::event::poll` (crossterm-only
   loop spins; `render_now` and plain stdout writes fail promptly with EIO and exit). Default SIGHUP kills the
   process first, so this bites `nohup`, any SIGHUP handler (including the one this app installs to restore the
-  terminal on SIGTERM/SIGHUP), and PTY harnesses that abandon a child. **PROVEN**
-  (`docs/upstream/repro_hangup_spin.rs` + `hangup_driver.py`; `tests/pty.rs::a_vanished_terminal_*`).
+  terminal on SIGTERM/SIGHUP), and PTY harnesses that abandon a child. **Observed, with
+  recorded evidence** (one host, crossterm 0.29; deterministic here: `docs/upstream/hangup-observed.txt` — LibGibson loop
+  `Rs 67 %`, crossterm-only loop `Rs 67 %`, both default-SIGHUP controls die of signal 1;
+  `docs/upstream/hangup-probe-observed.txt` — render and plain-write loops end with EIO; sources
+  `repro_hangup_spin.rs`, `repro_hangup_crossterm_only.rs`, `hangup_probe.rs`, drivers `*.py`;
+  `tests/pty.rs::a_vanished_terminal_*`, `tests/pty_audio.rs::a_vanished_terminal_*`).
   Workaround: a watchdog thread polling `POLLHUP` on stdin. **Filed** (mechanism is crossterm 0.29; LibGibson's
   loop is what consumers copy).
 
@@ -152,7 +170,8 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
   (steps 40–300): a child composed from its *whole* trace lands on the parent's chord at the fork 17/27 times
   (mean pitch-class overlap 0.79); a *future-only* child 10/27 (0.59). Neither is "the same music". The default
   is therefore whole-trace composition with the **past taken from the parent's PCM bit-for-bit**; the seam is a
-  0.35 s equal-power crossfade whose largest sample step is 4,656/32,767 against 2,629 for a pure-parent window.
+  0.35 s equal-power crossfade whose largest sample step is 4,621/32,767 (FullTrace, the default; 4,656 for
+  FutureOnly) against 2,629 for a pure-parent window.
   (`docs/evidence/audio.md`.)
 * **The past cannot be re-composed.** Whatever the user heard stays heard; the *new* future is new music.
   Re-deriving history in place would change audio from beat 0. "Audiovisual continuity" therefore means: same
@@ -163,13 +182,14 @@ Upstream references are to `femboy2112/libgibson` issues; "filed" entries have a
 * **Braille cells carry one colour.** Dots in a cell share the nearest dot's colour; crossing wires bleed colour.
 * **Glow is background colour**, available at TrueColor/ANSI256 only; ANSI16 and Mono rely on shape.
 * **Real audio-device playback is out of reach in CI.** The player spawns `pw-play`/`paplay`/`aplay` on a WAV;
-  this run asserted argv and file integrity, not sound.
+  `tests/pty_audio.rs` asserts the lifecycle (argv, RIFF/WAVE header and size, stop, replace, dead player, killed app,
+  vanished terminal) against a *fake* `pw-play`. No sound reached a device and nobody listened.
 
 ---
 
 ## Upstream actions
 
-Searched first: 29 issues (`gh issue list -R femboy2112/libgibson --state all`), plus keyword searches
+Searched first: 30 issues (`gh issue list -R femboy2112/libgibson --state all`), plus keyword searches
 (seek, Shake, remove entity, snapshot, rewind, duration, UiRuntime time, backwards). Nothing matched; closest are
 #74 (offline render materializes the whole PCM buffer — Cathedral, today), #73 (`Story::start` silent finish) and
 #15 (queued input after resize).

@@ -36,6 +36,15 @@ fn install_signal_flag() {
             libc::SIGHUP,
             on_signal as extern "C" fn(libc::c_int) as libc::sighandler_t,
         );
+        // an explicit `kill -INT/-QUIT` is not a key press in raw mode
+        libc::signal(
+            libc::SIGINT,
+            on_signal as extern "C" fn(libc::c_int) as libc::sighandler_t,
+        );
+        libc::signal(
+            libc::SIGQUIT,
+            on_signal as extern "C" fn(libc::c_int) as libc::sighandler_t,
+        );
     }
 }
 
@@ -52,10 +61,45 @@ fn spawn_hangup_watchdog() {
         };
         let r = unsafe { libc::poll(&mut p, 1, 0) };
         if r > 0 && p.revents & (libc::POLLHUP | libc::POLLERR | libc::POLLNVAL) != 0 {
-            // the terminal is gone: there is nothing left to restore
+            // the terminal is gone: there is nothing left to restore, but the WAVs can go
+            project_chronoscope::audio::cleanup_process_dir();
             unsafe { libc::_exit(129) };
         }
     });
+}
+
+/// Send fd 2 to a file for the life of the TUI: a panic message from the background composer (or
+/// any library `eprintln!`) must not paint over the screen. Returns what is needed to undo it.
+fn redirect_stderr() -> Option<(libc::c_int, std::path::PathBuf)> {
+    use std::os::unix::io::AsRawFd;
+    let path = std::env::temp_dir().join(format!("chronoscope-{}.stderr", std::process::id()));
+    let file = std::fs::File::create(&path).ok()?;
+    unsafe {
+        let saved = libc::dup(2);
+        if saved < 0 || libc::dup2(file.as_raw_fd(), 2) < 0 {
+            return None;
+        }
+        Some((saved, path))
+    }
+}
+
+fn restore_stderr(saved: Option<(libc::c_int, std::path::PathBuf)>) {
+    if let Some((fd, path)) = saved {
+        unsafe {
+            libc::dup2(fd, 2);
+            libc::close(fd);
+        }
+        match std::fs::metadata(&path) {
+            Ok(m) if m.len() > 0 => eprintln!(
+                "chronoscope: {} bytes were written to stderr during the session: {}",
+                m.len(),
+                path.display()
+            ),
+            _ => {
+                let _ = std::fs::remove_file(&path);
+            }
+        }
+    }
 }
 
 struct Args {
@@ -336,6 +380,14 @@ fn interactive(a: &Args) -> i32 {
     }
     install_signal_flag();
     spawn_hangup_watchdog();
+    let saved_stderr = if a.has("--stderr") {
+        None
+    } else {
+        redirect_stderr()
+    };
+    if std::env::var_os("CHRONO_STDERR_PROBE").is_some() {
+        eprintln!("stderr probe"); // test hook: must land in the stderr file, not on the screen
+    }
     ctx.set_max_fps(30);
     let skin = a
         .get("--skin=")
@@ -408,6 +460,7 @@ fn interactive(a: &Args) -> i32 {
     })();
     model.player.stop();
     let restored = ctx.restore();
+    restore_stderr(saved_stderr);
     for line in &model.journal {
         println!("{line}");
     }

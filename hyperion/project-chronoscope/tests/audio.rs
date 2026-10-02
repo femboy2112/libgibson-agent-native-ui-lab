@@ -443,3 +443,54 @@ fn a_child_is_unplayable_without_its_parent_and_requesting_the_child_rebuilds_th
         "the rebuilt parent is bit-identical"
     );
 }
+
+// The app's default strategy is FullTrace; the tests above pin FutureOnly. These pin the default.
+
+#[test]
+fn full_trace_is_a_pure_function_of_branch_lineage() {
+    let (mut h, f) = demo_with_fork();
+    let mut a = AudioStore::new(WorldId::BlackIce, Strategy::FullTrace, false);
+    let mut b = AudioStore::new(WorldId::BlackIce, Strategy::FullTrace, false);
+    a.request(&mut h, f);
+    b.request(&mut h, f);
+    let (pa, pb) = (a.get(f).unwrap().clone(), b.get(f).unwrap().clone());
+    assert_eq!(pa.hash, pb.hash);
+    assert_eq!(pa.pcm, pb.pcm);
+    assert!(pa.stats.error.is_none() && !pa.stats.nonfinite);
+}
+
+#[test]
+fn full_trace_keeps_the_past_immutable_and_the_seam_bounded() {
+    let (mut h, f) = demo_with_fork();
+    let mut s = AudioStore::new(WorldId::BlackIce, Strategy::FullTrace, false);
+    s.request(&mut h, 0);
+    s.request(&mut h, f);
+    let fork_sample = s.clock.sample_of(50) as usize;
+    let parent = s.fetch(&h, 0, 0, fork_sample).unwrap();
+    let child = s.fetch(&h, f, 0, fork_sample).unwrap();
+    assert_eq!(
+        parent, child,
+        "FullTrace: the child's past is the parent's, bit for bit"
+    );
+    // the future really is another performance
+    let after = (fork_sample + (XFADE_SECS * 48_000.0) as usize + 4800) as u64;
+    assert_ne!(
+        s.fetch(&h, 0, after, 4800).unwrap(),
+        s.fetch(&h, f, after, 4800).unwrap()
+    );
+    let win = 2400;
+    let seam = s
+        .fetch(&h, f, (fork_sample - win) as u64, 2 * win + 24_000)
+        .unwrap();
+    let max_step = seam
+        .chunks(2)
+        .zip(seam.chunks(2).skip(1))
+        .map(|(a, b)| (a[0] as i32 - b[0] as i32).abs())
+        .max()
+        .unwrap();
+    println!("FULLTRACE SEAM max |dL| = {max_step} / 32767");
+    assert!(
+        max_step < 30_000,
+        "no full-scale click at the FullTrace seam"
+    );
+}

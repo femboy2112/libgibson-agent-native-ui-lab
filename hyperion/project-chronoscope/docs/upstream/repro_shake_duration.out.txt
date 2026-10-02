@@ -1,0 +1,5 @@
+t=     0 ms  shake offset=(0, 2)  jitter displacement=(0, 2)  reveal visibility=Some(0.0)
+t=   250 ms  shake offset=(-1, -2)  jitter displacement=(-1, -2)  reveal visibility=Some(0.5)
+t=   500 ms  shake offset=(2, 1)  jitter displacement=(2, 1)  reveal visibility=Some(1.0)
+t=  5000 ms  shake offset=(1, -2)  jitter displacement=(1, -2)  reveal visibility=Some(1.0)
+t= 60000 ms  shake offset=(2, 1)  jitter displacement=(2, 1)  reveal visibility=Some(1.0)

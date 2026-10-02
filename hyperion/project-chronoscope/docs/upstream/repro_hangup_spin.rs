@@ -27,6 +27,5 @@ fn main() -> std::io::Result<()> {
     }
     ctx.restore()
 }
-// The same hang with crossterm alone (no LibGibson): `loop { crossterm::event::poll(100ms) }` after
-// `enable_raw_mode()`. Rendering/writing is NOT the problem: gibson's render and a plain stdout
-// write both return EIO promptly and the loop exits.
+// The same hang with crossterm alone (no LibGibson): see repro_hangup_crossterm_only.rs. Rendering/writing is
+// NOT the problem: gibson's render and a plain stdout write both return EIO promptly and the loop exits.
