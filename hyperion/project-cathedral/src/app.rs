@@ -386,18 +386,22 @@ impl App {
                 true
             }
             KeyCode::Char('d') | KeyCode::Char('D') => {
-                // Jump the focus to the most distressed service; tie-break by blast
-                // radius so that at rest (all healthy) it lands on the keystone.
-                let mut best = (f32::MIN, 0usize, 0u16);
+                // Jump the focus to the most distressed service. At rest nothing is
+                // distressed, so fall back to the keystone (the most directly
+                // depended-upon service) so a following [F]ault actually cascades.
+                let mut best = (f32::MIN, 0u16);
                 for i in 0..self.engine.len() as u16 {
                     let d = self.engine.states[i as usize]
                         .distress(&self.engine.fixture.services[i as usize]);
-                    let down = self.engine.downstream_count(i);
-                    if (d, down) > (best.0, best.1) {
-                        best = (d, down, i);
+                    if d > best.0 {
+                        best = (d, i);
                     }
                 }
-                self.selected = best.2;
+                self.selected = if best.0 >= 0.01 {
+                    best.1
+                } else {
+                    self.engine.most_depended_on()
+                };
                 true
             }
             _ => false,
