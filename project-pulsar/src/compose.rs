@@ -687,7 +687,7 @@ fn draw_help(s: &mut Surface, lay: &Layout) {
         "space  + -      play / pause   speed",
         "m  c            mark an earlier state  /  compare it with now",
         "z               zoom: all-sky \u{2192} local, spectrum, trace window",
-        "\u{2024} ,  .          detune the fold period (watch the ridge shear)",
+        ",  .            detune the fold period (watch the ridge shear)",
         "h j k l  x      move / hide the inspect cursor",
         "n  p            next / previous pipeline event",
         "r               replay from t = 0     ?  close help",
