@@ -57,23 +57,6 @@ pub fn put_clipped(s: &mut Surface, x: i32, y: i32, text: &str, style: Style, ma
     put(s, x, y, &t, style);
 }
 
-/// Copy every non-blank cell of `src` onto `dst` at offset `(dx, dy)`.
-pub fn blit_ink(dst: &mut Surface, src: &Surface, dx: u16, dy: u16) {
-    for y in 0..src.height {
-        for x in 0..src.width {
-            if let Some(c) = src.get(x, y) {
-                if c.is_continuation {
-                    continue;
-                }
-                let blank = c.glyph.is_empty() || c.glyph.grapheme.as_str() == " ";
-                if !blank {
-                    dst.set_cell(x + dx, y + dy, c.clone());
-                }
-            }
-        }
-    }
-}
-
 /// Copy every cell (blank or not) of `src` onto `dst` at offset `(dx, dy)`.
 pub fn blit_all(dst: &mut Surface, src: &Surface, dx: u16, dy: u16) {
     for y in 0..src.height {
@@ -111,52 +94,4 @@ pub fn row_text(s: &Surface, y: u16) -> String {
         }
     }
     line
-}
-
-/// Half-block realisation of an RGB raster with honest blanks: a dark pixel
-/// pair becomes a space (so captures stay legible and the terminal background
-/// shows through), one lit pixel becomes `▀` / `▄`, two become `█` or `▀` with
-/// a coloured background.
-pub fn raster_to_surface(px: &gibson::raster::RgbRaster, dark: u32) -> Surface {
-    let w = px.width();
-    let h = px.height();
-    let rows = h.div_ceil(2);
-    let mut s = Surface::new(w, rows);
-    let lum = |c: Rgb| 54 * c.0 as u32 + 183 * c.1 as u32 + 19 * c.2 as u32;
-    for y in 0..rows {
-        for x in 0..w {
-            let top = px.get(x as i32, y as i32 * 2).unwrap_or_default();
-            let bot = px.get(x as i32, y as i32 * 2 + 1).unwrap_or_default();
-            let (lt, lb) = (lum(top) / 256, lum(bot) / 256);
-            let (t_on, b_on) = (lt > dark, lb > dark);
-            let cell = match (t_on, b_on) {
-                (false, false) => continue,
-                (true, false) => Cell::new(Glyph::new("▀"), st(top)),
-                (false, true) => Cell::new(Glyph::new("▄"), st(bot)),
-                (true, true) => {
-                    let mut style = st(top);
-                    style.bg = Some(Color::rgb(bot.0, bot.1, bot.2));
-                    Cell::new(Glyph::new("▀"), style)
-                }
-            };
-            s.set_cell(x, y, cell);
-        }
-    }
-    s
-}
-
-/// Luminance-dithered Braille realisation (Mono-safe): density carries the value.
-pub fn raster_to_mono(px: &gibson::raster::RgbRaster) -> Surface {
-    let mut s = px.to_mono_surface();
-    // `to_mono_surface` writes U+2800 (blank Braille) for empty cells; make them true spaces.
-    for y in 0..s.height {
-        for x in 0..s.width {
-            if let Some(c) = s.get_mut(x, y) {
-                if c.glyph.grapheme.as_str() == "\u{2800}" {
-                    c.glyph = Glyph::space();
-                }
-            }
-        }
-    }
-    s
 }

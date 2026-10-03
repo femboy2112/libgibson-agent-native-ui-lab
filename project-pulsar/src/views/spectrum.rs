@@ -61,12 +61,19 @@ pub fn render(ctx: &Ctx, rect: Rect) -> ViewOut {
                 .label("earlier"),
         );
     }
+    // lines that clearly stand above the floor are re-drawn brighter on top
+    let bright: Vec<(f64, f64)> = pts.iter().copied().filter(|p| p.1 >= 8.0).collect();
     plot = plot
         .series(
             Series::line(pts)
-                .color(TRACE)
+                .color(scale(TRACE, 0.78))
                 .reduce(Reduce::ExtremaPerColumn)
                 .label("now"),
+        )
+        .series(
+            Series::scatter(bright)
+                .color((236, 246, 255))
+                .label("lines"),
         )
         .annotate(Annotation::HLine {
             y: 1.0,

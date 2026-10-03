@@ -477,7 +477,7 @@ pub fn render(ctx: &Ctx, rect: Rect) -> ViewOut {
                 }
             }
             for l in &layers {
-                if let Some(g) = l.canvas.glyph_at(cx, cy) {
+                if let Some(g) = l.canvas.glyph_at_mode(cx, cy, ctx.glyphs) {
                     glyph = g.to_string();
                     style = style.fg(Color::rgb(l.rgb.0, l.rgb.1, l.rgb.2));
                 }

@@ -194,9 +194,9 @@ fn friction_series_differ_only_by_colour() {
     assert_eq!(a.to_visible_lines(), b.to_visible_lines());
 }
 
-/// F7 - `reduce_extrema` keeps a one-sample spike (law J)... but a Log10 axis
-/// with the zero-valued floor of a spectrum counts every zero as a domain
-/// rejection AND breaks the line there. Callers must floor their data.
+/// F7 - On a Log10 axis every sample that is `<= 0` is a domain rejection AND
+/// breaks the line there (consistent with the contract, but a periodogram with
+/// exact zeros therefore needs flooring by the caller).
 #[test]
 fn friction_log_axis_zero_samples_break_the_line() {
     let spec = PlotSpec::new(

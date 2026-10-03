@@ -1250,3 +1250,48 @@ fn time_and_frequency_constants_are_self_consistent() {
     assert_eq!(epoch_at(256.0), N_EPOCHS);
     assert_eq!(epoch_at(1e9), N_EPOCHS);
 }
+
+#[test]
+fn no_size_the_terminal_can_take_panics_or_overflows_a_row() {
+    let widths = [
+        8u16, 9, 10, 12, 16, 20, 24, 30, 36, 42, 50, 60, 64, 80, 99, 100, 101, 120, 160, 220,
+    ];
+    let heights = [
+        4u16, 5, 6, 7, 8, 9, 10, 12, 13, 15, 18, 19, 20, 24, 31, 32, 40, 70,
+    ];
+    let mut mid = Model::new(obs());
+    mid.seek(200.0);
+    for &w in &widths {
+        for &h in &heights {
+            for view in View::ALL {
+                for (t, zoom, cursor, compare, help) in [
+                    (200.0, 0u8, false, false, false),
+                    (200.0, 2, true, true, true),
+                    (0.0, 1, false, false, false),
+                ] {
+                    let mut m = mid.clone();
+                    m.seek(t);
+                    m.view = view;
+                    m.zoom = zoom;
+                    m.cursor_on = cursor;
+                    m.cursor = (0.97, 0.03);
+                    m.help = help;
+                    if compare {
+                        m.mark = Some(60.0);
+                        m.compare = true;
+                        m.sel = Some(2);
+                    }
+                    let f = compose::compose(&m, w, h, false, BRAILLE);
+                    for (i, l) in lines(&f).iter().enumerate() {
+                        assert!(
+                            l.chars().count() <= w as usize,
+                            "{view:?} {w}x{h} row {i} overflows"
+                        );
+                    }
+                    assert_eq!(f.surface.width, w);
+                    assert_eq!(f.surface.height, h);
+                }
+            }
+        }
+    }
+}

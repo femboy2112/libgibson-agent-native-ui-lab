@@ -173,6 +173,9 @@ pub fn compose(m: &Model, w: u16, h: u16, mono: bool, glyphs: SubcellGlyphMode) 
         }
         from_anchors = Some(old.anchors);
     }
+    if m.ep() == 0 && m.from.is_none() {
+        draw_intro(&mut hero_surface, m);
+    }
     blit_all(&mut s, &hero_surface, 0, lay.hero.y);
 
     draw_lanes(&mut s, m, &lay, w);
@@ -190,6 +193,63 @@ pub fn compose(m: &Model, w: u16, h: u16, mono: bool, glyphs: SubcellGlyphMode) 
         layout: lay,
         hero,
         from_anchors,
+    }
+}
+
+/// The opening card: before the first epoch there is nothing to see, so say what the piece is.
+fn draw_intro(s: &mut Surface, m: &Model) {
+    let (w, h) = (s.width as i32, s.height as i32);
+    let lines: &[(&str, bool)] = &[
+        (
+            "THREE PERIODIC SIGNALS ARE BURIED IN THIS RECEIVER NOISE",
+            true,
+        ),
+        ("", false),
+        (
+            "advance time to integrate it: the same three identities will",
+            false,
+        ),
+        (
+            "surface as a pulse train, a spectral line, a folded profile,",
+            false,
+        ),
+        ("a pair of delays and finally a place on the sky.", false),
+        ("", false),
+        (
+            if m.playing {
+                "(playing)  space pauses"
+            } else {
+                "space  play    \u{2192}  step    ?  help"
+            },
+            true,
+        ),
+    ];
+    let bw = lines
+        .iter()
+        .map(|(l, _)| l.chars().count())
+        .max()
+        .unwrap_or(0) as i32;
+    if w < bw + 4 || h < lines.len() as i32 + 4 {
+        let short = "space = play    ? = help";
+        put(
+            s,
+            (w - short.chars().count() as i32) / 2,
+            h / 2,
+            short,
+            st_bold(ACCENT),
+        );
+        return;
+    }
+    let y0 = (h - lines.len() as i32) / 2;
+    for (i, (l, bold)) in lines.iter().enumerate() {
+        let x = (w - l.chars().count() as i32) / 2;
+        put(
+            s,
+            x,
+            y0 + i as i32,
+            l,
+            if *bold { st_bold(INK) } else { st(SOFT) },
+        );
     }
 }
 
@@ -442,7 +502,9 @@ fn draw_lanes(s: &mut Surface, m: &Model, lay: &Layout, w: u16) {
             x += 1;
             seg(s, &spark(&prof, 10), sty, &mut x);
             x += 1;
-            if let Some(k) = sl.sky {
+            if sl.state == State::RejectedCw {
+                seg(s, "local", st(SOFT), &mut x);
+            } else if let Some(k) = sl.sky {
                 let (az, el) = k.best();
                 seg(
                     s,
@@ -604,8 +666,8 @@ fn draw_scrubber(s: &mut Surface, m: &Model, lay: &Layout, w: u16) {
 
 fn draw_hints(s: &mut Surface, m: &Model, lay: &Layout, w: u16) {
     let text = match lay.class {
-        Class::Wide => "1-5 view  \u{2190}\u{2192} scrub  \u{21E7}\u{2190}\u{2192} 16s  \u{2191}\u{2193} pick  space play  +/- speed  m mark  c compare  z zoom  ,. detune  hjkl cursor  n/p event  r replay  ? help",
-        Class::Medium => "1-5 view \u{2190}\u{2192} scrub \u{2191}\u{2193} pick spc play m/c compare z zoom ,. detune hjkl cursor ? help",
+        Class::Wide => "1-5 view  \u{2190}\u{2192} scrub (\u{21E7}16s)  \u{2191}\u{2193} pick  space play  m mark  c compare  z zoom  ,. detune  hjkl cursor  n/p event  ? help",
+        Class::Medium => "1-5 view \u{2190}\u{2192} scrub \u{2191}\u{2193} pick spc play m/c compare z zoom ,. detune hjkl ? help",
         Class::Tiny => "1-5 \u{2190}\u{2192} \u{2191}\u{2193} spc m c z ? q",
     };
     let _ = m;

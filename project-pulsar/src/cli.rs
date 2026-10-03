@@ -455,12 +455,15 @@ pub fn run_report(obs: &Observatory) {
     let last = obs.timeline.epochs.last().expect("epochs");
     for (i, tr) in obs.truth().iter().enumerate() {
         let sl = last.slots[i];
-        let pos = sl
-            .sky
-            .map(|k| {
+        let pos = match sl.sky {
+            // interference has no sky position: it is common-mode (the array normal)
+            Some(_) if sl.state == State::RejectedCw => {
+                "common-mode: local origin, not a sky position".to_string()
+            }
+            Some(k) => {
                 let b = k.best();
                 format!(
-                    "az {:6.1} el {:+6.1}  (truth az {:6.1} el {:+6.1}, off {:.1} deg, sigma {:.1})",
+                    "az {:6.1} el {:+6.1}  (truth az {:6.1} el {:+6.1}, off {:.1} deg, 1-sigma radius {:.1})",
                     b.0,
                     b.1,
                     tr.az,
@@ -468,8 +471,9 @@ pub fn run_report(obs: &Observatory) {
                     crate::sim::separation_deg(b, (tr.az, tr.el)),
                     k.sigma_deg
                 )
-            })
-            .unwrap_or_else(|| "no sky fix".into());
+            }
+            None => "no sky fix".to_string(),
+        };
         println!(
             "  {} {:<9} f {:.5} (truth {:.5}, err {:+.1e})  {}",
             crate::identity::IDENT[i].letter,
@@ -489,6 +493,9 @@ pub fn main_with(args: &[String]) -> Result<i32, String> {
         return Ok(0);
     }
     let seed = o.seed.unwrap_or(DEFAULT_SEED);
+    if o.capture.is_none() && o.demo.is_none() && !o.report {
+        eprintln!("synthesising the sky and running the pipeline...");
+    }
     let obs = Arc::new(Observatory::new(seed));
     if o.report {
         run_report(&obs);
@@ -504,8 +511,15 @@ pub fn main_with(args: &[String]) -> Result<i32, String> {
         print!("{text}");
         return Ok(0);
     }
-    // interactive
-    let m = model_for(&o, obs)?;
+    // interactive: begin integrating at once unless the session was set up explicitly
+    let mut m = model_for(&o, obs)?;
+    if o.at.is_none() && o.script.is_none() {
+        // pressing play is a recorded key, so the session replays exactly
+        m.key(gibson::KeyEvent::new(
+            gibson::KeyCode::Char(' '),
+            gibson::KeyModifiers::empty(),
+        ));
+    }
     let done = app::run_interactive(m).map_err(|e| e.to_string())?;
     let script = done.replay_script();
     if !script.is_empty() {
