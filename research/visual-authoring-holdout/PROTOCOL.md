@@ -8,15 +8,21 @@ record: the pins, the matrix shape, and the rules whoever runs it must follow.
 ## Question
 
 Does the documentation intervention (guide + recipes + `AGENTS.md` router +
-`UI_LAYER` callout) materially change the design behavior of a fresh, non-Sonnet
-coding agent given the same substrate and a comparably ambitious prompt?
+`UI_LAYER` callout, now including the representation-atlas plan and its recipes)
+materially change the design behavior of a fresh, non-Sonnet coding agent given
+the same substrate and a comparably ambitious prompt?
 
 ## Arms (one variable)
 
 | Arm | `libgibson-reference/` tree |
 |---|---|
 | CONTROL | sanitized released `v0.4.0` (see `manifests/SANITIZATION.md`) |
-| TREATMENT | same tree **+** the 9-file treatment overlay, nothing else |
+| TREATMENT | same tree **+** the 13-file treatment-v2 overlay, nothing else |
+
+The overlay is **treatment-v2** (the representation atlas plus the v2 degeneracy
+fixes), pinned to `research/ai-visual-authoring @ a31b134`; the 13 files and their
+SHA256 are in `manifests/SANITIZATION.md`. (treatment-v1 was the 9-file overlay at
+`58f3385`, preserved historically in the same manifest.)
 
 Both arms: app depends on the remote tag
 `libgibson = { git = "https://github.com/femboy2112/libgibson", tag = "v0.4.0" }`
@@ -67,11 +73,34 @@ another, the protocol, the mapping, or any prior Hyperion branch.
 
 ## Capture (post-run, uniform)
 
-Per valid run: `120x40`, `80x24`, `42x15` color, and `120x40` Mono, via the
-app's own `--capture WxH[:mono]` path, rendered to PNG by the single shared
-pipeline `scripts/ansi2png.py` (pyte → Pillow, fixed cell geometry, no crop, no
-post-processing). If an app uses a different capture flag, set it per that app's
-README — do **not** edit the app to look better.
+**Static ladder (every valid run):** `120x40`, `80x24`, `42x15` color, and
+`120x40` Mono, via the app's own `--capture WxH[:mono]` path, rendered to PNG by
+the single shared pipeline `scripts/ansi2png.py` (pyte → Pillow, fixed cell
+geometry, no crop, no post-processing). Run with `scripts/capture.sh R0x`. If an
+app uses a different capture flag, set it per that app's README — do **not** edit
+the app to look better.
+
+**Temporal ladder (runs whose app has a seekable timeline only):** the atlas
+treatment teaches a pure `frame(t)` director, so a treatment app may be seekable.
+Where it is, capture the transition as frames, not just an end state, so the
+review can judge whether a transition *reads as a transform* (held out as human
+art direction, holdout §13). Run with `scripts/capture_temporal.sh R0x`, which
+reads a per-run `runs/$RID/TEMPORAL.plan` (copy `scripts/TEMPORAL.plan.template`):
+
+- Canonical phases: `establish`, `pre-transition`, `transition-midpoint`,
+  `post-transition`, `reveal`, `hold`, `payoff` — keep only those the app has.
+- When the app has a sharp transition at a boundary `b`, also bracket it with
+  `b-ε`, `b`, `b+ε` (`transition_pre` / `transition` / `transition_post`).
+- Each phase is rendered at `120x40` color and `120x40` Mono via the convention
+  `--capture WxH[:mono] --at T`; set `SEEK_FLAG` per the app's README if it
+  differs. **Raw deterministic `.ansi` frames are authoritative**; PNG (and any
+  GIF/video a reviewer later derives) are convenience, not required.
+- Times in `TEMPORAL.plan` are **observed from a dry run of the app, never
+  invented**. If the app has no temporal transition, the plan is `NONE` and only
+  the static ladder applies — a static-only piece is valid data, not a failure.
+
+Both ladders obey the no-rescue rule: a missing frame is recorded `NO_FRAME`
+(data), never faked.
 
 ## Blind review & stop condition
 

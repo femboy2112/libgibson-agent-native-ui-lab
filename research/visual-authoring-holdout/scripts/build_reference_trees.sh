@@ -4,24 +4,33 @@
 set -euo pipefail
 
 SRC="/home/leah/LibGibson"                       # upstream LibGibson repo
-TREAT_REF="research/ai-visual-authoring"         # frozen treatment branch (overlay source)
+# Frozen treatment overlay source. Pinned to an EXACT commit (not a branch name)
+# so the overlay is reproducible and cannot silently drift if the branch moves.
+# treatment-v2 = a31b134 (atlas, degeneracy fixes); treatment-v1 was 58f3385.
+TREAT_REF="${TREAT_REF:-a31b13447d3243ab1b7c4b34fb197b097c59e69d}"
 V="v0.4.0"                                        # released substrate tag
-OUT="/tmp/claude-1000/-home-leah-LibGibson/6f14caba-f217-4ba6-8074-7d83438e52ce/scratchpad/holdout/reference"
+OUT="${OUT:-/tmp/holdout-v0.4.0-reference}"      # throwaway build dir (overridable)
 
 # Files pruned from BOTH arms (hypothesis record + model-naming narrative docs)
 PRUNE_DIRS=( "docs/research" )
 PRUNE_FILES=( "docs/HUMAN_MUSIC_RELEASE_ROAST.md" "docs/STATE_OF_LIBGIBSON.md" "docs/INTRODUCTORY_CINEMA.md" )
 
-# The TREATMENT overlay (the ONLY difference between arms)
+# The TREATMENT overlay (the ONLY difference between arms). treatment-v2:
+# adds the atlas plan + three atlas recipes (skeleton/identity-transport/
+# directed-atlas) over the v1 set. docs/research/* stays pruned from BOTH arms.
 OVERLAY=(
   "AGENTS.md"
   "docs/AI_VISUAL_AUTHORING.md"
+  "docs/AI_VISUAL_ATLAS_PLAN.md"
   "docs/UI_LAYER.md"
   "examples/recipe_hero_with_hud.rs"
   "examples/recipe_continuous_world.rs"
   "examples/recipe_semantic_zoom.rs"
   "examples/recipe_cinematic_overlay.rs"
   "examples/recipe_capability_safe_canvas.rs"
+  "examples/recipe_atlas_skeleton.rs"
+  "examples/recipe_identity_transport.rs"
+  "examples/recipe_directed_atlas.rs"
   "examples/recipes_support/mod.rs"
 )
 
@@ -59,7 +68,13 @@ echo "== sanity: treatment must NOT contain hypothesis research files =="
 echo -n "  AI_VISUAL_AUTHORING_AUDIT present? "; [ -e "$OUT/treatment/docs/research/AI_VISUAL_AUTHORING_AUDIT.md" ] && echo "YES(BAD)" || echo "no(good)"
 echo -n "  docs/research/ present?            "; [ -d "$OUT/treatment/docs/research" ] && echo "YES(BAD)" || echo "no(good)"
 echo -n "  guide present in treatment?        "; [ -e "$OUT/treatment/docs/AI_VISUAL_AUTHORING.md" ] && echo "yes(good)" || echo "NO(BAD)"
+echo -n "  atlas plan present in treatment?   "; [ -e "$OUT/treatment/docs/AI_VISUAL_ATLAS_PLAN.md" ] && echo "yes(good)" || echo "NO(BAD)"
+echo -n "  atlas plan ABSENT in control?      "; [ -e "$OUT/control/docs/AI_VISUAL_ATLAS_PLAN.md" ] && echo "PRESENT(BAD)" || echo "absent(good)"
 echo -n "  guide ABSENT in control?           "; [ -e "$OUT/control/docs/AI_VISUAL_AUTHORING.md" ] && echo "PRESENT(BAD)" || echo "absent(good)"
 echo -n "  'panel farm' anywhere in control?  "; grep -rIl 'panel farm' "$OUT/control" >/dev/null 2>&1 && echo "YES(BAD)" || echo "no(good)"
-echo -n "  'panel farm' in treatment (only guide ok): "; grep -rIl 'panel farm' "$OUT/treatment" 2>/dev/null | sed "s#$OUT/treatment/##" | tr '\n' ' '; echo
+# 'panel farm' is teaching vocabulary (the composition anti-pattern the treatment
+# teaches you to avoid). It is legitimate ONLY in the treatment's teaching docs
+# (holdout §13): the guide and the atlas plan. It must never appear in control,
+# in a recipe, or anywhere that would name a model or the hypothesis.
+echo -n "  'panel farm' in treatment (guide + atlas plan ok): "; grep -rIl 'panel farm' "$OUT/treatment" 2>/dev/null | sed "s#$OUT/treatment/##" | tr '\n' ' '; echo
 echo "== done =="

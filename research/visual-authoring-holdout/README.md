@@ -17,6 +17,10 @@ scripts + the local mapping are deliberately **not** committed). This branch
 carries the reproducible subset: prompts, manifests, the treatment overlay, the
 build/capture/anonymize scripts, and the review template.
 
+The treatment overlay is **treatment-v2** (the representation atlas), pinned to
+`research/ai-visual-authoring @ a31b134`; see `manifests/SANITIZATION.md` for the
+13-file list, hashes, and the v1 history.
+
 ## Running it (maintainer / Leah — you hold the launch trigger)
 
 Each launch is the **outward** step: it unleashes an untrusted external model
@@ -31,9 +35,11 @@ cd /home/leah/libgibson_lab/holdout-v0.4.0
 Then, for every run that produced an app:
 
 ```bash
-./scripts/capture.sh R01     # builds + captures 4 configs -> runs/R01/cap/*.png
+./scripts/capture.sh R01            # builds + captures 4 static configs -> runs/R01/cap/*.png
+# if the app is seekable, fill runs/R01/TEMPORAL.plan (from TEMPORAL.plan.template) then:
+./scripts/capture_temporal.sh R01   # captures the phase/transition ladder -> runs/R01/cap/temporal/*
 # ... R02 .. R08
-./scripts/anonymize.sh       # -> blind-review/candidate-A..H/ + BLIND_REVIEW.md
+./scripts/anonymize.sh              # -> blind-review/candidate-A..H/ + BLIND_REVIEW.md
 ```
 
 Open `blind-review/BLIND_REVIEW.md`, judge each candidate from the images only,

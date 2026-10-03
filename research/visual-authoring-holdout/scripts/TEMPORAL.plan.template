@@ -1,0 +1,29 @@
+# TEMPORAL.plan — per-run temporal capture map (copy to runs/$RID/TEMPORAL.plan)
+#
+# One `phase=T` line per frame to capture. T is a value in the APP'S OWN time
+# units (seconds, frames, or whatever its --at seek accepts), OBSERVED from a dry
+# run of the subject's app — never invented, never guessed. capture_temporal.sh
+# renders each phase at 120x40 color and 120x40 Mono.
+#
+# Fill this in ONLY after watching the app run. If the app has no seekable
+# timeline / no temporal transition, delete every line below and write exactly:
+#     NONE
+# (then only the static capture.sh ladder applies to this run).
+#
+# The seven canonical phases of a directed transition. Keep only the ones the
+# app actually has; a piece may not reach every phase.
+establish=
+pre-transition=
+transition-midpoint=
+post-transition=
+reveal=
+hold=
+payoff=
+#
+# When the app has a sharp transition at a boundary b, ALSO bracket it so the
+# review can see the transition read as a transform rather than a cut. Set b to
+# the observed boundary time and eps to a small step in the app's units; the
+# three times are b-eps, b, b+eps.
+transition_pre=
+transition=
+transition_post=
