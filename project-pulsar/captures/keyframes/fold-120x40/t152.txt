@@ -1,0 +1,40 @@
+ PULSAR ┃ FOLD · alpha z0 ┃ t  152.0s (analysis 152s) ┃ ❚❚ ×4 ┃ seed 62             ◆ALPHA FIX  ●BETA FIX  ▲GAMMA CAND
+▶◆ ALPHA           LOCALIZED  ◆ ALPHA  fold @ P = 478.60 ms · profile S/N 5.7 · LOCALIZED · r=0.64 2P halves match: peri
+   2.0894 Hz ±1.3e-4              amplitude
+   ███████████████████  100%     │
+   az 311° el 42° ±0.16       0.4┤                 ⢀⠎⡇                                        ⡰⡇
+                                 │                 ⡎⡔⡆ ⢠                                     ⢰⢠⡆  ⡄
+ ● BETA            LOCALIZED     │                 ⡜⡠⢱⣤⢠⡄                                    ⢠⠃⢱⡄⡜⡄
+   5.5820 Hz ḟ-6.7e-4            │                ⢠⡇⠁⠸⣀⠿⡀                                    ⡸⠎⠸⡀⡸⡇
+   ███████████████████  100%  0.2┤                ⢀⠇ ⢸⠟⣾⡇       ⢠                           ⢰⡇ ⢸⠗⠁⢇       ⢠
+   az 169° el 52° ±0.14          │  ⡄   ⢰       ⣀ ⢸⡇  ⡿ ⢇⡀⡄     ⢀     ⢀            ⡆      ⢀⡀⢠⠃  ⡧⠃⢸⡀⣠     ⢀⡆
+                                 │  ⡆   ⢠⡆     ⢸⡸⠳⡸     ⢸⠈⡀     ⣸⡇   ⡠⣀⡆  ⡀   ⣰   ⢀⡄      ⡇⠱⡸⠇    ⢸⠈⢀⡆    ⡸⡄   ⡠⢄⡀  ⢀
+ ▲ GAMMA           CANDIDATE     │⠈⠺⡄   ⢸⡄   ⡀ ⢰⠉⢦⠃     ⢸⠑⢣⡦⠔⢣⠔⢼⡏⡆⠔⢆⢠⢀ ⠹⡀⡰⢱⢀⠎⠲⢠⡇  ⢸⡇   ⢀ ⢸⡎⢣⠃     ⢸⠑⠙⡄⠔⠱⡠⢺⡇⡇⠤⢲⢠⢀⡀⠸⡀⢀⠞⣄⠆
+   0.5318 Hz ±2.7e-4          0.0┤⠐⢴⢱⡦⢢⠉⡇⡇⠉⡠⠊⠘⡄⢸⠒⣄⠇⠉⠉⠉⠉⠉⠈⠢⠘⣄⡠⢆⡠⣰⠁⣇⡠⡄⢀⠇⠉⢲⢇⢠⢣⠋⡔⢤⠋⡆⢦⠉⢸⢣⡰⣀⠔⠉⡆⢰⠁⢆⠇⠉⠉⠉⠉⠉⠈⠢⠺⢣⡠⢢⢀⢴⠁⢸⣀⢤⢀⠇⠈⢱⢇⡜⡼⡀⡄
+   █████████░░░░░░░░░░   45%     │⠠⣠⠘⣤⢆⢷⡇⢣⠉⢀⠔⠱⡀⡇ ⠈⠈       ⠸⠁⢀⠈⣀⠈⠃⡇⢀⢸⡸⡎⠒⢤⡇⡇⠈⠞⡠⣀⠞⢣⢆⢣⢸⢸⠉⢣⡠⠚⡄⡸⠃⠈         ⠈⢀⢄⠁⠈⠃⢱ ⠘⡼⡎⠑⢢⡇⡸⣰⠟⡀
+   az  72° el 62° ±1.57          │ ⠈⠸⠁⠈⣦⠃⠸⠒⠁⡠⢢⠑⠃           ⠋⠁⠈ ⠙ ⠉⠁⢸⠃  ⠈⠸⡎⠘⡴⠁⠈ ⠈⠈⢆⡜⠸⠒⠉⢀⠴⠑⠃           ⠘⠁ ⠁⠘ ⠈⠉⠘⠃  ⠈⠸⠁⠁⡷⠁
+                             -0.2┤   ⠋⠘⠸⠇⢸⠤⠊  ⠣⠇                    ⠇   ⢱⠁     ⠘⠘⠈⠇⢸⠤⠒⠁ ⠣⠇                    ⠇   ⢱⠃
+ INTERFERENCE                    │     ⢹  ⠘                             ⠘        ⠘⡇      ⠁                    ⠁
+ ?  4.51 Hz unassigned           │
+ ✕ 13.30 Hz RFI                  └┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬
+                                 0.0                  0.5                  1.0                  1.5                  2.0
+ EVENTS                                                              phase (cycles)
+  32s ▲ GAMMA candidate       WATERFALL  ◆ ALPHA · 16 s sub-integrations, time flows down · stripe straight = locked
+  40s ● BETA candidate       0s                     ░▒▒     ░    ·                            ░▒▒     ░    ·
+  48s ◆ ALPHA candidate                             ▒▒▒ ·       ·    ···  ··                  ▒▒▒ ·       ·    ···  ··
+  80s ● BETA lock acquired         ░··           ···░░░░█░░      ▒··         ░··           ···░░░░█░░      ▒··
+  80s ● BETA localized                              ▓▒▒·░        ·                            ▓▒▒·░        ·
+  96s ◆ ALPHA candidate revi            ···        ▒▒██·▓            ░···         ···        ▒▒██·▓            ░···
+ 104s ✕ 13.3Hz flagged terre
+ 128s ◆ ALPHA lock acquired
+ 128s ◆ ALPHA localized
+
+
+
+
+
+
+
+                             480
+ 0s   ━━━━━━━·━·━·━━━━━━●━━·━✕━━━━━◆━━━━┃───────────────────────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

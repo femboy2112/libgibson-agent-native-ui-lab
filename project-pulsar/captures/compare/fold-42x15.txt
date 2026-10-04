@@ -1,0 +1,15 @@
+ PULSAR ┃ FOLD ┃ t 300.0s ┃ ❚❚ ×4 ┃ COMPAR
+ ◆A DONE ███ ●B DONE ███ ▲C LOCK ███
+ ◀ EARLIER t=64s · ALPHA CANDIDATE
+ ◆ ALPHA  fold @ P = 957.39 ms · profile S
+ ● BETA  fold @ P = 177.29 ms · profile S/
+ ▲ GAMMA  fold @ P = 1874.28 ms · profile
+-0.5┤⠠⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠒⠤⠔⠒⠒⠒⠒⠑⠒⠒⠒⠒⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠄
+ ▶ NOW t=300s · ALPHA RESOLVED
+ ◆ ALPHA  fold @ P = 478.63 ms · profile S
+ ● BETA  fold @ P = 182.33 ms · profile S/
+ ▲ GAMMA  fold @ P = 1881.63 ms · profile
+ 0.4┤     ⢀    ⢀ ⡀⢀⠤⠔⠢⠤⠢⠤⠤⣀⣀
+-0.0┤⠐⠒⠊⠒⠒⠊⠢⠒⠊⠒⠊⠉⠈⠁⠉⠉⠉⠉⠉⠉⠉⠁⠉⠉⠊⠑⠉⠒⠒⠒⠒⠤⠒⠒⠤⠂
+ 0s   ━━··◇●✕━◆━━●▲━━~━━┃─────────── 480s
+ 1-6 view ←→ time Tab sig m cmp ? q

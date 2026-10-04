@@ -1,0 +1,24 @@
+ PULSAR ┃ DOSSIER · overview ┃ t  480.0s (analysis 480s) ┃ ❚❚ ×4 ┃ seed 62
+▶◆ ALPHA      RESOLVED  FINAL INTERPRETATION — observation complete
+   2.0892 Hz ±2.0e-5
+   █████████████  100%  ◆A DONE 308°/46° 100%
+   az 308° el 46° ±0.0  ●B DONE 165°/53° 100%
+                        ▲C LOCK pos ? 100%
+ ● BETA       RESOLVED  ✕13.3Hz terrestrial
+   5.3602 Hz ḟ-6.7e-4
+   █████████████  100%
+   az 165° el 53° ±0.0
+
+ ▲ GAMMA        LOCKED
+   0.5315 Hz ±4.0e-5
+   █████████████  100%
+   no far-field fix (σ
+
+ INTERFERENCE
+ ~  4.51 Hz transient
+ ✕ 13.30 Hz RFI
+
+
+
+ 0s   ━━━━·━··━━━●━·━✕━━◆━━━━━━●━▲━━━━━━━◆~━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃ 480s
+ 1-6 view  ←→ time  Tab signal  f focus  m compare  i inspect  ? help  q quit

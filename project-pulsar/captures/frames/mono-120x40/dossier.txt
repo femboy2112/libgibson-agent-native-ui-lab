@@ -1,0 +1,40 @@
+ PULSAR ┃ DOSSIER · overview ┃ t  480.0s (analysis 480s) ┃ ❚❚ ×4 ┃ seed 62        ◆ALPHA DONE  ●BETA DONE  ▲GAMMA LOCK
+▶◆ ALPHA            RESOLVED  FINAL INTERPRETATION — observation complete
+   2.0892 Hz ±2.0e-5
+   ███████████████████  100%  ◆ ALPHA — fast pulse train · RESOLVED
+   az 308° el 46° ±0.08           f = 2.08924 Hz ± 2.0e-5   P = 478.64 ms
+                                  detection: log10 FAP -31.4 (≈11.7σ after trials) · confidence 100%
+ ● BETA             RESOLVED      position: az 308° el 46°  1σ 0.081×0.071 (4.7°)
+   5.3602 Hz ḟ-6.7e-4             timeline: candidate 48s · lock 128s · fix 128s · resolved 248s
+   ███████████████████  100%      growth exponent 0.63 (coherent integration ⇒ 0.5)
+   az 165° el 53° ±0.08
+                              ● BETA — drifting carrier · RESOLVED
+ ▲ GAMMA              LOCKED      f = 5.36020 Hz ± 2.6e-4   P = 186.56 ms
+   0.5315 Hz ±4.0e-5              drift ḟ = -6.75e-4 Hz/s (-0.32 Hz over the whole run)
+   ███████████████████  100%      detection: log10 FAP -65.9 (≈17.2σ after trials) · confidence 100%
+   no far-field fix (σ 0.51)      position: az 165° el 53°  1σ 0.080×0.067 (4.6°)
+                                  timeline: candidate 40s · lock 80s · fix 80s · resolved 176s
+ INTERFERENCE                     growth exponent 0.45 (coherent integration ⇒ 0.5)
+ ~  4.51 Hz transient
+ ✕ 13.30 Hz RFI               ▲ GAMMA — slow broad-pulse train · LOCKED
+                                  f = 0.53148 Hz ± 4.0e-5   P = 1881.54 ms
+ EVENTS                           detection: log10 FAP -21.4 (≈9.6σ after trials) · confidence 100%
+  32s ▲ GAMMA candidate           position: unconstrained (1σ 0.51): the 56 ms baseline spans only 0.19 rad of its cycle
+  40s ● BETA candidate            timeline: candidate 32s · lock 192s · fix — · resolved —
+  48s ◆ ALPHA candidate           growth exponent 0.66 (coherent integration ⇒ 0.5)
+  80s ● BETA lock acquired
+  80s ● BETA localized        INTERFERENCE & MISLEADING CANDIDATES
+  96s ◆ ALPHA candidate revi    ~   4.51 Hz  transient: S/N grew to 7.0 then fell to 4.9 — not a persistent source
+ 104s ✕ 13.3Hz flagged terre    ✕  13.30 Hz  terrestrial: amplitude differs between stations (10.5σ)
+ 128s ◆ ALPHA lock acquired     ◆ ALPHA candidate was revised at 96 s: its first frequency was built from interference
+ 128s ◆ ALPHA localized
+ 176s ● BETA resolved         VERDICT  2 of 3 sources fixed on the sky, 1 locked in phase only, 0 still candidate; 2
+ 192s ▲ GAMMA lock acquired     interferer(s) rejected
+ 248s ◆ ALPHA resolved
+ 256s ~ 4.5Hz flagged transi
+
+
+
+
+ 0s   ━━━━━━━·━·━·━━━━━━●━━·━✕━━━━━◆━━━━━━━━━●━━━▲━━━━━━━━━━━◆━~━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃ 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

@@ -1,0 +1,40 @@
+ PULSAR ┃ SKY · overview ┃ t  480.0s (analysis 480s) ┃ ❚❚ ×4 ┃ seed 62            ◆ALPHA DONE  ●BETA DONE  ▲GAMMA LOCK
+▶◆ ALPHA            RESOLVED
+   2.0892 Hz ±2.0e-5                                                                      ◆ ALPHA  RESOLVED
+   ███████████████████  100%                                                                az 308.2°  el 46.2°
+   az 308° el 46° ±0.08                                    N                                1σ 0.081 × 0.071  (4.7°)
+                                                   ⣀⣀⠤⠤⠔⠒⠒⠒⠖⠒⠒⠒⠤⠤⢄⣀⡀                      ● BETA   RESOLVED
+ ● BETA             RESOLVED                  ⣀⡠⠔⠊⠉        ⠄       ⠈⠉⠒⠤⣀⡀                   az 165.0°  el 52.9°
+   5.3602 Hz ḟ-6.7e-4                      ⡠⠔⠊     ⢀ ⠄⠂⠐⠐ ⠁⠅30° ⠂⠄⢀     ⠈⠓⠤⡀                1σ 0.080 × 0.067  (4.6°)
+   ███████████████████  100%            ⢀⠴⠊⠈ ⠆⠠⡀⡀⠈⠈    ⡀⢀  ⠄       ⠈⠈ ⠄⡀   ⠉⠲⢄            ▲ GAMMA  LOCKED
+   az 165° el 53° ±0.08               ⢀⠔⠅   ⡀⠂⡐⠤⢀⠊⠐⠂⠡⠈⡀ ⠂  ⠄            ⠁⠂⡀   ⠕⢄            position unconstrained
+                                     ⡰⠃  ⠐⠄⠂⡀⠐    ⠁⠐ ⠄⢀⠉ ⠁ ⠄               ⠂⠔   ⠳⡀          1σ 0.513 × 0.420  (29.4°)
+ ▲ GAMMA              LOCKED       ⢀⠎⠁  ⠠⣀⠔⠊⠉⠉⠒⢤⠁          ⠄⠂           ⠌⡀⠄⠁⠈⠠   ⠉⢆       ✕ 13.30 Hz terrestrial
+   0.5315 Hz ±4.0e-5              ⢠⠊   ⠄⠜⡅⣠⠞⢀⠳⡄⡑⡇    ⣀⠄⠔⠂⠒⠐⠖60°⠄⢄⡀     ⠐⠐ ⠄   ⠈⠄  ⠈⢢        amp. differs by station 10.
+   ███████████████████  100%     ⢀⠎   ⠌⠐⡇⢊⣇⣿◆⢀ALPHA 308°/46°      ⠑⢄ ⢀⢀⠁   ⠂   ⠈⠄  ⠈⢆
+   no far-field fix (σ 0.51)     ⡎   ⡂ ⢀⠣⡀⠈⠑⠚⠁⡠⠚⢀⠔⠁        ⠄        ⠑⢄⠄     ⠁⡀   ⡂  ⠈⡆
+                                ⢸   ⠐  ⠈ ⠈⠑⠒⠒⠉ ⠔⠁  ⠁⢀      ⠂     ⢀ ⠁  ⠂⠄     ⠠   ⠐   ⢸
+ INTERFERENCE                   ⡇  ⠠⠁         ⠜       ⠄    ⠂    ⠄    ⡈ ⠘⢀ ⠄⠐ ⠁⠈   ⠡   ⡇
+ ~  4.51 Hz transient          ⢰⠁  ⢐ ⠂      ⡀⠰⠁     ⠄  ⠄⢀  ⠂ ⢀⠐     ⠠  ⠁⠈ ⠂       ⢐   ⢱
+ ✕ 13.30 Hz RFI                ⢸   ⠄   ⠂   ⠂⠁⢘⠈ ⠄         ⠄⠂⠄       ⠂   ⢘ ⠈⢀       ⠄  ⢸
+                             W ⢸⠁ ⠁⠅⠁ ⠁ ⠁ ⠁⡀⠂⢘⠁ ⠁ ⠁⠈ ⠈ ⠈ ⠈⠄+⠌ ⠈ ⠈ ⠈⡈⠁ ⠁ ⢑⠁⠁ ⠠ ⠁ ⠁ ⠁⠅⠁ ⢹ E
+ EVENTS                        ⢸   ⠈⠄  ⠐⠄⠄⠈ ⠈⠈  ⠐  ⢀   ⠁⠐ ⠈⡀⠁⠐⡈⠂⢀ ⠠     ⢨    ⠐    ⢐   ⢸
+  32s ▲ GAMMA candidate         ⡇⠂ ⠠   ⠐   ⠐  ⢅ ⢀     ⠄   ⠁⡀ ⠂  ⠄ ⠑⠠ ⡀ ⢀⠅     ⠈⡀  ⠠   ⡇
+  40s ● BETA candidate          ⢱   ⢁⠁⠈     ⠄ ⠈⢄    ⠐   ⠠  ⡀⢀⠁   ⢀⠁   ⠐⠌⠄       ⠄⢀⠁  ⢰⠁
+  48s ◆ ALPHA candidate         ⠈⡆   ⡂ ⠄ ⠠      ⠂⠔ ⠁⢀     ⠠⠄⠄ ⠂  ⠄ ⠁⠄⠔⠁ ⠈⡉ ⠁⠈ ⠁⠈ ⠁   ⡎
+  80s ● BETA lock acquired       ⠘⡄ ⠈ ⠄ ⣄ ⠄ ⡀  ⠈⠐ ⠑⢄⠈ ⠂⠒   ⡈⢀ ⡀ ⠐⡀⢀⠠⠄⠐   ⠠      ⠄   ⡜
+  80s ● BETA localized            ⠸⡀  ⠈⠄⢀ ⠂  ⠉⠄⡀ ⠤ ⡀⠈⠒⠄⢄⡀⣀⠠⢀⢀⠤⠒⠁⠉⠉⠢⡀   ⠁⢀  ⡄   ⠌   ⡸
+  96s ◆ ALPHA candidate revi       ⠙⡄⠐ ⠈⠄⡀⡀⡀⠈  ⠘⠠  ⠈ ⠈ ⠐  ⠂⢠⠃⢠⠂⠉⠄⢆⡀⢣      ⠄  ⠠⠈   ⡜⠁
+ 104s ✕ 13.3Hz flagged terre        ⠠⠐⠂⠉⠈⢈⠃⠈⠈⠑⠠⢄   ⠈   ⠈⠂⠁⠄⢸⠂⢸⡀●⣠BETA      ⡁⢌   ⣠⠋
+ 128s ◆ ALPHA lock acquired           ⠑⢄⠰⠆⣁⡠⠂⢠⠂ ⠁⠢⠠⠂⠂⡄⡂ ⠁⠠⠄⠈⢆⡀⠉⠉⢁⠤⠊      ⡀⠂   ⢄⠔⠁
+ 128s ◆ ALPHA localized                 ⠑⢤⣀⠐⠄⠌⣀⠂⠈⢀⠣ ⡀⠠⠠⡐⠑⠐ ⠄ ⠁⠉⠠⠁   ⠁ ⠄⠂⠁   ⣠⠔⠁
+ 176s ● BETA resolved                     ⠈⠣⠂⢁⢠⡨⠂⠈⠈⢑ ⠄⡀⠂⠈  ⠄ ⢀⠄⠐⡀⠄⠐⠈⠈    ⣀⠤⠋
+ 192s ▲ GAMMA lock acquired                  ⠉⠈⠁⠄⠂⠐⠐⠄     ⠁⠅⠁ ⠂⢄⠂    ⣀⠤⠒⠊⠁
+ 248s ◆ ALPHA resolved                           ⠈⠉⠒⠅⠤⠤⠄⣀⣀⣀⣄⠐⣀⣀⠤⠤⠔⠒⠊⠉
+ 256s ~ 4.5Hz flagged transi                               S
+
+
+
+
+ 0s   ━━━━━━━·━·━·━━━━━━●━━·━✕━━━━━◆━━━━━━━━━●━━━▲━━━━━━━━━━━◆━~━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃ 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

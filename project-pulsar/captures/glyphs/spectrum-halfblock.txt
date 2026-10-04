@@ -1,0 +1,24 @@
+ PULSAR ┃ SPECTRUM · overview ┃ t  300.0s (analysis 296s) ┃ ❚❚ ×4 ┃ seed 62
+▶◆ ALPHA      RESOLVED  INTEGRATED POWER SPECTRUM  whitened, 3 stations · throug
+   2.0893 Hz ±4.4e-5   1000┤
+   █████████████  100%     │
+   az 306° el 43° ±0.1  100┤                                          ▄✕13.3
+                           │              ▄~4.5                       █
+ ● BETA       RESOLVED   10┤▄▀▲▄2▄▀◆A▄▄▄▄▀2▄▄▄▄▄▄3▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█▄▄▄▄▄▄▄▄
+   5.4847 Hz ḟ-6.7e-4      │██▄█▄▄3█▄▄▄▄▄██▄▄█▄▄██▄▄▄▄██▄▄▄▄▄▄▄▄▄▄▄▄▄██▄▄▄▄▄██▄
+   █████████████  100%    1┤█████████████████▄●B███████████████████████████████
+   az 169° el 47° ±0.0     │██▀████▀████▀██████████████████████████████████████
+                           └┬───────────────┬──────────────┬───────────────┬───
+ ▲ GAMMA        LOCKED      0               5             10              15
+   0.5315 Hz ±8.9e-5    DYNAMIC SPECTRUM  32 s segments, time flows down · ● mod
+   █████████████  100%      ▒                ●                       ░░
+   no far-field fix (σ      ░             ·  ●  ··                   ░░  ·
+                            ▒     ·       ░  ●      ·                ░░·
+ INTERFERENCE               ▒             ·  ●     ·              ·  ▒▒
+ ~  4.51 Hz transient       ▒                ●                       ░░
+ ✕ 13.30 Hz RFI             ·                ●                       ░░
+
+
+
+ 0s   ━━━━·━··━━━●━·━✕━━◆━━━━━━●━▲━━━━━━━◆~━━━━━┃───────────────────────── 480s
+ 1-6 view  ←→ time  Tab signal  f focus  m compare  i inspect  ? help  q quit

@@ -1,0 +1,15 @@
+ PULSAR ┃ SKY ┃ t 300.0s ┃ ❚❚ ×4 ┃ COMPARE
+ ◆A DONE ███ ●B DONE ███ ▲C LOCK ███
+ ◀ EARLIER t=64s · ALPHA CANDIDATE
+                   ⣀◆⡀A⡀
+                W ⠰⠁⣷+⠳⡀ E
+                  ⠈▲⣟C⠻B
+                     S
+ ▶ NOW t=300s · ALPHA RESOLVED
+                     N
+                   ⣀⠐⡄⡀⡄
+                W ⠠◆~+⢤⢀ E
+                  ⠈⠖⠛●⠈B
+                     S
+ 0s   ━━··◇●✕━◆━━●▲━━~━━┃─────────── 480s
+ 1-6 view ←→ time Tab sig m cmp ? q

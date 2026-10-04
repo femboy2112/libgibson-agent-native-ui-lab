@@ -1,0 +1,40 @@
+ PULSAR ┃ SPECTRUM · overview ┃ t  200.0s (analysis 200s) ┃ ❚❚ ×4 ┃ seed 62        ◆ALPHA FIX  ●BETA DONE  ▲GAMMA LOCK
+▶◆ ALPHA           LOCALIZED  INTEGRATED POWER SPECTRUM  whitened, 3 stations · through 200 s
+   2.0893 Hz ±8.8e-5             power (× floor)
+   ███████████████████  100% 100┤
+   az 316° el 51° ±0.14         │                                                                       ⡀✕13.3
+                                │                                                                       ⡇
+ ● BETA             RESOLVED    │                        ⠄?4.5                                          ⡇
+   5.5492 Hz ḟ-6.7e-4           │                        ⡇                                              ⡇
+   ███████████████████  100%  10┤           ⡀          ⠠2⡇                                              ⡇
+   az 168° el 50° ±0.10         │⠤⠤⠤⠂▲C⠤⠤⠤⠤⠤⠁◆A⠤⠤⠤⠤⠤⠤⠤⠤⢸⠤⡇⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⡇⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤
+                                │   ⡇       ⡇          ⢸ ⡇        ⠠3                   ⢀   ⢠       ⢠    ⡇
+ ▲ GAMMA              LOCKED    │⣸  ⡇ ⠐2  ⢀ ⡇   ⢀⡄  ⡆  ⢸ ⡇ ⢀   ⡄  ⢸ ⣇        ⢀⢀        ⢸ ⣰ ⢸       ⢸⡀ ⢠ ⡇      ⡀    ⢠
+   0.5316 Hz ±1.7e-4            │⢻  ⡇ ⢸⡆ ⡀⢸ ⢹⣤⢰⢰⢸⣷⡇⡄⣇⡀⢰⢸ ⡇ ⢸ ⣇ ⣧ ⢀⢸⡀⣿⣶⣶⡇⣾⢠⣦⢰⡄⢸⡄⣄⣄ ⣇⣦⣦⣾⢰⣿⣄⣿⡄⢸⡀ ⢸⡆⡄⡆⡄⢸⡇⡄⢸⢠⡇⣀⣶⡇⢠⡄⢰⡇⢀⢀⢰⢸⢸⡇⡀
+   █████████████░░░░░░   70%    │⢸⢠⡄⡇⣴⢸⡇⢸⢰⣿⣸⢸⣿⢸⡄⢸⣿⡇⡇⢀⡇⣾⢀⡄⡇⣿⢸⡇⣿⢰⣿⣦⣾⢸⣇⣿⣿⣿⣷⣿⣿⣿⣿⣇⢸⡇⣿⣿⣰⣿⣿⣿⣿⣿⣿⢠⡇⣿⢸⣧⣶⣼⡇⣿⣿⣿⣿⡇⣿⢸⣿⡇⣿⣿⡇⣾⡇⣸⡇⢸⣼⢸⢸⣿⡇⡇
+   az 118° el 57° ±1.12        1┤⢸⣾⢀⡇⣿⢸⡇⣾⠠3⣿⢸⣿⣿⣿⣿⣿⡇⣷⢸⡇⣿⢸⡇⡇⣿⢸⣷⣿⢀●B⣿⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⡇⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⡇⣿⢸⡟⣿⣿⡇⣿⣿⣿⣿⡇⣿⣿⣿⡇⣿⣿⡇⣿⡇⣿⡇⣼⣿⢸⢸⣿⣿⡇
+                                │⢸⣿⢸⡇⣿⢸⡇⣿⢸⣿⣿⢸⣿⣿⣿⣿⣿⡇⣿⢸⡇⣿⢸⡇⣇⣿⣿⢹⣿⢸⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⡇⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⡇⡿⣼⡇⣿⡿⣿⣿⣿⣿⢿⡇⣿⣿⡟⡇⣿⣿⣿⢿⣧⡇⣇⣿⣿⣿⣿⣿⣿⡇
+ INTERFERENCE                   │⢸⡇⢸⡇⣿⢸⡇⢹⢸⣿⣿⢸⣿⣿⣿⣿⡿⡇⣿⣿⡇⣿⢸⣿⡇⣿⣿⢸⣿⢸⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⠁⣿⣿⡿⣿⣿⣿⢸⣿⣿⢸⡇⡇⣿⡇⣿⡇⣿⡏⣿⣿⢸⡇⡇⣿⡇⡇⣿⣿⣿⢸⣿⡇⣿⣿⣿⣿⣿⣿⣿⡇
+ ?  4.51 Hz unassigned          │⢸⡇⢸⡇⣿⠘⠃⢸⢸⣿⣿⢸⢻⠃⣿⡟⡇⡇⠇⡿⠇⡟⢸⡿⡇⢸⣿⠸⣿⢸⢹⣿⢻⢸⣿⢸⣿⣿⣿⠻⣿⣿⣿⣿⠘⣿⡿⢻⡇⢻⢿⣿⢸⣿⣿⢸⡇⡇⣿⡇⡿⡇⢻⡇⣿⢿⠘⡇⡇⡇⡇⠇⡏⣿⢿⢸⢸⠁⣿⢹⢿⣿⣿⣿⣿⡇
+ ✕ 13.30 Hz RFI                 └┬─────────────────────────┬──────────────────────────┬──────────────────────────┬─────
+                                 0                         5                         10                         15
+ EVENTS                                                              frequency (Hz)
+  32s ▲ GAMMA candidate       DYNAMIC SPECTRUM  32 s segments, time flows down · ● model path of BETA
+  40s ● BETA candidate           ░                             ●                                       ░░
+  48s ◆ ALPHA candidate          ▒                             ●                                       ░░·
+  80s ● BETA lock acquired       ░                            ·●    ·                                  ░░
+  80s ● BETA localized           ··        ··           ··    ●●                                       ░░ ··  ·
+  96s ◆ ALPHA candidate revi     ▒░                     ░░    ●           ·                            ░░
+ 104s ✕ 13.3Hz flagged terre     ▒                      ··    ●                                        ░░
+ 128s ◆ ALPHA lock acquired
+ 128s ◆ ALPHA localized
+ 176s ● BETA resolved
+ 192s ▲ GAMMA lock acquired
+
+
+
+
+
+
+ 0s   ━━━━━━━·━·━·━━━━━━●━━·━✕━━━━━◆━━━━━━━━━●━━━▲━┃────────────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit
