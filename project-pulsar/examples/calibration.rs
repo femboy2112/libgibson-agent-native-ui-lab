@@ -3,13 +3,16 @@
 //! For many seeds, compare the final estimates with the injected truth in units of the
 //! analysis's own 1σ. A calibrated analysis has z-scores of order 1 and ~95 % of 2-D
 //! Mahalanobis² below 5.99.
-//!   cargo run --release --example calibration -- [n_seeds]
+//!   cargo run --release --example calibration -- [n_seeds] [first_seed]
+//! (Seeds 1-100 were used while tuning amplitudes and thresholds; pass 1000 for an
+//! out-of-sample check.)
 use pulsar::analysis::{Engine, Stage};
 use pulsar::scenario::{SigId, N_CP, T_END};
 
 fn main() {
     let n: u64 = std::env::args().nth(1).and_then(|s| s.parse().ok()).unwrap_or(16);
-    let seeds: Vec<u64> = (1..=n).collect();
+    let first: u64 = std::env::args().nth(2).and_then(|s| s.parse().ok()).unwrap_or(1);
+    let seeds: Vec<u64> = (first..first + n).collect();
     let results: Vec<_> = std::thread::scope(|s| {
         let hs: Vec<_> = seeds
             .chunks(seeds.len().div_ceil(6))

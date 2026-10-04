@@ -163,7 +163,10 @@ orthographic projection (its own doc defers them).
 `cargo run --release --example calibration -- 24` (24 universes, final estimates vs injected truth,
 in units of the analysis' *own* 1σ): frequency z-score rms **1.03 / 0.76 / 0.95**
 (ALPHA / BETA / GAMMA); position Mahalanobis² mean **1.34 / 0.87 / 1.76** (ideal 2: the stated
-sky uncertainty is slightly conservative), inside the 95 % region 23/24, 24/24, 24/24.
+sky uncertainty is, if anything, slightly conservative), inside the 95 % region 23/24, 24/24, 24/24.
+Seeds 1–100 were used while tuning amplitudes and thresholds, so the honest number is the
+**out-of-sample** one — `calibration -- 30 1000` (seeds 1000–1029): z-score rms **1.29 / 0.87 / 1.02**,
+Mahalanobis² mean **1.82 / 1.34 / 2.24**, inside the 95 % region 30/30, 30/30, 28/30.
 `--example null_scan -- 24`: on 24 noise-only universes (4320 identity-checkpoints) there are
 **0 locks**, 101 candidate-checkpoints (2.3 %), 10/24 universes with a transient false candidate.
 
