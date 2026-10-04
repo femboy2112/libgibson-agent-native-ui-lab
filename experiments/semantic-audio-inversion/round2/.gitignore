@@ -5,6 +5,9 @@ __pycache__/
 *.mp3
 *.flac
 *.npz
+*.tar
+*.tar.zst
+*.zip
 analysis_out/
 cover_out/
 local/
