@@ -1,0 +1,29 @@
+{
+  "schema": "sai.round2_instrument_freeze/v1",
+  "commit": "0eb6748edc7cb82dc248de66fa872c0f7c10bb85",
+  "libgibson_anchor": "c2f6483d92fe2b351e6cd50936a97d8cdf73cb79",
+  "files": {
+    "python/sai_v2/__init__.py": "7ae8948bd7824a8189051e090c36eaf4d37be049f4b169455fa8b7c175a6bcfa",
+    "python/sai_v2/ablate.py": "f97e3dcc57b2a50980b01044ff5bcf6bba4084409ddc1891e403e39f4835a41b",
+    "python/sai_v2/calibrate.py": "89644e0687f5c3f2e3e199e0d6e5a3c8c3f947b433620690425a89af60c9ee9f",
+    "python/sai_v2/campaign.py": "60cedb2b42dd71606696a4a7a7ee5c871ba116cfec2876aa40e9a453fe4a2c2c",
+    "python/sai_v2/corpus.py": "f7fb9acb620bf778ab352f12e938028db5c45ca1e036f117f3ebad4ef869c7a0",
+    "python/sai_v2/ensemble_probe.py": "ff6aea9b5b2951b14e3d4e8fbd81c25e7f976663c40ed6ab55e477e8c7bd5249",
+    "python/sai_v2/evaluate.py": "f944ccdf64ff3f4fbf35b89caed247765811c6fa3bf6573db5bba6e403fea4f1",
+    "python/sai_v2/model.py": "dc00aaaa6316216f79a1d6dc46b49e8996f60d8bedac0041dd715b62862f79e0",
+    "python/sai_v2/observe.py": "f72bef4dce329214a0cbdc1e6da12f2c4f53b7e2c1c3465e0c23599d195623fd",
+    "python/sai_v2/production.py": "db9676a1287864221f92ad10852cef07eab78744f3c70fda578e1d9ce6aeef18",
+    "python/sai_v2/rank.py": "8f3b26398a4430e194bba3a9a72b775a6f44cc3781fe01417840aa5fe4676f98",
+    "python/sai_v2/relations.py": "eae826454c0bc8eef3b636cafe314ffe6f60e3aa2449d980acd245d01af098f2",
+    "python/sai_v2/report.py": "e5e7b6c28230106fc9ab1ad2ccbab00a275c08c5ad488efe1524165b2d07477c",
+    "python/sai_v2/run.py": "a456eb03f48737fd4ab526f43215dc040b45e31c7516e7b9f8efa7e7fa4c2287",
+    "renderer/src/ensemble.rs": "825ec169fcf2ca7059f963b13a1d9fef0e83c5b6742078ca8dc84a13911cb4a5",
+    "renderer/src/main.rs": "437cfc16015699e3767bccf020fc1b79c988740d42feb3e7937d643bd68ac28b",
+    "tests/test_corpus.py": "0efac425556bbb7a1b5ce7be4c46b78c9f94ad90885d162975eb2b437e5d76ba",
+    "tests/test_relations.py": "f832c6ecdb89bfd29d132194115bd7c753721e4967f7585bb20975372ae8ab28",
+    "tests/test_runner.py": "d311d01d8230fbebecf6d682c6e0c12efb31929e53b2352d5a51021376ae05c6",
+    "schemas/stem_evidence_v2.schema.json": "8a71a7708b7d9381ea3c992baacd1e97ecfc526ae8ee54d553d8c25148ecf539"
+  },
+  "purpose": "freeze before generating a new uninspected holdout; no further tuning on it",
+  "old_holdout": "untouched"
+}

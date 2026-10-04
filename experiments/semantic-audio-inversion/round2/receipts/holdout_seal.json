@@ -1,0 +1,10 @@
+{
+  "schema": "sai.holdout_seal/v1",
+  "instrument_freeze_commit": "0eb6748edc7cb82dc248de66fa872c0f7c10bb85",
+  "root": "/home/leah/ANAL_MUSIC/cover_out/round2_holdout_sealed",
+  "files": 61,
+  "bytes": 96774529,
+  "file_manifest_sha256": "613a9091c4b61cd870f68a3f93f68f3b3af24ea42fad3fb54552c73f3e7ce35e",
+  "inspection": "Files streamed only for custody hashes; no truth JSON parsed, no PCM analyzed or auditioned",
+  "old_round1_holdout": "untouched"
+}
