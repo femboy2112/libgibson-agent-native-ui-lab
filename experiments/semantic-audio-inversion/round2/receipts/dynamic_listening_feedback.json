@@ -1,0 +1,12 @@
+{
+  "source_id": "track-003",
+  "candidate": "track-003/dynamic_ensemble_control/BLACK_ICE",
+  "render_sha256": "5f3ae4efe98bb78995914a452c61914a89bec574e55f8785ca01fe1c93da098b",
+  "recognizable": true,
+  "acceptable_quality": false,
+  "recognition_scope": "partial: underlying song audible beneath severe garble",
+  "listener": "maintainer",
+  "date": "2026-10-04",
+  "assessment": "Sounds like a garbled mess, like an out-of-tune radio, but the song can be heard underneath the garble.",
+  "claim_update": "Partial recognition observed for measurement playback only. Quality failed. No checked-cover admission."
+}

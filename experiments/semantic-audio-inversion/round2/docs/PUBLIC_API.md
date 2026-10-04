@@ -147,6 +147,7 @@ renderer/target/release/sai-round2-renderer dev /LOCAL/round2-dev 22050
 renderer/target/release/sai-round2-renderer cover /LOCAL/model.json /LOCAL/track 220901,220902 22050
 renderer/target/release/sai-round2-renderer probe /LOCAL/model.json /LOCAL/profile-probe
 renderer/target/release/sai-round2-renderer native-pocket /LOCAL/model.json /LOCAL/track/treatments/native-pocket 220901,220902 22050
+renderer/target/release/sai-round2-renderer ensemble /LOCAL/model.json /LOCAL/dynamic_ensemble_control 22050
 ```
 
 `dev` creates six freshly generated development objects, two trace shapes in
@@ -157,3 +158,49 @@ not receive them. `holdout OUT SR` uses the distinct seed family
 `sai.round2_holdout/v1`. It is only for execution after the instrument freeze;
 the generator has no analysis/evaluation route. Both dataset commands require a
 fresh empty directory. The original Round-1 holdout is never accessed.
+
+## Post-audition measurement playback
+
+The maintainer rejected the track-003 baseline candidate as unrecognizable.
+Internal admission and note-onset scores do not override that listening result.
+One concrete loss is visible in the native implementation: when a Metric line
+has no observed rest bound, `source_notes` chooses its gate from the gap to the
+next attack, multiplied by 0.58–0.9 and capped at three beats. The generated
+backing and free drum part can further obscure the source's articulation and
+syncopation. Adding `reserved_until` is not merely an articulation hint: the
+primitive conformance check enforces it even if a manually constructed map says
+Metric. Official Metric projection removes these bounds. We do not mislabel a
+stronger rest invariant as a free realization choice.
+
+The separate `ensemble` route is a falsifying measurement-playback instrument,
+not a newly admitted cover. It constructs public `Score`/`Note`/`DrumHit` values
+from raw onset/offset **seconds**, using a 60 BPM render clock so one internal
+beat equals one second. It does not normalize source tempo drift, replace gates
+with inter-onset gaps, invent a chord chart, or generate accompaniment. Pitched
+functions stay unclassified and public composition admission is explicitly
+`not_applicable`.
+
+Each selected source lane is rendered independently. The policy uses ft
+vocals/bass plus 6s guitar/piano/other when present, falling back to ft other only
+without those 6s harmonic observations; it never doubles the overlapping support
+separator routes. Role assignment uses register, overlap, and gate duration, with
+the stem label retained as a prior. The selected observation-lane count is not
+proof of the true ensemble's instrument count: separation leakage and CQT
+harmonics can produce spurious lanes and notes. In particular, very weak measured
+stems can still contain transcription events. These remain an inference issue,
+not permission to invent a missing band part.
+
+The synth's fixed pools (Lead/Bass three voices, Keys/Pad six) are not expanded
+upstream. The lab packs events into enough independent synth instances to avoid
+pool stealing while preserving the musical lane and every event. The fixed
+dry/60-ms-release diagnostic production control keeps the native oscillator and
+filter recipes and limits time smearing. All three world palettes are rendered.
+Aggregate role stems and independent lane WAVs share exact alignment.
+
+The primary control uses native role patches unchanged, no source gain/EQ/pan
+fit, and one global conservative headroom factor. Source RMS and spectral targets
+are a **deferred recipe** until structure is validated. The initially rendered
+source-RMS/centroid-fitted versions are retained locally as explicitly designated
+exploratory secondary calibration, not substituted for the primary control or
+treated as evidence of musical success. Current `ensemble` commands reproduce
+the unfitted control.

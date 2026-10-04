@@ -43,8 +43,8 @@ def _unknown(reason, **details):
 
 def quality_family(quality):
     groups = {
-        "major": {"maj", "major", "maj7", "major7", "dom7", "7", "6", "maj6", "9", "dom9", "maj9"},
-        "minor": {"min", "minor", "m", "min7", "minor7", "m7", "min6", "min9"},
+        "major": {"maj", "major", "maj7", "major7", "dom7", "7", "6", "maj6", "9", "dom9", "maj9", "add9"},
+        "minor": {"min", "minor", "m", "min7", "minor7", "m7", "min6", "m6", "min9", "minmaj7"},
         "diminished": {"dim", "diminished", "dim7", "min7b5", "half-diminished"},
         "augmented": {"aug", "augmented"}, "suspended": {"sus", "sus2", "sus4"},
     }

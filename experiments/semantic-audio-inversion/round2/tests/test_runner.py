@@ -9,10 +9,22 @@ import soundfile as sf
 from sai_v2.rank import rank_candidates, REQUIRED
 from sai_v2.production import fit_stems
 from sai_v2.observe import production_features, yin_events
-from sai_v2.evaluate import octave_line_f1, drums_metric, transported_source
+from sai_v2.evaluate import octave_line_f1, drums_metric, transported_source, phrase_residual
+from sai_v2.relations import quality_family
 
 
 class RunnerTests(unittest.TestCase):
+    def test_correct_attacks_do_not_hide_filled_rests(self):
+        a = [{"onset_beat": 0, "duration_beats": .25, "pitch_midi": 60},
+             {"onset_beat": 1, "duration_beats": .25, "pitch_midi": 62}]
+        b = [{"onset_beat": 0, "offset_beat": .9, "pitch_midi": 60},
+             {"onset_beat": 1, "offset_beat": 1.25, "pitch_midi": 62}]
+        self.assertEqual(octave_line_f1(a, b)["f1"], 1.)
+        self.assertGreater(phrase_residual(a, b)["rest_intrusion_fraction"], .8)
+    def test_public_quality_family_complete_extensions(self):
+        self.assertEqual(quality_family("add9"), "major")
+        self.assertEqual(quality_family("minmaj7"), "minor")
+        self.assertEqual(quality_family("m6"), "minor")
     def test_global_preroll_transport_every_coordinate(self):
         source = {"duration_beats": 4, "notes": [{"onset_beat": 1, "duration_beats": .5}],
                   "drums": [{"onset_beat": 1, "metric_onset_beat": 1}],

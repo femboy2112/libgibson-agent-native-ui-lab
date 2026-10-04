@@ -17,10 +17,16 @@ def produce_if_eligible(source, candidate, observations, checks, admitted, prero
     if admitted is not True or not structurally_valid({"gates": checks}):
         return fit_stems({}, {}, candidate/"processed_mix.wav", structural_pass=False)
     track = Path(source["provenance"]["blueprint"]["artifact"]).parents[1]
-    aliases = {"lead": "vocals", "bass": "bass", "drums": "drums", "support": "other"}
     targets = {}
-    for role, label in aliases.items():
-        matches = list((track/"separation").glob(f"htdemucs_ft/{label}.wav"))
+    for role in ("lead", "bass", "drums", "support"):
+        events = source.get("drums", []) if role == "drums" else [n for n in source["notes"] if n["role"] == role]
+        routes = {(n.get("provenance", {}).get("model"), n.get("provenance", {}).get("stem_label")) for n in events}
+        if len(routes) != 1:
+            continue  # role ambiguity is not permission to choose vocals or another stem
+        model, label = routes.pop()
+        if not model or not label:
+            continue
+        matches = list((track/"separation").glob(f"{model}/{label}.wav"))
         if len(matches) == 1:
             targets[role] = production_features(matches[0])
     stems = {role: candidate/"stems"/(role+".wav") for role in ("lead", "bass", "drums", "support", "sfx")}
@@ -41,6 +47,8 @@ def brief(residual):
             "lead_note_f1": residual["lead"]["f1"], "bass_note_f1": residual["bass"]["f1"],
             "lead_octave_f1": residual["lead_octave_quotient"]["f1"],
             "bass_octave_f1": residual["bass_octave_quotient"]["f1"],
+            "lead_rest_intrusion": residual["phrase"]["lead"]["rest_intrusion_fraction"],
+            "bass_rest_intrusion": residual["phrase"]["bass"]["rest_intrusion_fraction"],
             "motif": residual["motif"].get("relation"),
             "motif_relative_f1": residual["motif"].get("relative_note_match", {}).get("f1"),
             "bass": residual["bass_figure"].get("relation"),
@@ -49,6 +57,7 @@ def brief(residual):
             "harmony_family_agreement": residual["harmony"].get("family_agreement"),
             "groove": residual["groove"].get("relation"),
             "groove_f1": residual["groove"].get("full", {}).get("f1"),
+            "drum_onset_f1": residual["drum_onset_match"]["f1"],
             "form": residual["form"].get("relation")}
 
 
@@ -62,6 +71,8 @@ def evaluate_track(directory):
     if not receipt_file.exists():
         receipt_file = d.parent.parent/"source_receipt.json"
     receipt = json.loads(receipt_file.read_text())
+    feedback_path = receipt_file.parent.parent/"LISTENING_FEEDBACK.json"
+    feedback = json.loads(feedback_path.read_text())["items"] if feedback_path.exists() else []
     manifest = json.loads((d/"candidate_manifest.json").read_text())
     source_production = production_features(receipt["source_path"])
     write_json(d/"source_production_observation.json", source_production)
@@ -87,12 +98,19 @@ def evaluate_track(directory):
                 residual.pop(key)
         checks = gates(residual)
         checks["all_source_axes_represented"] = not config.get("unrepresented_observed_axes")
+        render_receipt = json.loads((c/"render_receipt.json").read_text())
+        mix_hash = next(x["sha256"] for x in render_receipt if x["stem"] == "full")
+        hearing = next((x for x in feedback if x["render_sha256"] == mix_hash), None)
+        residual["maintainer_listening"] = hearing or {"status": "UNVERIFIED"}
+        if hearing is not None:
+            checks["maintainer_recognition"] = hearing["recognizable"] is True
         residual["gates"] = checks
         residual["internal_admission"] = conformance["admitted"]
         prod = distance(source_production, observations["full"]["production"])
         residual["production"] = prod
         write_json(c/"residuals.json", residual)
         row.update(gates=checks, residual=brief(residual), production_residual=prod,
+                   maintainer_listening=residual["maintainer_listening"],
                    musical_residual=[1-residual["lead_octave_quotient"]["f1"], 1-residual["bass_octave_quotient"]["f1"],
                                      1-residual["harmony"].get("root_agreement", 0)])
         # All actual fits are gated. Failure still emits the explicit production receipt.
@@ -102,10 +120,13 @@ def evaluate_track(directory):
     ranking = rank_candidates(rows)
     # A rejected render can be offered for diagnosis, but cannot become a winner.
     diagnostic = ranking["diagnostic_best"] or next((r["candidate_id"] for r in rows if "residual" in r), None)
-    report = {"source_id": d.name, "source_receipt": receipt,
+    heard = [r["maintainer_listening"] for r in rows if r.get("maintainer_listening", {}).get("recognizable") is not None]
+    perceptual = ("Refuted for the hash-bound auditioned candidate; other candidates UNVERIFIED"
+                  if any(x["recognizable"] is False for x in heard) else "UNVERIFIED: maintainer listening required")
+    report = {"source_id": source["source_id"], "source_receipt": receipt,
               "candidates": rows, "ranking": ranking, "listening_diagnostic": diagnostic,
               "structural_success": ranking["winner"] is not None,
-              "perceptual_quality": "UNVERIFIED: maintainer listening required"}
+              "perceptual_quality": perceptual, "maintainer_listening": heard}
     write_json(d/"ROUND2_RESULT.json", report)
     reports = d/"reports"
     reports.mkdir(exist_ok=True)
@@ -138,7 +159,7 @@ def evaluate_track(directory):
         notes = [f"# Listening queue: {d.name}", "", status, "",
                  f"Raw HumanMusic: `{destination}`", "",
                  "Listen against the source's corresponding metric positions; measured beat warping makes wall-clock timestamps differ.",
-                 "Check the first lead entry, each repeated phrase, bass continuity, and section changes. No listener has certified these renders.", "",
+                 "Check the first lead entry, each repeated phrase, bass continuity, and section changes. " + perceptual + ".", "",
                  ("Produced cover passed its post-processing re-analysis; listening remains required."
                   if (best/"produced_cover.wav").exists() else "The produced_cover.wav is withheld because observational structure has not passed. Raw rejected audio is for diagnosis only."), "",
                  "| Candidate | World | Admitted | Audio |", "| --- | --- | --- | --- |"]
@@ -151,7 +172,7 @@ def evaluate_track(directory):
         (reports/"LISTENING_NOTES.md").write_text("\n".join(notes)+"\n")
     (reports/"ROUND2_REPORT.md").write_text(
         f"# {d.name}: measured Round-2 result\n\n"+
-        f"Structurally eligible winner: {ranking['winner']}. Perceptual quality UNVERIFIED.\n\n"+
+        f"Structurally eligible winner: {ranking['winner']}. {perceptual}.\n\n"+
         "Complete per-axis values, refusal receipts and candidate order: ../ROUND2_RESULT.json.\n"+
         "Production is deferred while musical gates fail; internal cover conformance is not observational identity.\n")
     return report

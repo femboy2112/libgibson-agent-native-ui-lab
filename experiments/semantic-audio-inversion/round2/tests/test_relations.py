@@ -252,5 +252,48 @@ class MotifOccurrenceTests(unittest.TestCase):
         self.assertEqual(compare_motif_occurrences(self.repeated(), b, self.windows())["metric_fraction"], 0)
 
 
+class PhraseIntervalTests(unittest.TestCase):
+    def compare(self, a, b):
+        from sai_v2.evaluate import phrase_residual
+        return phrase_residual(a, b)
+
+    def test_overlapping_source_notes_do_not_manufacture_rests(self):
+        a = [dict(onset_beat=0, offset_beat=4, pitch_midi=60),
+             dict(onset_beat=1, offset_beat=1.2, pitch_midi=62),
+             dict(onset_beat=5, offset_beat=6, pitch_midi=64)]
+        r = self.compare(a, a)
+        self.assertEqual(r["source_gap_count"], 1)
+        self.assertEqual(r["source_rest_beats"], 1)
+        self.assertEqual(r["rest_intrusion_fraction"], 0)
+
+    def test_offset_alignment_uses_comparator_tie_order(self):
+        # Caller orders coincident pitches differently; matching sorts by pitch.
+        a = [dict(onset_beat=0, offset_beat=2, pitch_midi=64),
+             dict(onset_beat=0, offset_beat=1, pitch_midi=60),
+             dict(onset_beat=4, offset_beat=5, pitch_midi=67)]
+        b = [a[1], a[0], a[2]]
+        r = self.compare(a, b)
+        self.assertEqual(r["matched_offset_median_error_beats"], 0)
+        self.assertEqual(r["source_rest_beats"], 2)
+
+    def test_missing_release_or_observation_is_unknown(self):
+        a = [dict(onset_beat=i, pitch_midi=60+i) for i in (0, 2)]
+        b = [{**x, "offset_beat": x["onset_beat"]+.5} for x in a]
+        for left, right in ((a, b), (b, a), (b, [])):
+            r = self.compare(left, right)
+            self.assertEqual(r["status"], "unknown")
+            self.assertIsNone(r["rest_intrusion_fraction"])
+
+    def test_overlapping_observations_count_occupied_time_once(self):
+        a = [dict(onset_beat=0, offset_beat=1, pitch_midi=60),
+             dict(onset_beat=4, offset_beat=5, pitch_midi=62)]
+        b = [dict(onset_beat=0, offset_beat=3, pitch_midi=60),
+             dict(onset_beat=1, offset_beat=2.5, pitch_midi=64),
+             a[1]]
+        r = self.compare(a, b)
+        self.assertEqual(r["source_rest_beats"], 3)
+        self.assertEqual(r["intrusion_beats"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()

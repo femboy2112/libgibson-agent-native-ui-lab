@@ -80,3 +80,21 @@ lines. Such axes remain visible in the source object and full-profile refusal.
 
 No real audio, full real transcription, source filenames, lyrics, or generated real
 cover WAVs belong in Git. Local receipts and listening artifacts live outside the repo.
+
+## Dynamic ensemble discriminator
+
+The maintainer rejected the admitted track-003 cover as unrecognizable. A separate
+`ensemble INPUT OUT [SR]` renderer command uses public Score/Instrument/Synth surfaces
+to play measured source lanes with their original seconds and release bounds. It
+adds no generic accompaniment. Its admission is **not applicable**: this is direct
+measurement playback, not a fresh checked cover. Observational lanes are not proven
+physical instrument counts. Uncertain CQT detections can produce severe garble.
+
+The default is an unfitted world-law control. Source gain/spectral targets are
+deferred metadata. `python -m sai_v2.ensemble_probe WORLD_DIRECTORY` re-analyzes its
+actual PCM, checks the immutable source snapshot hash, and retains every failed gate.
+`python -m sai_v2.ablate WORLD_DIRECTORY` emits aligned lead-only, rhythm+lead, and
+support-only listening contrasts at unchanged gain. No ablation becomes a winner.
+
+Read [REPORT.md](REPORT.md) and [CLAIM_LEDGER.md](CLAIM_LEDGER.md) for the measured
+outcome, negative and partial-positive listening evidence, and unresolved API gaps.

@@ -1,0 +1,11 @@
+{
+  "schema": "sai.listener_feedback/v1",
+  "listener": "maintainer",
+  "date": "2026-10-04",
+  "candidate": "track-003/candidates/candidate-002",
+  "render_sha256": "53e83da48e856e4bdff063d02d66ae5151ae6338080402bd1adb2ab2303647d8",
+  "recognizable": false,
+  "assessment": "Not recognizable without returning to the original; missing groove, syncopation and identity-bearing notes; heard as heavily quantized generic harmony.",
+  "proposed_direction": "Source-driven ensemble size and relational instrument timbre.",
+  "claim_update": "Listener recognition refuted for this exact candidate; note agreement does not certify song identity."
+}

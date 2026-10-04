@@ -1,4 +1,5 @@
 //! External consumer of the reviewed HumanMusic release. All recordings stay local.
+mod ensemble;
 use gibson::audio::human_music::{
     contract::CompositionGrammar,
     cover::*,
@@ -622,6 +623,10 @@ fn run_real(input: &Path, out: &Path, seeds: &[u64], sr: u32, native_pocket: boo
                 &out.join("compilation_refusal.json"),
                 &json!({"source_id":source.source_id,"error":e,"input_sha256":sha(&bytes)}),
             )?;
+            write_json(
+                &out.join("candidate_manifest.json"),
+                &json!({"status":"compilation_refused","source_id":source.source_id,"input_sha256":sha(&bytes),"compilation_refusal":e,"candidates":[]}),
+            )?;
             return Err(e);
         }
     };
@@ -707,6 +712,11 @@ fn main() {
 fn cli() -> Result<()> {
     let args: Vec<_> = std::env::args().collect();
     match args.get(1).map(String::as_str) {
+        Some("ensemble") => ensemble::run(
+            Path::new(args.get(2).ok_or("ensemble INPUT OUT [SR]")?),
+            Path::new(args.get(3).ok_or("ensemble INPUT OUT [SR]")?),
+            args.get(4).map(|x| x.parse().unwrap()).unwrap_or(22050),
+        ),
         Some("probe") => probe(
             Path::new(args.get(2).ok_or("probe INPUT OUT")?),
             Path::new(args.get(3).ok_or("probe INPUT OUT")?),
