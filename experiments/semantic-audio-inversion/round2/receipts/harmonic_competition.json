@@ -1,0 +1,300 @@
+{
+  "schema": "sai.harmonic_competition_probe/v1",
+  "contract": {
+    "sample_rate": 22050,
+    "hop": 512,
+    "fft": 8192,
+    "pitch_range_inclusive": [
+      36,
+      95
+    ],
+    "families": [
+      "decay1",
+      "decay2",
+      "odd",
+      "weak_fundamental"
+    ],
+    "partials": 12,
+    "max_atoms": 6,
+    "baseline_threshold_db": -40,
+    "minimum_step_energy_fraction": 0.025,
+    "minimum_total_explained_fraction": 0.6,
+    "minimum_coefficient_fraction": 0.12,
+    "minimum_frame_rms": 1e-05,
+    "minimum_event_duration_sec": 0.06,
+    "rng_seed": 2026100401,
+    "tuning": "Predeclared; no search or adjustment after outcome inspection.",
+    "decision": "Candidate supported on this fixture set only if pitched micro F1 improves, neither null emits notes, and octave pair recall is at least .8; otherwise retain the exact failure.",
+    "script_sha256": "ae6fbf712151b143e0dfb3f24981758be57693401581111f70027fca60ce8ca5",
+    "archived_mir_lib_sha256": "c8610967367fa21de6d02487a0d4d984ef9d5f0000d8e573cc0a13cb62713942"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "librosa": "1.0.0"
+  },
+  "boundary": "Exploratory synthetic probe. No source replacement, no pin promotion, no holdout access. Analytic harmonic prior and synthetic additive generator share harmonic assumptions; off-model controls explicitly retained.",
+  "aggregate_pitched": {
+    "archived_cqt": {
+      "tp": 1673,
+      "fp": 3175,
+      "fn": 357,
+      "f1": 0.48647862750799653
+    },
+    "harmonic_competition": {
+      "tp": 1696,
+      "fp": 452,
+      "fn": 334,
+      "f1": 0.8118717089516515
+    }
+  },
+  "predeclared_success": true,
+  "nulls_pass": true,
+  "octave_recall": 1.0,
+  "cases": [
+    {
+      "name": "triad_regular",
+      "pcm_sha256": "4ffc8fc6b84c9b1c4fd434e5c282b5be40ec372b5777bc198c6cb63d5a033f85",
+      "archived_cqt": {
+        "tp": 273,
+        "fp": 260,
+        "fn": 0,
+        "precision": 0.5121951219512195,
+        "recall": 1.0,
+        "f1": 0.6774193548387096,
+        "event_count": 6
+      },
+      "harmonic_competition": {
+        "tp": 268,
+        "fp": 117,
+        "fn": 5,
+        "precision": 0.6961038961038961,
+        "recall": 0.9816849816849816,
+        "f1": 0.8145896656534954,
+        "event_count": 6
+      }
+    },
+    {
+      "name": "triad_strong_overtones",
+      "pcm_sha256": "cce0b2421a4f46a44ee148614826c8d04851e593fc0f3e7279754b6e950ca6f5",
+      "archived_cqt": {
+        "tp": 11,
+        "fp": 485,
+        "fn": 262,
+        "precision": 0.02217741935483871,
+        "recall": 0.040293040293040296,
+        "f1": 0.02860858257477243,
+        "event_count": 15
+      },
+      "harmonic_competition": {
+        "tp": 227,
+        "fp": 105,
+        "fn": 46,
+        "precision": 0.6837349397590361,
+        "recall": 0.8315018315018315,
+        "f1": 0.7504132231404959,
+        "event_count": 16
+      }
+    },
+    {
+      "name": "single_missing_fundamental",
+      "pcm_sha256": "3b3d1f76a0df4f4de950c1c44a4d169d2e9c3441b5bbede734d22068df04cc2b",
+      "archived_cqt": {
+        "tp": 0,
+        "fp": 544,
+        "fn": 91,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "event_count": 6
+      },
+      "harmonic_competition": {
+        "tp": 91,
+        "fp": 2,
+        "fn": 0,
+        "precision": 0.978494623655914,
+        "recall": 1.0,
+        "f1": 0.9891304347826086,
+        "event_count": 1
+      }
+    },
+    {
+      "name": "real_octave_pair",
+      "pcm_sha256": "0285effbcd5e6887d1b13195be7127d59d354c261e16875b0f5fb2a40b36de92",
+      "archived_cqt": {
+        "tp": 182,
+        "fp": 364,
+        "fn": 0,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "f1": 0.5,
+        "event_count": 6
+      },
+      "harmonic_competition": {
+        "tp": 182,
+        "fp": 25,
+        "fn": 0,
+        "precision": 0.8792270531400966,
+        "recall": 1.0,
+        "f1": 0.9357326478149101,
+        "event_count": 6
+      }
+    },
+    {
+      "name": "odd_partial_triad",
+      "pcm_sha256": "2d611ad1919961812184e87030adb728a43118987a2206dab1707186ddf8eabf",
+      "archived_cqt": {
+        "tp": 273,
+        "fp": 274,
+        "fn": 0,
+        "precision": 0.4990859232175503,
+        "recall": 1.0,
+        "f1": 0.6658536585365854,
+        "event_count": 6
+      },
+      "harmonic_competition": {
+        "tp": 273,
+        "fp": 30,
+        "fn": 0,
+        "precision": 0.900990099009901,
+        "recall": 1.0,
+        "f1": 0.9479166666666666,
+        "event_count": 7
+      }
+    },
+    {
+      "name": "detuned_triad",
+      "pcm_sha256": "6d7aac5cddac7d0e98399ee9ac537f2510886b80689812e761a9ed1e1307279c",
+      "archived_cqt": {
+        "tp": 270,
+        "fp": 259,
+        "fn": 3,
+        "precision": 0.5103969754253308,
+        "recall": 0.989010989010989,
+        "f1": 0.6733167082294265,
+        "event_count": 6
+      },
+      "harmonic_competition": {
+        "tp": 267,
+        "fp": 20,
+        "fn": 6,
+        "precision": 0.9303135888501742,
+        "recall": 0.978021978021978,
+        "f1": 0.9535714285714286,
+        "event_count": 6
+      }
+    },
+    {
+      "name": "inharmonic_triad",
+      "pcm_sha256": "122ddbe8bcc81ad3749c1bb69a412932e90888a418d813b599e4124a3bd1eb09",
+      "archived_cqt": {
+        "tp": 272,
+        "fp": 258,
+        "fn": 1,
+        "precision": 0.5132075471698113,
+        "recall": 0.9963369963369964,
+        "f1": 0.6774595267745953,
+        "event_count": 8
+      },
+      "harmonic_competition": {
+        "tp": 269,
+        "fp": 103,
+        "fn": 4,
+        "precision": 0.7231182795698925,
+        "recall": 0.9853479853479854,
+        "f1": 0.834108527131783,
+        "event_count": 4
+      }
+    },
+    {
+      "name": "staggered_phrase",
+      "pcm_sha256": "eb39edd00d06f45cc79eab43e1384372c3641bd0ff64ebe6efcb21e89624401e",
+      "archived_cqt": {
+        "tp": 119,
+        "fp": 452,
+        "fn": 0,
+        "precision": 0.2084063047285464,
+        "recall": 1.0,
+        "f1": 0.34492753623188405,
+        "event_count": 20
+      },
+      "harmonic_competition": {
+        "tp": 119,
+        "fp": 50,
+        "fn": 0,
+        "precision": 0.7041420118343196,
+        "recall": 1.0,
+        "f1": 0.8263888888888888,
+        "event_count": 8
+      }
+    },
+    {
+      "name": "quiet_triad_in_noise",
+      "pcm_sha256": "d73a80134b8c9c03831f91219e4601411f07e5f8c3a19334c971eacea38f4227",
+      "archived_cqt": {
+        "tp": 273,
+        "fp": 279,
+        "fn": 0,
+        "precision": 0.4945652173913043,
+        "recall": 1.0,
+        "f1": 0.6618181818181819,
+        "event_count": 19
+      },
+      "harmonic_competition": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 273,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "event_count": 0
+      }
+    },
+    {
+      "name": "silence",
+      "pcm_sha256": "94f6442463ebde701b516554636acd73486884f891952e8a7f74190d9eaf1785",
+      "archived_cqt": {
+        "tp": 0,
+        "fp": 720,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "event_count": 6
+      },
+      "harmonic_competition": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "event_count": 0
+      }
+    },
+    {
+      "name": "noise",
+      "pcm_sha256": "abec814a54e4357c1c4f121f7c368ed57fb41187e6b00098aa017d5de17000fc",
+      "archived_cqt": {
+        "tp": 0,
+        "fp": 146,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "event_count": 37
+      },
+      "harmonic_competition": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "event_count": 0
+      }
+    }
+  ],
+  "full_result_sha256": "e07eabdf29b160f27bd84555acf96c23ac7d644a3b9c5a2d7bca5bf183a1f9a3"
+}

@@ -16,6 +16,9 @@
 | Attack-only note F1 adequately measures phrase behavior | Refuted | Missing rests/elongated releases despite favorable attack matches; interval occupancy diagnostic added |
 | Quantization rounding alone caused the failed cover | Conjecture disfavored | Maximum event rounding about 1.2 ms on inspected track; backing and release policy changed much more. Not a complete causal decomposition |
 | Polyphonic overtones/quiet residual peaks cause support garble | Conjectured | Actual CQT implementation independently labels up to six relative-level peaks; near-silent piano stem has thousands of note candidates. Controlled harmonic competition probe needed |
+| Harmonic-family competition improves pitch recovery | Observed, bounded | Separate post-freeze synthetic probe: pitched occupancy F1 .486479→.811872; synthetic forward/inverse models share harmonic assumptions |
+| That proposal model universally improves transcription | Refuted | Quiet triad under noise loses every note; long FFT windows do not establish accurate rhythm |
+| The archived harmonic note extractor can hallucinate notes on silence | Observed | Unchanged CQT caller emits six events on digital silence; new probe emits zero |
 | Bass extraction parameters contribute to missing notes | Corroborated | Underresolved C1 frame warnings, synthetic gate failures, larger-window probe increases emissions; source pitch correctness unresolved |
 | Temporal harmonic comparison removes length degeneracy | Observed | Splitting/merging, half-span root mutation, extension-family lowering and spurious-transition regressions pass; original v1 unchanged |
 | Production fitting improves real-cover similarity without harming identity | UNVERIFIED | No checked real candidate reaches pre-fit gates. Synthetic fit/alignment/pitch tests pass; prematurely fitted dynamic explorations excluded |
