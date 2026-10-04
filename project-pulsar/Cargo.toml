@@ -6,6 +6,14 @@ publish = false
 license = "MIT OR Apache-2.0"
 description = "Project Pulsar — a deterministic synthetic deep-space signal observatory built on gibson::plot"
 
+[lib]
+name = "pulsar"
+path = "src/lib.rs"
+
+[[bin]]
+name = "project-pulsar"
+path = "src/main.rs"
+
 # LibGibson is pinned to an EXACT candidate revision (a git rev, not a branch).
 # Do not change this pin, do not add a path override.
 [dependencies]
@@ -15,3 +23,12 @@ libgibson = { git = "https://github.com/femboy2112/libgibson", rev = "8d69c0143c
 portable-pty = "0.9"
 vt100 = "0.16"
 libc = "0.2"
+
+# The observatory does real DSP (FFTs, dechirp search) on every checkpoint; an
+# unoptimised debug build makes `cargo test` and interactive playback needlessly
+# slow. Optimise the dev/test profile (debug assertions stay on).
+[profile.dev]
+opt-level = 2
+
+[profile.test]
+opt-level = 2
