@@ -70,7 +70,10 @@ freezing the observer, compiler and comparison code. Do not analyze it while tun
 
 Read [CORPUS_AUDIT.md](docs/CORPUS_AUDIT.md),
 [PUBLIC_API.md](docs/PUBLIC_API.md), [RELATIONS.md](docs/RELATIONS.md),
-[PROTOCOL.md](docs/PROTOCOL.md) and [BASS_WINDOW_PROBE.md](docs/BASS_WINDOW_PROBE.md).
+[PROTOCOL.md](docs/PROTOCOL.md), [BASS_WINDOW_PROBE.md](docs/BASS_WINDOW_PROBE.md),
+and [INVERSE_CAUSAL_SYNTHESIS.md](docs/INVERSE_CAUSAL_SYNTHESIS.md), which records the
+leading next-phase hypothesis: infer music by approximately inverting gesture/excitation/source
+physics before quotienting nuisance instrument parameters away.
 
 This is an analysis-by-synthesis consistency experiment, not unique recovery of the
 original score. Role separation improves contact with a line; it does not establish
