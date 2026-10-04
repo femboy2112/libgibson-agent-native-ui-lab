@@ -40,6 +40,9 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(a.identity_hash(),b.identity_hash())
         b.data['notes'][0]['midi']+=1
         self.assertNotEqual(a.identity_hash(),b.identity_hash())
+    def test_overlapping_harmony_rejected(self):
+        d=fixture();d['harmony'].append(copy.deepcopy(d['harmony'][0]))
+        with self.assertRaises(ValueError):StemEvidence(d)
     def test_provenance_required(self):
         d=fixture();d['notes'][0]['provenance']={}
         with self.assertRaises(ValueError):StemEvidence(d)

@@ -748,6 +748,58 @@ mod tests {
         "notes":[{"role":"lead","onset_beat":0,"duration_beats":1,"midi":60,"confidence":1},{"role":"lead","onset_beat":1,"duration_beats":1,"midi":64,"confidence":1},{"role":"lead","onset_beat":2,"duration_beats":1,"midi":67,"confidence":1}],"evidence_status":{"motif":"metric"}})).unwrap()
     }
     #[test]
+    fn synthetic_microspan_counterexample_stays_rejected() {
+        // Constructed fixture, not notes or chords transcribed from any recording.
+        // A minimum 0.1-beat pad gate outlasts the 10/256-beat foreign chord.
+        let mut s = source();
+        s.duration_beats = 32.;
+        for (i, n) in s.notes.iter_mut().enumerate() {
+            n.onset_beat = i as f64 * 8.;
+            n.midi = 67.;
+        }
+        s.evidence_status["harmony"] = json!("exact");
+        s.harmony = vec![
+            HarmonyEvidence {
+                start_beat: 0.,
+                end_beat: 4.,
+                root: 7,
+                quality: "min".into(),
+                confidence: 1.,
+            },
+            HarmonyEvidence {
+                start_beat: 4.,
+                end_beat: 4. + 10. / 256.,
+                root: 0,
+                quality: "min".into(),
+                confidence: 1.,
+            },
+            HarmonyEvidence {
+                start_beat: 4. + 10. / 256.,
+                end_beat: 32.,
+                root: 7,
+                quality: "min".into(),
+                confidence: 1.,
+            },
+        ];
+        let (map, _) = compile(&s).unwrap();
+        let world = MusicWorld::black_ice();
+        let target = CoverTarget {
+            world: &world,
+            seed: 220901,
+            grammar: CompositionGrammar::HookArc,
+            options: PerformanceOptions::default(),
+            profile: PerformanceProfile::BAND,
+        };
+        match cover(&map, target) {
+            Err(CoverError::Rejected(admission)) => {
+                assert!(admission.conformance.passes());
+                assert_eq!(admission.pipeline.temporal_false, 2);
+                assert!(!admission.pipeline.passes());
+            }
+            _ => panic!("known-red microspan no longer returned a checked rejection"),
+        }
+    }
+    #[test]
     fn native_pocket_transports_every_coordinate_once() {
         let mut s = source();
         s.beat_origin_offset = Some(0.25);

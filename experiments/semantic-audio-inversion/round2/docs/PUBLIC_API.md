@@ -128,6 +128,16 @@ the simultaneous-pitch constraint when its vocabulary has no lawful chord.
 These are consumer observations, not upstream repairs. Per-note proof receipts
 remain local with the copyrighted-input-derived artifacts.
 
+A synthetic regression reproduces this without any musical data from a song:
+32 beats, three G lead attacks at beats 0, 8 and 16, and G-minor harmony except
+for C minor during `[4,4+10/256)`. At the reviewed anchor, BLACK_ICE BAND seed
+220901 passes native cover conformance but returns a checked rejection with
+two false temporal-function claims. The test deliberately verifies that this
+known-red admission stays red; it does not call the underlying behavior fixed.
+The independent all-profile diagnostic also reproduced the two claims in
+VAPOR95. This isolates a native duration interaction from the uncertainty in
+real-song transcription.
+
 ## Commands
 
 ```sh
