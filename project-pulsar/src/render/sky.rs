@@ -29,19 +29,27 @@ pub const CLOUD_N: usize = 160;
 pub fn sample(seed: u64, id: SigId, p: &SignalProduct, i: usize) -> (f64, f64) {
     match (&p.sky, p.stage >= Stage::Candidate) {
         (Some(sk), true) => {
-            let z0 = gauss(seed, 700 + id.idx() as u64, 2 * i as u64);
-            let z1 = gauss(seed, 700 + id.idx() as u64, 2 * i as u64 + 1);
+            // The posterior is the measurement Gaussian *truncated to the visible sky*
+            // (the prior is zero below the horizon): rejection-sample, attempt 0 first,
+            // so a point only moves when its own draw stops being admissible.
             let l = chol2(sk.cov);
-            let (x, y) = (
-                sk.lm.0 + l[0][0] * z0,
-                sk.lm.1 + l[1][0] * z0 + l[1][1] * z1,
-            );
-            let r = (x * x + y * y).sqrt();
-            if r > 0.995 {
-                (x * 0.995 / r, y * 0.995 / r)
-            } else {
-                (x, y)
+            let mut last = (sk.lm.0, sk.lm.1);
+            for attempt in 0..16u64 {
+                let idx = 2 * (i as u64 + attempt * 100_003);
+                let z0 = gauss(seed, 700 + id.idx() as u64, idx);
+                let z1 = gauss(seed, 700 + id.idx() as u64, idx + 1);
+                let (x, y) = (
+                    sk.lm.0 + l[0][0] * z0,
+                    sk.lm.1 + l[1][0] * z0 + l[1][1] * z1,
+                );
+                last = (x, y);
+                if x * x + y * y <= 0.995 * 0.995 {
+                    return (x, y);
+                }
             }
+            // posterior mass essentially outside the disc: pin to the horizon
+            let r = (last.0 * last.0 + last.1 * last.1).sqrt().max(1e-9);
+            (last.0 * 0.995 / r, last.1 * 0.995 / r)
         }
         _ => {
             let u1 = unit(hash3(seed, 900 + id.idx() as u64, 2 * i as u64));
@@ -123,7 +131,7 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
     // ---- geometry: where does the disc go? ----
     let legend_side = r.width >= 90;
     let legend_rows: u16 = if !legend_side && r.height >= 20 { 6 } else { 0 };
-    let legend_w: u16 = if legend_side { 40.min(r.width / 2) } else { 0 };
+    let legend_w: u16 = if legend_side { 31.min(r.width / 2) } else { 0 };
     let avail_w = r.width - legend_w;
     let avail_h = r.height - legend_rows;
     let disc_h = avail_h.saturating_sub(2).min((avail_w.saturating_sub(4)) / 2).max(3);
@@ -199,6 +207,32 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
         }
     }
     paint_layer(&mut out.surf, &grid, origin, mode);
+
+    // ---- trails: where each identity's best position has been (a trace of identity) ----
+    for id in SigId::ALL {
+        let p = cp.signal(id);
+        let (Some(c0), true) = (p.cand_cp, p.stage >= Stage::Candidate) else { continue };
+        let sel = id == st.selected;
+        let col = scale(id_color(id, sel, st.focus), 0.6);
+        let mut trail = Layer {
+            canvas: BrailleCanvas::new(disc_w, disc_h),
+            style: style_b(col, false, true),
+        };
+        let mut prev: Option<(i32, i32)> = None;
+        for j in c0..=cp.k {
+            let sk = vin.eng.checkpoint(j).signal(id).sky;
+            let cur = sk.filter(|s| s.lm.0 * s.lm.0 + s.lm.1 * s.lm.1 < 0.99).map(|s| to_px(s.lm.0, s.lm.1));
+            if let (Some(a), Some(b)) = (prev, cur) {
+                // dotted: plot every third pixel of the segment
+                let n = ((b.0 - a.0).abs().max((b.1 - a.1).abs())).max(1);
+                for i in (0..=n).step_by(3) {
+                    trail.canvas.set(a.0 + (b.0 - a.0) * i / n, a.1 + (b.1 - a.1) * i / n);
+                }
+            }
+            prev = cur.or(prev);
+        }
+        paint_layer(&mut out.surf, &trail, origin, mode);
+    }
 
     // ---- layers per identity: cloud, ellipses ----
     let mut marks: Vec<(String, (f64, f64), f64)> = Vec::new();
@@ -401,8 +435,8 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
         for l in cp.interference().into_iter().filter(|l| l.class == LineClass::Terrestrial) {
             if legend_side {
                 let why = match &l.sky {
-                    Some(sk) if !sk.physical => "delays fit no far-field direction".to_string(),
-                    _ => format!("amplitude differs by station ({:.1}σ)", l.amp_z),
+                    Some(sk) if !sk.physical => "delays fit no far-field sky".to_string(),
+                    _ => format!("amp. differs by station {:.1}σ", l.amp_z),
                 };
                 line(
                     &mut out.surf,

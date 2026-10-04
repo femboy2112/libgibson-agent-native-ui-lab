@@ -40,6 +40,34 @@ pub fn growth_slope(g: &[(f64, f64)]) -> Option<f64> {
     }
 }
 
+/// Word-wrap `text` to `width`, continuation lines indented two further spaces.
+fn wrap_into(out: &mut Vec<(String, Style)>, text: String, st: Style, width: usize) {
+    if width < 12 || text.chars().count() <= width {
+        out.push((text, st));
+        return;
+    }
+    let indent: String = text.chars().take_while(|c| *c == ' ').collect();
+    let cont = format!("{indent}  ");
+    let mut line = indent.clone();
+    let mut first = true;
+    for word in text.trim_start().split(' ') {
+        let need = line.chars().count() + if line.trim().is_empty() { 0 } else { 1 } + word.chars().count();
+        if need > width && !line.trim().is_empty() {
+            out.push((std::mem::take(&mut line), st));
+            line = cont.clone();
+            first = false;
+        }
+        if !line.trim().is_empty() {
+            line.push(' ');
+        }
+        line.push_str(word);
+    }
+    let _ = first;
+    if !line.trim().is_empty() {
+        out.push((line, st));
+    }
+}
+
 fn ts(k: Option<usize>) -> String {
     k.map(|c| format!("{:.0}s", (c * CHUNK) as f64 / FS))
         .unwrap_or_else(|| "—".into())
@@ -69,18 +97,21 @@ pub fn identity_lines(cp: &Checkpoint, id: SigId, width: usize) -> Vec<(String, 
     }
     let m = p.model.unwrap();
     let per = if p.f_now > 0.0 { 1000.0 / p.f_now } else { f64::NAN };
-    let mut l1 = format!(
+    let l1 = format!(
         "    f = {:.5} Hz ± {:.1e}   P = {:.2} ms",
         p.f_now, p.f_sigma, per
     );
+    v.push((l1, style(INK)));
     if id == SigId::Beta {
-        l1.push_str(&format!(
-            "   drift ḟ = {:+.2e} Hz/s ({:+.2} Hz over the run)",
-            m.fdot,
-            m.fdot * T_END
+        v.push((
+            format!(
+                "    drift ḟ = {:+.2e} Hz/s ({:+.2} Hz over the whole run)",
+                m.fdot,
+                m.fdot * T_END
+            ),
+            style(INK),
         ));
     }
-    v.push((l1, style(INK)));
     v.push((
         format!(
             "    detection: log10 FAP {:.1} (≈{:.1}σ after trials) · confidence {:.0}%",
@@ -107,7 +138,7 @@ pub fn identity_lines(cp: &Checkpoint, id: SigId, width: usize) -> Vec<(String, 
             let lever = std::f64::consts::TAU * p.f_now * STATIONS[1].0 * 1e-3;
             v.push((
                 format!(
-                    "    position: unconstrained (1σ {:.2}): the {:.0} ms baseline spans only {:.2} rad of this source's cycle",
+                    "    position: unconstrained (1σ {:.2}): the {:.0} ms baseline spans only {:.2} rad of its cycle",
                     sk.sig_major, STATIONS[1].0, lever
                 ),
                 style(WARN),
@@ -120,19 +151,23 @@ pub fn identity_lines(cp: &Checkpoint, id: SigId, width: usize) -> Vec<(String, 
         .unwrap_or_else(|| "—".into());
     v.push((
         format!(
-            "    timeline: candidate {} · lock {} · fix {} · resolved {} · growth exponent {} (coherent ⇒ 0.5)",
+            "    timeline: candidate {} · lock {} · fix {} · resolved {}",
             ts(p.cand_cp),
             ts(p.lock_cp),
             ts(p.loc_cp),
             ts(p.res_cp),
-            slope
         ),
         style(MUTED),
     ));
-    for l in v.iter_mut() {
-        l.0 = truncate(&l.0, width);
+    v.push((
+        format!("    growth exponent {slope} (coherent integration ⇒ 0.5)"),
+        style(MUTED),
+    ));
+    let mut out = Vec::new();
+    for (t, s) in v {
+        wrap_into(&mut out, t, s, width);
     }
-    v
+    out
 }
 
 pub fn draw(vin: &ViewIn) -> ViewOut {
@@ -167,7 +202,7 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
         };
         for id in ids {
             for (t, s) in identity_lines(cp, id, w.saturating_sub(1)) {
-                lines.push((t, if st.focus == Focus::Signal || id == st.selected { s } else { s }));
+                lines.push((t, s));
             }
             lines.push((String::new(), style(INK)));
         }
@@ -208,25 +243,24 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
                     ),
                 ),
             };
-            lines.push((truncate(&format!("  {g} {:>6.2} Hz  {why}", l.f), w), style(c)));
+            wrap_into(&mut lines, format!("  {g} {:>6.2} Hz  {why}", l.f), style(c), w);
         }
         if !any {
             lines.push(("  none detected".to_string(), style(MUTED)));
         }
         for e in cp.events.iter().filter(|e| e.kind == EventKind::Revised) {
             if let Who::Sig(id) = e.who {
-                lines.push((
-                    truncate(
-                        &format!(
-                            "  {} {} candidate was revised at {:.0} s: its first frequency was built from interference",
-                            id.glyph(),
-                            id.name(),
-                            e.t()
-                        ),
-                        w,
+                wrap_into(
+                    &mut lines,
+                    format!(
+                        "  {} {} candidate was revised at {:.0} s: its first frequency was built from interference",
+                        id.glyph(),
+                        id.name(),
+                        e.t()
                     ),
                     style(MUTED),
-                ));
+                    w,
+                );
             }
         }
         lines.push((String::new(), style(INK)));
@@ -234,19 +268,18 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
             SigId::ALL.iter().filter(|i| f(cp.signal(**i).stage)).count()
         };
         // Localized/Resolved are fixed on the sky; Locked is phase-coherent only.
-        lines.push((
-            truncate(
-                &format!(
-                    "VERDICT  {} of 3 sources fixed on the sky, {} locked in phase only, {} still candidate; {} interferer(s) rejected",
-                    n(&|s| s >= Stage::Localized),
-                    n(&|s| s == Stage::Locked),
-                    n(&|s| s == Stage::Candidate),
-                    cp.interference().iter().filter(|l| l.class != LineClass::Unassigned).count()
-                ),
-                w,
+        wrap_into(
+            &mut lines,
+            format!(
+                "VERDICT  {} of 3 sources fixed on the sky, {} locked in phase only, {} still candidate; {} interferer(s) rejected",
+                n(&|s| s >= Stage::Localized),
+                n(&|s| s == Stage::Locked),
+                n(&|s| s == Stage::Candidate),
+                cp.interference().iter().filter(|l| l.class != LineClass::Unassigned).count()
             ),
             style_b(INK, true, false),
-        ));
+            w,
+        );
     } else {
         // compact: one or two lines per identity
         for id in SigId::ALL {

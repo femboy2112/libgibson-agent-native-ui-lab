@@ -581,6 +581,70 @@ mod tests {
         assert_eq!(parse_script(&text).unwrap(), cmds);
     }
 
+    fn key(c: KeyCode) -> KeyEvent {
+        KeyEvent::new(c, KeyModifiers::empty())
+    }
+
+    #[test]
+    fn keys_map_to_commands_and_the_goto_prompt_owns_the_keyboard() {
+        let mut m = Model::new(62);
+        let st = m.st.clone();
+        assert_eq!(cmd_for_key(&st, key(KeyCode::Char('5'))), Some(Cmd::SetView(View::Sky)));
+        assert_eq!(cmd_for_key(&st, key(KeyCode::Right)), Some(Cmd::Step(CHUNK as i64)));
+        assert_eq!(cmd_for_key(&st, key(KeyCode::Char('q'))), Some(Cmd::Quit));
+        assert_eq!(cmd_for_key(&st, key(KeyCode::Char('b'))), Some(Cmd::Select(SigId::Beta)));
+        assert_eq!(cmd_for_key(&st, key(KeyCode::Char('z'))), None);
+        // open the prompt: digits are text, not view switches; 'q' is just ignored text
+        m.apply(Cmd::GotoOpen);
+        let st = m.st.clone();
+        assert_eq!(cmd_for_key(&st, key(KeyCode::Char('5'))), Some(Cmd::GotoChar('5')));
+        for k in ['1', '2', '5', '.', '5'] {
+            m.apply(cmd_for_key(&m.st.clone(), key(KeyCode::Char(k))).unwrap());
+        }
+        m.apply(Cmd::GotoChar('x')); // ignored: not a digit
+        m.apply(Cmd::GotoSubmit);
+        assert_eq!(m.st.goto, None);
+        assert_eq!(m.st.n, secs_to_samples(125.5));
+        // out-of-range and unparsable goto never panic and clamp
+        m.apply(Cmd::GotoOpen);
+        for k in "99999".chars() {
+            m.apply(Cmd::GotoChar(k));
+        }
+        m.apply(Cmd::GotoSubmit);
+        assert_eq!(m.st.n, N_TOTAL);
+        m.apply(Cmd::GotoOpen);
+        m.apply(Cmd::GotoSubmit); // empty buffer: unchanged
+        assert_eq!(m.st.n, N_TOTAL);
+    }
+
+    #[test]
+    fn event_jumps_land_on_analysis_events_and_clamp_at_the_ends() {
+        let mut m = Model::new(62);
+        m.apply(Cmd::JumpEvent(1));
+        let first = m.st.n;
+        assert!(first > 0 && first % CHUNK == 0);
+        m.apply(Cmd::JumpEvent(-1));
+        assert_eq!(m.st.n, first, "no earlier event: stays");
+        m.apply(Cmd::Seek(N_TOTAL));
+        m.apply(Cmd::JumpEvent(1));
+        assert_eq!(m.st.n, N_TOTAL, "no later event: stays");
+    }
+
+    #[test]
+    fn playback_stops_at_the_end_and_replays_from_the_start() {
+        let mut m = Model::new(62);
+        m.apply(Cmd::Seek(N_TOTAL - 10));
+        m.apply(Cmd::TogglePlay);
+        assert!(m.st.playing || m.st.n == 0);
+        m.apply(Cmd::Seek(N_TOTAL - 10));
+        m.st.playing = true;
+        m.apply(Cmd::Advance(100));
+        assert_eq!(m.st.n, N_TOTAL);
+        assert!(!m.st.playing, "playback stops at the end of the observation");
+        m.apply(Cmd::TogglePlay);
+        assert_eq!(m.st.n, 0, "pressing play at the end rewinds");
+    }
+
     #[test]
     fn friendly_forms() {
         assert_eq!(parse_line("at 120").unwrap(), Some(Cmd::Seek(3840)));

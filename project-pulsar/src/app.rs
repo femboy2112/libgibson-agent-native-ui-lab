@@ -193,6 +193,72 @@ pub fn run_interactive(opts: RunOpts) -> io::Result<Session> {
     Ok(live.sess)
 }
 
+/// Play the built-in cue sheet on a real terminal (bounded: it stops after the last
+/// step, or on `q` / Ctrl-C). Step changes are scheduled from the loop's own elapsed
+/// time, but each step's *frame* is a pure function of the commands applied — so the
+/// picture at every step is identical to the headless `--demo` frame.
+pub fn run_demo_live(seed: u64, hold: Duration, mono: bool) -> io::Result<()> {
+    use crate::capture::DEMO;
+    use crate::session::parse_script;
+    let mut ctx = Context::fullscreen()?;
+    if mono {
+        ctx.set_color_depth(ColorDepth::Mono);
+    }
+    struct Demo {
+        sess: Session,
+        step: usize,
+        started: Option<Duration>,
+    }
+    let d = Demo {
+        sess: Session::new(seed),
+        step: 0,
+        started: None,
+    };
+    d.sess.model.engine.prewarm();
+    let result = App::fullscreen()
+        .skin(skins::BLACK_ICE)
+        .motion(MotionPreference::None)
+        .fps(20)
+        .run_with_context(
+            &mut ctx,
+            d,
+            |d, ev, _ctx| {
+                match ev {
+                    AppEvent::Input(Event::Key(k)) => {
+                        if matches!(k.code, gibson::KeyCode::Char('q') | gibson::KeyCode::Esc) {
+                            return Ok(Control::Quit);
+                        }
+                    }
+                    AppEvent::Tick(now) => {
+                        let due = match d.started {
+                            None => true,
+                            Some(t0) => now.saturating_sub(t0) >= hold,
+                        };
+                        if due {
+                            if d.step >= DEMO.len() {
+                                return Ok(Control::Quit);
+                            }
+                            if let Ok(cmds) = parse_script(DEMO[d.step].script) {
+                                for c in cmds {
+                                    d.sess.apply(c);
+                                }
+                            }
+                            d.sess.apply(Cmd::Frame(255));
+                            d.step += 1;
+                            d.started = Some(now);
+                        }
+                    }
+                    _ => {}
+                }
+                Ok(Control::Continue)
+            },
+            |d, cx| view(&d.sess.model, cx),
+        );
+    let restored = ctx.restore();
+    result?;
+    restored
+}
+
 pub fn glyph_name(g: SubcellGlyphMode) -> &'static str {
     match g {
         SubcellGlyphMode::Braille2x4 => "braille",

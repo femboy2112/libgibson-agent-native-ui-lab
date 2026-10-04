@@ -14,6 +14,22 @@ use crate::session::Focus;
 use gibson::plot::{self, Annotation, AxisScale, AxisSpec, PlotSpec, PlotView, Series};
 use gibson::Rect;
 
+/// Coherence of a phasor walk: `|ΣZ| / Σ|Z|` — 1 for a perfectly straight ray, about
+/// `0.89/√N` for the random walk of pure noise.
+pub fn coherence(walk: &[(f64, f64)]) -> Option<(f64, f64)> {
+    if walk.len() < 3 {
+        return None;
+    }
+    let steps = walk.windows(2).map(|w| (w[1].0 - w[0].0).hypot(w[1].1 - w[0].1));
+    let total: f64 = steps.sum();
+    let last = walk.last()?;
+    if total <= 0.0 {
+        return None;
+    }
+    let n = (walk.len() - 1) as f64;
+    Some((last.0.hypot(last.1) / total, 0.886 / n.sqrt()))
+}
+
 pub fn draw(vin: &ViewIn) -> ViewOut {
     let mut out = ViewOut::new(vin.rect);
     let r = vin.rect;
@@ -34,9 +50,72 @@ pub fn draw(vin: &ViewIn) -> ViewOut {
             Rect::new(0, ha, r.width, r.height - ha),
         )
     };
-    walk_plot(vin, &mut out, ra);
+    // In the side-by-side layout the walk is as tall as it is *wide* in pixels (equal
+    // scales need a roughly square plot); the rows beneath carry the coherence table.
+    let walk_h = if side {
+        (ra.width / 2 + 4).min(ra.height).max(8.min(ra.height))
+    } else {
+        ra.height
+    };
+    walk_plot(vin, &mut out, Rect::new(ra.x, ra.y, ra.width, walk_h));
+    if side && ra.height >= walk_h + 6 {
+        coherence_table(vin, &mut out, Rect::new(ra.x, ra.y + walk_h, ra.width, ra.height - walk_h));
+    }
     growth_plot(vin, &mut out, rb);
     out
+}
+
+fn coherence_table(vin: &ViewIn, out: &mut ViewOut, rect: Rect) {
+    let cp = vin.cp;
+    let st = vin.st;
+    let mut y = rect.y as i32 + 1;
+    put(
+        &mut out.surf,
+        rect.x as i32 + 1,
+        y,
+        "COHERENCE  |ΣZ| / Σ|Z|",
+        style_b(INK, true, false),
+    );
+    y += 1;
+    let ids = shown_ids(vin);
+    for id in ids {
+        if y >= (rect.y + rect.height) as i32 {
+            break;
+        }
+        let col = id_color(id, id == st.selected, st.focus);
+        let p = cp.signal(id);
+        let txt = match coherence(&p.walk) {
+            Some((c, base)) => format!(
+                "{} {:<5} {} {:.2}  noise {:.2} ({:.0}×)",
+                id.glyph(),
+                id.name(),
+                meter(c, 10, vin.mode),
+                c,
+                base,
+                c / base.max(1e-9)
+            ),
+            None => format!("{} {:<5} no walk yet", id.glyph(), id.name()),
+        };
+        put_max(&mut out.surf, rect.x as i32 + 1, y, &txt, style_b(col, id == st.selected, false), rect.width.saturating_sub(2));
+        y += 1;
+    }
+    for l in cp.interference().into_iter().take(2) {
+        if y >= (rect.y + rect.height) as i32 {
+            break;
+        }
+        if let Some((c, base)) = coherence(&l.walk) {
+            let (col, g) = line_style(l.class);
+            put_max(
+                &mut out.surf,
+                rect.x as i32 + 1,
+                y,
+                &format!("{g} {:>5.2}Hz {} {:.2}  noise {:.2}", l.f, meter(c, 10, vin.mode), c, base),
+                style(col),
+                rect.width.saturating_sub(2),
+            );
+            y += 1;
+        }
+    }
 }
 
 fn shown_ids(vin: &ViewIn) -> Vec<SigId> {
@@ -73,23 +152,44 @@ fn walk_plot(vin: &ViewIn, out: &mut ViewOut, rect: Rect) {
         AxisSpec::new(AxisScale::Linear, "Re Σ").unit("σ"),
         AxisSpec::new(AxisScale::Linear, "Im Σ").unit("σ"),
     );
-    let mut rmax: f64 = 6.0;
+    // Scale the axes to the *second-largest* identity so one bright source cannot flatten
+    // the others into the origin: the brightest runs off the plot (the library clips it
+    // and counts the clip); its label sits where it leaves.
+    let ids = shown_ids(vin);
+    let mut finals: Vec<f64> = ids
+        .iter()
+        .filter_map(|id| cp.signal(*id).walk.last().map(|p| p.0.hypot(p.1)))
+        .collect();
+    finals.sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
+    let rmax: f64 = match (ids.len(), finals.as_slice()) {
+        (n, [_, second, ..]) if n > 1 => (1.25 * second).max(6.0),
+        (_, [only]) => (1.15 * only).max(6.0),
+        _ => 6.0,
+    };
+    let aspect = {
+        let probe_spec = PlotSpec::new(
+            AxisSpec::new(AxisScale::Linear, "Re Σ").unit("σ"),
+            AxisSpec::new(AxisScale::Linear, "Im Σ").unit("σ"),
+        );
+        let pv = PlotView::new(range(-rmax, rmax), range(-rmax, rmax));
+        plot::compile(&probe_spec, &pv, Rect::new(0, 0, area.width, area.height))
+            .map(|(l, _)| l.px_w as f64 / (l.px_h.max(1)) as f64)
+            .unwrap_or(2.0)
+            .clamp(0.5, 6.0)
+    };
+    let (bx, by) = (rmax * aspect, rmax);
+    let inside = |p: &(f64, f64)| p.0.abs() <= bx && p.1.abs() <= by;
     let mut ends: Vec<((f64, f64), String, Rgb)> = Vec::new();
-    for id in shown_ids(vin) {
+    for id in ids {
         let p = cp.signal(id);
         if p.walk.len() < 2 {
             continue;
         }
         let col = id_color(id, id == st.selected, st.focus);
-        for &(x, y) in &p.walk {
-            rmax = rmax.max(x.abs()).max(y.abs());
-        }
         spec = spec.series(Series::line(p.walk.clone()).color(col).label(id.name()));
-        ends.push((
-            *p.walk.last().unwrap(),
-            format!("{}{}", id.glyph(), id.letter()),
-            col,
-        ));
+        // label at the last point still on the plot
+        let at = p.walk.iter().rev().find(|q| inside(q)).copied().unwrap_or((0.0, 0.0));
+        ends.push((at, format!("{}{}", id.glyph(), id.letter()), col));
     }
     if st.focus == Focus::Overview {
         for l in &cp.lines {
@@ -97,16 +197,10 @@ fn walk_plot(vin: &ViewIn, out: &mut ViewOut, rect: Rect) {
             if l.walk.len() < 2 {
                 continue;
             }
-            // Lines may be far brighter than any source (a terrestrial transmitter is);
-            // they are allowed to run off the plot — the library counts the clipping —
-            // rather than flatten every identity into a dot at the origin.
-            if l.class != LineClass::Terrestrial {
-                for &(x, y) in &l.walk {
-                    rmax = rmax.max(x.abs()).max(y.abs());
-                }
-            }
+            // Lines may be far brighter than any source; they run off the plot too.
             spec = spec.series(Series::line(l.walk.clone()).color(scale(col, 0.8)).label(&l.label));
-            ends.push((*l.walk.last().unwrap(), format!("{g}{:.1}", l.f), col));
+            let at = l.walk.iter().rev().find(|q| inside(q)).copied().unwrap_or((0.0, 0.0));
+            ends.push((at, format!("{g}{:.1}", l.f), col));
         }
     }
     for (xy, label, col) in ends {
@@ -120,14 +214,7 @@ fn walk_plot(vin: &ViewIn, out: &mut ViewOut, rect: Rect) {
     spec = spec
         .annotate(Annotation::HLine { y: 0.0, color: FAINT })
         .annotate(Annotation::VLine { x: 0.0, color: FAINT });
-    let rr = rmax * 1.12;
-    // equal data-scale on both axes: ask the compiler how many pixels the plot got
-    let probe_view = PlotView::new(range(-rr, rr), range(-rr, rr));
-    let aspect = plot::compile(&spec, &probe_view, Rect::new(0, 0, area.width, area.height))
-        .map(|(l, _)| l.px_w as f64 / (l.px_h.max(1)) as f64)
-        .unwrap_or(2.0)
-        .clamp(0.5, 6.0);
-    let view = PlotView::new(range(-rr * aspect, rr * aspect), range(-rr, rr));
+    let view = PlotView::new(range(-bx, bx), range(-by, by));
     if let Some(pr) = draw_plot(&mut out.surf, area, "relation.walk", spec, view, vin.mode) {
         out.probes.push(Probe::Plot(pr));
     }

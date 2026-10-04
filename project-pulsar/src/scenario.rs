@@ -219,8 +219,10 @@ impl Scenario {
                 amp: 0.45,
                 lm: pos[2],
             };
-            // Terrestrial line: station-dependent amplitude, delays that no far-field
-            // direction can produce (|l| > 1 on the long baseline).
+            // Terrestrial line: amplitude differs from station to station (a far-field
+            // source is equally bright everywhere). Its 66 ms delay also exceeds the
+            // 56 ms baseline's unambiguous range at 13 Hz (period 75 ms), so the phase
+            // test alone cannot reject it — the amplitude test must.
             let rfi = RfiTruth {
                 f: f_rfi,
                 phi0: phase(&mut rng),
@@ -340,6 +342,19 @@ impl Receiver {
         scn.rfi.amp = [0.0; 3];
         scn.ghost.amp = 0.0;
         Receiver::from_scenario(scn)
+    }
+
+    /// A copy whose samples at index `>= n` are replaced by zeros. Used by the tests to
+    /// *prove causality*: analysis checkpoint `k` must be identical whatever the
+    /// not-yet-received data turn out to be.
+    pub fn zero_after(&self, n: usize) -> Receiver {
+        let mut r = self.clone();
+        for xs in r.x.iter_mut() {
+            for v in xs.iter_mut().skip(n) {
+                *v = 0.0;
+            }
+        }
+        r
     }
 
     /// Station `s` samples (all `N_TOTAL`; callers must only read the prefix that

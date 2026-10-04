@@ -361,7 +361,11 @@ pub struct Engine {
     pub rx: Receiver,
     bb: Baseband,
     pub dynspec: DynSpec,
+    /// Computed checkpoints. Held only for instants (push / clone), never across DSP,
+    /// so a reader of an already-computed checkpoint never waits for a computation.
     cps: Mutex<Vec<Arc<Checkpoint>>>,
+    /// Serialises *computation*: one thread extends the chain at a time.
+    compute: Mutex<()>,
 }
 
 static SHARED: OnceLock<Mutex<HashMap<u64, Arc<Engine>>>> = OnceLock::new();
@@ -379,6 +383,7 @@ impl Engine {
             bb,
             dynspec,
             cps: Mutex::new(vec![Arc::new(Checkpoint::empty())]),
+            compute: Mutex::new(()),
         }
     }
 
@@ -411,13 +416,29 @@ impl Engine {
     /// `k` is clamped to `N_CP`.
     pub fn checkpoint(&self, k: usize) -> Arc<Checkpoint> {
         let k = k.min(N_CP);
-        let mut g = self.cps.lock().unwrap_or_else(|e| e.into_inner());
-        while g.len() <= k {
-            let next = g.len();
-            let cp = analyze(self, g.last().map(|c| c.as_ref()), next);
-            g.push(Arc::new(cp));
+        fn lock(m: &Mutex<Vec<Arc<Checkpoint>>>) -> std::sync::MutexGuard<'_, Vec<Arc<Checkpoint>>> {
+            m.lock().unwrap_or_else(|e| e.into_inner())
         }
-        g[k].clone()
+        // fast path: already computed — never waits on a running computation
+        {
+            let g = lock(&self.cps);
+            if g.len() > k {
+                return g[k].clone();
+            }
+        }
+        let _one_at_a_time = self.compute.lock().unwrap_or_else(|e| e.into_inner());
+        loop {
+            let prev = {
+                let g = lock(&self.cps);
+                if g.len() > k {
+                    return g[k].clone();
+                }
+                g.last().cloned()
+            };
+            let next = prev.as_ref().map(|c| c.k + 1).unwrap_or(0);
+            let cp = analyze(self, prev.as_deref(), next);
+            lock(&self.cps).push(Arc::new(cp));
+        }
     }
 
     /// Checkpoint available at sample index `n`.
@@ -705,7 +726,7 @@ fn build_signal(
         .collect();
 
     // delays and sky
-    p.delays = coherent::delays(&last, n, h.nd, f_eff, &sig2);
+    p.delays = coherent::delays(&last, n, h.nd, f_eff, sig2);
     p.sky = p.delays.as_ref().map(coherent::sky_from_delays);
 
     // fold
@@ -745,19 +766,14 @@ fn build_signal(
         _ => false,
     };
     let _ = h.f_assoc;
-    match p.stage {
-        Stage::Unseen => {
-            if lf <= CAND_LF {
-                p.stage = Stage::Candidate;
-                p.cand_cp = Some(k);
-                events.push(Event {
-                    cp: k,
-                    kind: EventKind::Candidate,
-                    who: Who::Sig(id),
-                });
-            }
-        }
-        _ => {}
+    if p.stage == Stage::Unseen && lf <= CAND_LF {
+        p.stage = Stage::Candidate;
+        p.cand_cp = Some(k);
+        events.push(Event {
+            cp: k,
+            kind: EventKind::Candidate,
+            who: Who::Sig(id),
+        });
     }
     if p.stage == Stage::Candidate {
         // a candidate whose frequency jumps far outside its own error bar has been
@@ -841,7 +857,7 @@ fn analyze_line(eng: &Engine, spec: &Spectrum, n: usize, f: f64, w_peak: f64) ->
     }
     let trials = (spec.nbins() as f64 / 4.0).max(1.0);
     let lf = log10_fap(3, s_last, trials);
-    let d = coherent::delays(&last, n, 1, f, &sig2);
+    let d = coherent::delays(&last, n, 1, f, sig2);
     let (amp_z, amp_ratio, sky) = match &d {
         Some(d) => (d.amp_z, d.amp_ratio, Some(coherent::sky_from_delays(d))),
         None => (0.0, [1.0; 2], None),

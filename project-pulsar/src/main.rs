@@ -18,6 +18,7 @@ USAGE
 
 MODES (non-interactive modes never touch the terminal and always terminate)
   --demo                    play the built-in 12-step cue sheet to stdout
+  --demo --live             ... or on the terminal itself (q quits); --hold-ms N per step
   --dump                    print one frame (use --at/--view/--script to set the state)
   --capture-dir DIR         write the full deterministic capture set into DIR
   --replay FILE             re-run a recorded session log; print the final frame
@@ -37,7 +38,8 @@ REALISATION
 
 INTERACTIVE
   --record FILE             write the exact command log of the session on exit
-  --play                    start playing";
+  --play                    start playing (a bare launch already plays at x16)
+  --paused                  start paused at t = 0";
 
 #[derive(Default)]
 struct Args {
@@ -55,6 +57,9 @@ struct Args {
     replay: Option<PathBuf>,
     record: Option<PathBuf>,
     play: bool,
+    paused: bool,
+    live: bool,
+    hold_ms: u64,
     help: bool,
 }
 
@@ -100,6 +105,9 @@ fn parse_args() -> Result<Args, String> {
             "--replay" => a.replay = Some(PathBuf::from(value("--replay")?)),
             "--record" => a.record = Some(PathBuf::from(value("--record")?)),
             "--play" => a.play = true,
+            "--paused" => a.paused = true,
+            "--live" => a.live = true,
+            "--hold-ms" => a.hold_ms = value("--hold-ms")?.parse().map_err(|e| format!("--hold-ms: {e}"))?,
             "--help" | "-h" => a.help = true,
             other => return Err(format!("unknown argument `{other}` (try --help)")),
         }
@@ -124,8 +132,19 @@ fn start_commands(a: &Args) -> Result<Vec<Cmd>, String> {
     Ok(v)
 }
 
+/// A bare interactive launch is a *film*: it starts playing at x16 so something happens
+/// at once. Any explicit state (--at/--view/--script) or --paused opts out.
+fn default_playback(a: &Args) -> Vec<Cmd> {
+    if a.at.is_none() && a.view.is_none() && a.script.is_none() && !a.paused && !a.play {
+        vec![Cmd::TogglePlay, Cmd::Speed(1)]
+    } else {
+        Vec::new()
+    }
+}
+
 fn env_of(a: &Args) -> Env {
     let (w, h) = a.size.unwrap_or((120, 40));
+    let (w, h) = (w.max(1), h.max(1)); // a 0-sized terminal is not a thing; clamp, never crash
     Env {
         width: w,
         height: h,
@@ -147,6 +166,14 @@ fn run(a: Args) -> Result<(), String> {
     if let Some(dir) = &a.capture_dir {
         let files = capture::write_capture_set(dir, seed).map_err(err)?;
         println!("wrote {} files under {}", files.len(), dir.display());
+        return Ok(());
+    }
+    if a.demo && a.live {
+        if !io::stdout().is_terminal() {
+            return Err("--live needs a terminal; drop --live for headless output".into());
+        }
+        let hold = std::time::Duration::from_millis(if a.hold_ms == 0 { 2500 } else { a.hold_ms });
+        app::run_demo_live(seed, hold, a.mono).map_err(err)?;
         return Ok(());
     }
     if a.demo {
@@ -183,6 +210,8 @@ fn run(a: Args) -> Result<(), String> {
     if !io::stdout().is_terminal() {
         return Err("stdout is not a terminal: use --dump, --demo or --capture-dir for headless output".into());
     }
+    let mut start = start;
+    start.extend(default_playback(&a));
     let sess = app::run_interactive(RunOpts {
         seed,
         start,

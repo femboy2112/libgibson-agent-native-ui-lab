@@ -218,7 +218,13 @@ pub fn draw_identity(hero: &mut Surface, lay: &Layout, cp: &Checkpoint, st: &Sta
             } else {
                 String::new()
             };
-            format!("{}{}{}", fmt_hz(p.f_now), unit, if compact { String::new() } else { sig })
+            let base = format!("{}{}", fmt_hz(p.f_now), unit);
+            // the ± only when it fits whole: a clipped error bar is a lie
+            if !compact && base.chars().count() + sig.chars().count() <= (rw - 3) as usize {
+                format!("{base}{sig}")
+            } else {
+                base
+            }
         } else {
             "no estimate".to_string()
         };
