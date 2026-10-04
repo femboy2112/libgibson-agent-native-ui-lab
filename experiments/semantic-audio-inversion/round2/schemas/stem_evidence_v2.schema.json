@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sai:stem_evidence:v2",
+  "title": "SAI additive stem evidence v2",
+  "description": "Local derived observations plus compiler projection. model.py also rejects nonfinite values, overlaps, reversed spans, out-of-duration events and nonmonotonic times. Statuses are evidence ceilings, never established truth or guaranteed pins. V1 is unchanged.",
+  "type": "object",
+  "required": [
+    "schema",
+    "source_id",
+    "source_sha256",
+    "blueprint_sha256",
+    "duration_sec",
+    "duration_beats",
+    "provenance",
+    "notes",
+    "harmony",
+    "sections",
+    "drums",
+    "evidence_status"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sai.stem_evidence/v2"
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "blueprint_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "duration_sec": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "duration_beats": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "tempo_bpm": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 0
+    },
+    "meter_beats": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "key_root": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 11
+    },
+    "beat_origin_offset": {
+      "type": "number"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "evidence_status": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "unknown",
+          "theme",
+          "metric",
+          "ordered",
+          "quality_family",
+          "pocket_skeleton",
+          "topology",
+          "observed"
+        ]
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "production": {
+      "type": "object"
+    },
+    "separator_disagreement": {
+      "type": "object"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/note"
+      }
+    },
+    "harmony": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/harmony"
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/span"
+      }
+    },
+    "drums": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/drum"
+      }
+    },
+    "lanes": {
+      "type": "array"
+    },
+    "quarantine": {
+      "type": "array"
+    },
+    "motif_families": {
+      "type": "array"
+    },
+    "tempo_rivals": {
+      "type": "array"
+    },
+    "key_rivals": {
+      "type": "array"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Derived artifact/hash, analyzer/model/stem and dependence family; unknowns remain null."
+    },
+    "note": {
+      "type": "object",
+      "required": [
+        "role",
+        "onset_sec",
+        "offset_sec",
+        "onset_beat",
+        "duration_beats",
+        "midi",
+        "confidence",
+        "provenance"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "lead",
+            "bass",
+            "support",
+            "riff",
+            "unknown"
+          ]
+        },
+        "onset_sec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "offset_sec": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "onset_beat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "duration_beats": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "midi": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 127
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "span": {
+      "type": "object",
+      "required": [
+        "start_beat",
+        "end_beat",
+        "confidence",
+        "provenance"
+      ],
+      "properties": {
+        "start_beat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_beat": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "harmony": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/span"
+        },
+        {
+          "type": "object",
+          "required": [
+            "root",
+            "quality"
+          ],
+          "properties": {
+            "root": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 11
+            },
+            "quality": {
+              "type": "string"
+            },
+            "rivals": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drum": {
+      "type": "object",
+      "required": [
+        "onset_sec",
+        "onset_beat",
+        "family",
+        "confidence",
+        "provenance"
+      ],
+      "properties": {
+        "onset_sec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "onset_beat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "family": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "is_fill": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "fill_status": {
+          "enum": [
+            "unknown",
+            "fill",
+            "core"
+          ]
+        },
+        "pocket_member": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
