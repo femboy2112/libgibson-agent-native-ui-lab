@@ -3,3 +3,8 @@
 *.log
 __pycache__/
 *.pyc
+
+# Read-only candidate reference — reconstructible from libgibson@<pinned rev>
+# plus the treatment-v2 authoring overlay; not committed (large, derivable).
+/libgibson-reference/
+/project-pulsar/target/

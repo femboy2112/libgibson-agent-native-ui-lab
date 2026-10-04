@@ -1,0 +1,40 @@
+ PULSAR ┃ FOLD · alpha z0 ┃ t  480.0s (analysis 480s) ┃ ❚❚ ×4 ┃ seed 62           ◆ALPHA DONE  ●BETA DONE  ▲GAMMA LOCK
+▶◆ ALPHA            RESOLVED  ◆ ALPHA  fold @ P = 478.64 ms · profile S/N 12.4 · RESOLVED · r=0.83 2P halves match: peri
+   2.0892 Hz ±2.0e-5              amplitude
+   ███████████████████  100%     │
+   az 308° el 46° ±0.08          │                   ⢠⡀                                        ⢠⡀
+                              0.4┤                  ⢀⡰⢇                                        ⡰⢱⡄
+ ● BETA             RESOLVED     │                  ⢠⠃⢸⡆                                      ⢠⡇⠈⡆
+   5.3602 Hz ḟ-6.7e-4            │                  ⢸⠁⠸⡇                                     ⢀⢰⠁ ⢸⡆
+   ███████████████████  100%     │                 ⡰⡇  ⢸⡆                                    ⢀⢸  ⠸⡇
+   az 165° el 53° ±0.08       0.2┤                 ⡜⠇  ⠸⢇⡀                                   ⢠⠃   ⢱⡀
+                                 │                ⢠⡇    ⠘⡄                                   ⡜⠁   ⠘⡄
+ ▲ GAMMA              LOCKED     │                ⢰⠁    ⠈⠱⡀          ⢀                      ⢀⠇    ⠈⠱⡀⡄
+   0.5315 Hz ±4.0e-5             │  ⢀⡄ ⡆ ⢠       ⣠⡸⠁     ⠘⠱⡀         ⢠⡀  ⡀  ⡄  ⣠ ⣆ ⢠       ⢠⡸⠃     ⠘⠈⢆⡀         ⣄  ⢀  ⡄
+   ███████████████████  100%  0.0┤⢀⣠⡠⢆⢀⡇⠉⢰⡀⠉⣄⢠⡀⡄⢀⠴⠁⠉⠉⠉⠉⠉⠉⠉⠘⠱⡀⠔⢄⠔⣀⢆⡀⢀⢄⢰⢄⢆⠔⣄⢄⢀⡆⣀⢀⢴⢀⢧⡀⢰⡀⠉⢠⣀⡀⢄⢠⡰⠁⠉⠉⠉⠉⠉⠉⠉⠉⠘⡄⠔⠢⡰⣀⠢⣀⠉⣄⢀⠦⡀⠔⡠⡀⢀⠆
+   no far-field fix (σ 0.51)     │⠠⠴⠁⠸⡸⢸⠴⡇⢣⢀⠦⡰⠉⢆⡎⠚         ⠘⠑⠊⠢⠊⠤⠣⢄⡠⢢⡎⠢⠣⠊⠈⠢⡜⠸⠤⠃⠈⡾⠘⡄⡜⢣⠤⡰⢤⠋⢢⢰⠁         ⠈⠑⠊⠑⠜⠤⠑⠤⣀⢦⡸⠓⠱⠊⠔⠑⡜⠃
+                                 │⠐⠚ ⠘⠃⠈⠚⠇⠱⠋⠓⠜ ⠘⠇           ⠈⠁⠑⠁ ⠑⠢⠔⠱⠁ ⠑⠁ ⠑⠎⠘⠒⠁ ⠃⠈⠑⠃⠱⠑⠁⠲⠁⠱⠃           ⠈⠁⠈⠊ ⠈⠒⠤⠳⠁ ⠘⠁ ⠈⠎
+ INTERFERENCE                    │    ⠁ ⠉  ⠁   ⠈                                ⠁ ⠈⠁ ⠈    ⠁
+ ~  4.51 Hz transient        -0.2┤
+ ✕ 13.30 Hz RFI                  └┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬
+                                 0.0                  0.5                  1.0                  1.5                  2.0
+ EVENTS                                                              phase (cycles)
+  32s ▲ GAMMA candidate       WATERFALL  ◆ ALPHA · 16 s sub-integrations, time flows down · stripe straight = locked
+  40s ● BETA candidate       0s                      ▒▒▒   · ░░     ░                          ▒▒▒   · ░░     ░
+  48s ◆ ALPHA candidate                            · ▓▓░ ░░    · ░    ···   ·                · ▓▓░ ░░    · ░    ···   ·
+  80s ● BETA lock acquired         ···▒░        ··· ░██ ▓░░░      ··░ ····   ···▒░        ··· ░██ ▓░░░      ··░ ····
+  80s ● BETA localized                           ·· ░▓▓░▒··              ·                 ·· ░▓▓░▒··              ·
+  96s ◆ ALPHA candidate revi       ·       ·   ·   ░▒▓▓▒▓        ░    ▒▒ ·   ·       ·   ·   ░▒▓▓▒▓        ░    ▒▒ ·
+ 104s ✕ 13.3Hz flagged terre           ░  · ·       ·▒▒░░░░ ·                    ░  · ·       ·▒▒░░░░ ·
+ 128s ◆ ALPHA lock acquired               ░         ·▓▓░░                 ··        ░         ·▓▓░░                 ··
+ 128s ◆ ALPHA localized                             ▒░░▒ ··                                   ▒░░▒ ··
+ 176s ● BETA resolved                                ▓▓▓·                                      ▓▓▓·
+ 192s ▲ GAMMA lock acquired            ·  ··       ·▒▒▒▒     ··                  ·  ··       ·▒▒▒▒     ··
+ 248s ◆ ALPHA resolved                      ·    ░░ ▒░░█··· ·                         ·    ░░ ▒░░█··· ·
+ 256s ~ 4.5Hz flagged transi               ·       ·▓░░██  ░ ░░ ▒        ·           ·       ·▓░░██  ░ ░░ ▒        ·
+                                    ·· ▒▒▒   ░░░·  ░·███▒░░           ·· ▒░░░ ·· ▒▒▒   ░░░·  ░·███▒░░           ·· ▒░░░
+                                                       ▒                                         ▒
+                                      ░          ··  ▓▓░···             ·       ░          ··  ▓▓░···             ·
+                             480            ░      ░·███░▒▒··  ▒     ░   ·  ░         ░      ░·███░▒▒··  ▒     ░   ·  ░
+ 0s   ━━━━━━━·━·━·━━━━━━●━━·━✕━━━━━◆━━━━━━━━━●━━━▲━━━━━━━━━━━◆━~━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃ 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

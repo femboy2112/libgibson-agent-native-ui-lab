@@ -1,0 +1,35 @@
+[?2026h[H[?7l [1mPULSAR[0m ┃ [1mSPECTRUM[0m · overview ┃ t  300.0s (analysis 296s) ┃ ❚❚ ×4 ┃ seed 62       [1m◆ALPHA DONE  [0m●BETA DONE  ▲GAMMA LOCK  
+[1m▶◆[0m [1mALPHA[0m            [1mRESOLVED[0m  [1mINTEGRATED POWER SPECTRUM[0m  whitened, 3 stations · through 296 s
+   2.0893 Hz ±4.4e-5              power (× floor)
+   ███████████████████  100% 1000┤
+   az 306° el 43° ±0.11          │
+                                 │
+[1m ●[0m BETA             RESOLVED     │
+   5.4847 Hz ḟ-6.7e-4         100┤                                                                      ⡀✕13.3
+   [2m███████████████████[0m  100%     │                                                                      ⡇
+   az 169° el 47° ±0.09          │                                                                      ⡇
+                                 │   ⡀▲C     ⠄◆A        ⠄2⠁~4.5                                         ⡇
+[1m ▲[0m GAMMA              LOCKED   10┤   ⡇       ⡇          ⡇ ⡇        ⠄3                                   ⡇
+   0.5315 Hz ±8.9e-5             │⠉⠉⠉⡇⠉⠈2⠉⠉⠉⠉⡇⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⡇⠉⡇⠉⠉⠉⠉⢸⠉⠉⠉⡇⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⡇⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉
+   [2m███████████████████[0m  100%     │⣷  ⡇⢀⢸  ⢀⢰⣄⡆  ⢀⡀ ⢀⢰⣄⡆ ⡇ ⡇ ⡄⣦ ⢸ ⡀⡀⡇⢀⣄⡆⣤⡆⡄⡆⣶⡀⢰⡇⢸⣀   ⡄⣰⣀⡄ ⣀⡄ ⡄  ⢀⢠ ⡄⣤⡀ ⢀⡀⡇⡇⣄⢰ ⡆⡀ ⡀⢠⢸⢠⡄⣇
+   no far-field fix (σ 0.74)     │⣿⣸⣤⡇⣿⢸⡇⣾⠈3⣿⣷⣷⣾⡇⣿⢰⡆⢸⢀⡇⣿⢰⢀⡇⣶⣿⣿⢸⣿⡆⡇⣷⡇⣿⣿⣇⣿⣿⣷⣿⣿⣿⣾⣿⣸⣿⣷⣧⣦⡇⣿⣿⣧⣷⡀⣿⣶⡇⣶⡆⣿⢸⣼⡇⣿⡀⣶⣿⣷⣿⣧⣿⣿⢰⣿⣿⡄⣷⣿⢸⣸⡇⣿⡇
+                                1┤⢻⣿⢠⡇⣿⢸⡇⣿⢸⣿⣿⣿⣿⣿⡇⣿⢸⡇⣸⢸⡇⣿⢸⢸⡇⣿⣿⣿⢸⠄●B⣿⡇⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⣿⣿⣿⣿⣿⣿⣿⣇⣿⡇⣿⣸⣿⡇⣿⣧⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣷⣿⣿⣼⣿⣿⣿⡇
+ [1mINTERFERENCE[0m                    │⢸⡟⢸⡇⣿⢸⣷⣿⢸⢿⣿⣿⣿⣿⡇⣿⢸⡇⣿⢸⠃⣿⢸⠈⡇⣿⣿⣿⣿⡿⡇⣿⣿⣷⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⡏⣿⣿⣿⣿⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⡏⣿⣿⢹⣿⣿⢸⢸⣿⣿⣿⣿⡏⣿⣿⢸⣿⢸
+ ~  4.51 Hz transient            │⢸⡇⢸⡇⣿⢸⡇⣿⢸⢸⣿⣿⣿⣿⡇⣿⣿⡇⣿⠸⣿⣿⢸⣿⠃⣿⣿⣿⣿⡇⡇⣿⣿⡟⢸⢸⣿⣿⣿⣿⣿⣿⣿⢻⡇⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⡿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⡇⣿⣿⢸⢸⣿⢸⢸⣿⣿⣿⡟⡇⣿⣿⢸⣿⢸
+ ✕ 13.30 Hz RFI                  └┬─────────────────────────┬──────────────────────────┬─────────────────────────┬─────
+                                  0                         5                         10                        15
+ [1mEVENTS[0m                                                              frequency (Hz)
+  32s ▲ GAMMA candidate       [1mDYNAMIC SPECTRUM[0m  32 s segments, time flows down · ● model path of BETA
+  40s ● BETA candidate            ░                            [1m●[0m·                                      ░░
+  48s ◆ ALPHA candidate           ▒                            [1m●[0m·                                      ░░·
+  80s ● BETA lock acquired        ░                            [1m●[0m    ··                                 ░░
+  80s ● BETA localized            ·         ··           ·     [1m●[0m                                       ░░ ··  ·
+  96s ◆ ALPHA candidate revi      ▒                      ░     [1m●[0m           ·                           ░░
+ 104s ✕ 13.3Hz flagged terre      ▒                      ·     [1m●[0m                                       ░░
+ 128s ◆ ALPHA lock acquired       ·                            [1m●[0m         ··                       ·    ▒▒
+ 128s ◆ ALPHA localized           ·                            [1m●[0m                                       ░░
+ 176s ● BETA resolved             ▒                            [1m●[0m                                       ░░
+ 192s ▲ GAMMA lock acquired       ·                            [1m●[0m                                       ░░
+ 248s ◆ ALPHA resolved
+ 256s ~ 4.5Hz flagged transi[5B 0s   ━━━━━━━[1m·[0m━[1m·[0m━[1m·[0m━━━━━━[1m●[0m━━[1m·[0m━[1m✕[0m━━━━━[1m◆[0m━━━━━━━━━[1m●[0m━━━[1m▲[0m━━━━━━━━━━━[1m◆[0m━[1m~[0m━━━━━━━━━[1m┃[0m──────────────────────────────────────── 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit[?7h[?25l[?2026l

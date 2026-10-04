@@ -1,0 +1,24 @@
+ PULSAR ┃ SKY · overview ┃ t    8.0s (analysis 8s) ┃ ❚❚ ×4 ┃ seed 62
+▶◆ ALPHA        SEARCH                             N
+   1.5536 Hz ±7.5e-3                         ⢀⢀⢀⢀⠄⠂⠐⠠⠲⠠⡀⡀
+   ░░░░░░░░░░░░░   -0%                    ⢀⠠⠠⠐⠠⡈⠄⢀⢀⠰⠠⠄⠒⡀⠐⡠⢀⡀
+   position unknown                      ⡰⠛⠁⠁⣀⡀⠠⠈⠐⢀⡀⠂⠄  ⡆⠁⠄⠐⢀⡀
+                                       ⢀⡜⢁⠠⡀⢀⠨ ⠁⠂⢁⢀⣂⠐⠐⡀ ⠡⠔⠄⡀⠄⠐⣄
+ ● BETA         SEARCH                 ⡜⠐⠄⠁⣠⡀⠐⠂⢏⡀⠄⠄⠠⠉ ⠁⠷⡅⢀⠂⠠⡈⢀⠠⡄
+   no estimate                        ⢰⠐⡐⠒⠂⠔⡐⠐ ⠠⠑⠨ ⡄⢀⠂⠄⢀⣀⠁⠄⠐⠘⢂⠠⢳
+   ░░░░░░░░░░░░░    0%              W ⢀⠄⡧⠈⠠⠠⡠⠄⠐⢠⠉⡀⠄+⠠⡀⠘⡂⢀⡧⠠⡀⡁⡀⡀⢼ E
+   position unknown                   ⢸⠄⡐⣈⠂⠁⢀⠠ ⠁⡀⠰⡈⠠⡈⢀⢀⠠⡀⢀ ⡀⠂⢐⠂⠁
+                                       ⢇⠘⠄⢀⠈⡈⠈⠂⠁⠔⠈ ⡀⠐⡀⠂⣤⠐⢀ ⢀⡀⠐⢠⠇
+ ▲ GAMMA        SEARCH                 ⠈⠈⡀⡄⠂⢀⠈⡀⠁⠂⠐⠁⣀⠄⢂⠔⠁⡀⠁⡀ ⠂⠒⠈
+   0.8031 Hz ±9.0e-3                    ⠈⢣⠊⠂⡀⢀⠐⡐⢂⡀⠈⠤⠠⠠⠄⣀⠠⢀⡀⢍⠠⠋
+   ░░░░░░░░░░░░░   -0%                    ⠙⠠⠉⡒⠐⢔⣀⠂⢀⠈⡀⢀⠐⠤⠈⢉⠒⠚⠁
+   position unknown                         ⠈⠙⠈⠠⢤⠂⠠⡐⠁⠈⠔⠈⠈⠉
+                                                   S
+ INTERFERENCE           ◆ ALPHA  SEARCH
+ none flagged             position unconstrained (prior: all sky)
+                        ● BETA   SEARCH
+ EVENTS                   position unconstrained (prior: all sky)
+                        ▲ GAMMA  SEARCH
+                          position unconstrained (prior: all sky)
+ 0s   ━┃────────────────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  Tab signal  f focus  m compare  i inspect  ? help  q quit

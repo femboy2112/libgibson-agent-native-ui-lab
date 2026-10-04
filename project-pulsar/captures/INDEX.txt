@@ -1,0 +1,269 @@
+# Project Pulsar capture set — seed 62
+# every file is a deterministic function of (seed, script, size, capability)
+
+frames/120x40/stream.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 120x40
+frames/120x40/spectrum.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 120x40
+frames/120x40/spectrum.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/120x40/fold.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 120x40
+frames/120x40/relation.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 120x40
+frames/120x40/sky.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 120x40
+frames/120x40/sky.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/120x40/dossier.txt
+    project-pulsar --seed 62 --dump --at 480 --view dossier --script "select alpha" --size 120x40
+frames/mono-120x40/stream.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 120x40 --mono
+frames/mono-120x40/spectrum.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 120x40 --mono
+frames/mono-120x40/spectrum.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/mono-120x40/fold.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 120x40 --mono
+frames/mono-120x40/relation.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 120x40 --mono
+frames/mono-120x40/sky.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 120x40 --mono
+frames/mono-120x40/sky.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/mono-120x40/dossier.txt
+    project-pulsar --seed 62 --dump --at 480 --view dossier --script "select alpha" --size 120x40 --mono
+frames/80x24/stream.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 80x24
+frames/80x24/spectrum.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 80x24
+frames/80x24/spectrum.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/80x24/fold.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 80x24
+frames/80x24/relation.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 80x24
+frames/80x24/sky.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 80x24
+frames/80x24/sky.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/80x24/dossier.txt
+    project-pulsar --seed 62 --dump --at 480 --view dossier --script "select alpha" --size 80x24
+frames/mono-80x24/stream.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 80x24 --mono
+frames/mono-80x24/spectrum.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 80x24 --mono
+frames/mono-80x24/spectrum.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/mono-80x24/fold.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 80x24 --mono
+frames/mono-80x24/relation.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 80x24 --mono
+frames/mono-80x24/sky.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 80x24 --mono
+frames/mono-80x24/sky.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/mono-80x24/dossier.txt
+    project-pulsar --seed 62 --dump --at 480 --view dossier --script "select alpha" --size 80x24 --mono
+frames/42x15/stream.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 42x15
+frames/42x15/spectrum.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 42x15
+frames/42x15/spectrum.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/42x15/fold.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 42x15
+frames/42x15/relation.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 42x15
+frames/42x15/sky.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 42x15
+frames/42x15/sky.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/42x15/dossier.txt
+    project-pulsar --seed 62 --dump --at 480 --view dossier --script "select alpha" --size 42x15
+frames/mono-42x15/stream.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 42x15 --mono
+frames/mono-42x15/spectrum.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 42x15 --mono
+frames/mono-42x15/spectrum.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/mono-42x15/fold.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 42x15 --mono
+frames/mono-42x15/relation.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 42x15 --mono
+frames/mono-42x15/sky.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 42x15 --mono
+frames/mono-42x15/sky.ansi
+    raw ANSI stream of the same frame (SGR attributes visible)
+frames/mono-42x15/dossier.txt
+    project-pulsar --seed 62 --dump --at 480 --view dossier --script "select alpha" --size 42x15 --mono
+keyframes/sky-120x40/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 120x40
+keyframes/sky-120x40/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view sky --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view spectrum --script "select alpha" --size 120x40
+keyframes/spectrum-120x40/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view spectrum --script "select alpha" --size 120x40
+keyframes/fold-120x40/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view fold --script "select alpha; focus" --size 120x40
+keyframes/fold-120x40/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view fold --script "select alpha; focus" --size 120x40
+keyframes/relation-120x40/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view relation --script "select alpha" --size 120x40
+keyframes/relation-120x40/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view relation --script "select alpha" --size 120x40
+keyframes/stream-120x40/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view stream --script "select alpha" --size 120x40
+keyframes/stream-120x40/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view stream --script "select alpha" --size 120x40
+keyframes/sky-80x24/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 80x24
+keyframes/sky-80x24/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view sky --script "select alpha" --size 80x24
+keyframes/sky-42x15/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 42x15
+keyframes/sky-42x15/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view sky --script "select alpha" --size 42x15
+keyframes/sky-mono-80x24/t008.txt
+    project-pulsar --seed 62 --dump --at 8 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t032.txt
+    project-pulsar --seed 62 --dump --at 32 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t056.txt
+    project-pulsar --seed 62 --dump --at 56 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t080.txt
+    project-pulsar --seed 62 --dump --at 80 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t104.txt
+    project-pulsar --seed 62 --dump --at 104 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t152.txt
+    project-pulsar --seed 62 --dump --at 152 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t200.txt
+    project-pulsar --seed 62 --dump --at 200 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t300.txt
+    project-pulsar --seed 62 --dump --at 300 --view sky --script "select alpha" --size 80x24 --mono
+keyframes/sky-mono-80x24/t480.txt
+    project-pulsar --seed 62 --dump --at 480 --view sky --script "select alpha" --size 80x24 --mono
+compare/sky-120x40.txt
+    pinned t=64 s versus now t=300 s, sky view
+compare/sky-80x24.txt
+    pinned t=64 s versus now t=300 s, sky view
+compare/sky-42x15.txt
+    pinned t=64 s versus now t=300 s, sky view
+compare/spectrum-120x40.txt
+    pinned t=64 s versus now t=300 s, spectrum view
+compare/spectrum-80x24.txt
+    pinned t=64 s versus now t=300 s, spectrum view
+compare/spectrum-42x15.txt
+    pinned t=64 s versus now t=300 s, spectrum view
+compare/fold-120x40.txt
+    pinned t=64 s versus now t=300 s, fold view
+compare/fold-80x24.txt
+    pinned t=64 s versus now t=300 s, fold view
+compare/fold-42x15.txt
+    pinned t=64 s versus now t=300 s, fold view
+glyphs/spectrum-braille.txt
+    spectrum at 80x24, --glyphs=braille
+glyphs/spectrum-halfblock.txt
+    spectrum at 80x24, --glyphs=halfblock
+glyphs/spectrum-block.txt
+    spectrum at 80x24, --glyphs=block
+glyphs/spectrum-ascii.txt
+    spectrum at 80x24, --glyphs=ascii

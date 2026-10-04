@@ -1,0 +1,40 @@
+ PULSAR ┃ RELATION · overview ┃ t   32.0s (analysis 32s) ┃ ❚❚ ×4 ┃ seed 62        ◆ALPHA SRCH  ●BETA SRCH  ▲GAMMA CAND
+▶◆ ALPHA              SEARCH  PHASOR WALK  Σ demodulated chunks: stra GROWTH LAW  S/N vs integration time: a source clim
+   2.0969 Hz ±1.5e-3            Im Σ (σ)                                 coherent S/N
+   █░░░░░░░░░░░░░░░░░░    5%   │                  ⡇                  100┤
+   position unknown            │                  ⡇                     │
+                               │                  ⡇⠁●B                  │
+ ● BETA               SEARCH   │                  ⡇ ⠈⠢⡀                 │
+   5.6649 Hz ḟ-6.2e-4         5┤                  ⡇  ⢀⠇                 │
+   ███░░░░░░░░░░░░░░░░   16%   │                  ⡇  ⢸                  │
+   position unknown            │                  ⡇  ⡸                  │
+                               │                  ⡇⢀⡠⠇                  │
+ ▲ GAMMA           CANDIDATE   │                  ⢸⠁                    │
+   0.5352 Hz ±1.3e-3          0┤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⣄⡠⠔⢄⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤    │
+   █████░░░░░░░░░░░░░░   27%   │                  ⠁  ⠈⠢⢄⡀               │
+   no far-field fix (σ 2.28)   │                  ⡇ ⢀⠇  ⠈▲C             │
+                               │                  ⡇ ⢸                 10┤                                           ⣀⠤⠒
+ INTERFERENCE                  │                  ⡇ ⢸                   │                                       ⣀⠤⠒⠉
+ none flagged                -5┤                  ⡇ ⢸                   │                                   ⣀⠤⠒⠉
+                               │                  ⡇ ⢸                   │                               ⣀⠤⠒⠉
+ EVENTS                        │                  ⡇ ⡸                   │                          ⢀⡠⠔⠊⠉
+  32s ▲ GAMMA candidate        │                  ⡇ ⡇                   │             ⣀⣀⠠▲C    ⢀⡠⠔⠊⠁
+                               │                  ⡇⠠◆A                  │          ⣀⡰⠉⠊⠁   ⢀⡠⠔⠊⠁
+                               └───────┬──────────┬─────────┬───────    │      ⣀⠔⠊⢀⠜  ⣀⣀⠠◆A⠁
+                                      -5          0         5           │   ⢀⡠⠊  ⡠⠃⣀⠤⠒⠉
+                                              Re Σ (σ)                  │⣀⣀⠤⠤⠤⠤⣀⠤⠒⠉⠃
+                                                                        │⠊ ⣀⠄slope ½
+                              COHERENCE  |ΣZ| / Σ|Z|                    │⠒⠉
+                              ◆ ALPHA █████████░ 0.88  noise 0.44 (2    │
+                              ● BETA  ████████░░ 0.84  noise 0.44 (2   1┤
+                              ▲ GAMMA ████████░░ 0.78  noise 0.44 (2    │
+                                                                        │
+                                                                        │
+                                                                        │
+                                                                        │
+                                                                        │
+                                                                        └──┬─────────────────────────┬─────────────────
+                                                                          10                        100
+                                                                                      integration time (s)
+ 0s   ━━━━━━━┃──────────────────────────────────────────────────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

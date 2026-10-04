@@ -1,0 +1,40 @@
+ PULSAR ┃ STREAM · overview ┃ t    8.0s (analysis 8s) ┃ ❚❚ ×4 ┃ seed 62           ◆ALPHA SRCH  ●BETA SRCH  ▲GAMMA SRCH
+▶◆ ALPHA              SEARCH  RECEIVER VOLTAGE · station 0 · last 24 s   buried signal = coloured ticks / trace
+   1.5536 Hz ±7.5e-3            voltage
+   ░░░░░░░░░░░░░░░░░░░   -0%  4┤
+   position unknown            │
+                              2┤              ⡀⡄⢀     ⡄⡄
+ ● BETA               SEARCH   │⡆ ⢰⣸⣴⢠⢀⢠   ⣆⣴⣤⣧⣿⣾⣠⡀ ⢠⡆⡇⣇⡄ ⣇⢸⡀
+   no estimate                0┤⡿⣆⡜⣿⣿⣸⣼⣾⣇⣶⢸⣿⣿⣿⢿⡟⠻⢻⣷⣿⢸⣿⣷⣿⣧⣼⣿⡟⢧
+   ░░░░░░░░░░░░░░░░░░░    0%   │⠃⡏⡇⢻⢿⡏⣿⡟⣿⣿⣿⠟⠘⠃⠘⠃ ⠸⢸⢿⡏⣿⠻⠋⡟⣿⢻⡇⢸
+   position unknown          -2┤    ⠈⡇⠃⠇⠃⣿⠇       ⠈⢸⠃⠉  ⠁⡇
+                               │         ⠈         ⠈
+ ▲ GAMMA              SEARCH -4┤
+   0.8031 Hz ±9.0e-3           └┬─────────────────┬─────────────────┬─────────────────┬─────────────────┬──────────────
+   ░░░░░░░░░░░░░░░░░░░   -0%    0                 5                10                15                20
+   position unknown                                                    time (s)
+                              ◆ ALPHA  demodulated I/Q per 8 s chunk · SEARCH
+ INTERFERENCE                  │ ⢸
+ none flagged                 2┤ ⢸
+                               │ ⢸
+ EVENTS                       0┤⠉⢸⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉
+                             -2┤ ⢸
+                               │ ⢸
+                              ● BETA  demodulated I/Q per 8 s chunk · SEARCH
+                               │ ⢸
+                              2┤ ⢸
+                               │ ⢸
+                              0┤⠉⢸⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉
+                             -2┤ ⢸
+                               │ ⢸
+                              ▲ GAMMA  demodulated I/Q per 8 s chunk · SEARCH
+                               │ ⢸
+                              2┤ ⢸
+                               │ ⢸
+                              0┤⠉⢸⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉
+                             -2┤ ⢸
+                               │ ⢸
+                               └┬─────────────────┬─────────────────┬─────────────────┬─────────────────┬──────────────
+                                0                100               200               300               400
+ 0s   ━━┃───────────────────────────────────────────────────────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

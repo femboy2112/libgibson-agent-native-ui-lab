@@ -1,0 +1,15 @@
+ PULSAR ┃ RELATION ┃ t 300.0s ┃ ❚❚ ×4
+ ◆A DONE ███ ●B DONE ███ ▲C LOCK ███
+ PHASOR WALK  Σ demodulated chunks: straig
+ 50┤                 ⠈●B
+   │                  ⡀⡀
+  0┤⠉⠉⠉⠉⠉⠉⠉⠉⠉⠄✕13.3⠋⠉⠉⠉⠓⠂~4.5⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉
+-50┤                  ⢸
+ GROWTH LAW  S/N vs integration time: a so
+100┤
+   │                      ⣀⣀⣀⣀⣀⣀⠤⣀⣀⣀⠄✕C⠤⠤
+ 10┤       ⣀⣀⣀⣀⣀⣀⡠⠤⠤⠤⠤⠔⠒⠒⠒⠒⠊⠉⠉⠉⠉⠉⠉⠉⠒⠂~
+  1┤⠒⠒⠈slope ½⠉⠁   ⡠⠒⠉
+   │⡠⠔⠊⠁        ⠠⠒⠉
+ 0s   ━━··━●✕━◆━━●▲━━~━━┃─────────── 480s
+ 1-6 view ←→ time Tab sig m cmp ? q

@@ -1,0 +1,40 @@
+ PULSAR ┃ RELATION · overview ┃ t   80.0s (analysis 80s) ┃ ❚❚ ×4 ┃ seed 62         ◆ALPHA CAND  ●BETA FIX  ▲GAMMA CAND
+▶◆ ALPHA           CANDIDATE  PHASOR WALK  Σ demodulated chunks: stra GROWTH LAW  S/N vs integration time: a source clim
+   1.0446 Hz ±2.5e-4             Im Σ (σ)                                coherent S/N
+   █████░░░░░░░░░░░░░░   26%    │                 ⢸                  100┤
+   az 353° el 42° ±0.77         │                 ⢸                     │
+                                │              ⠈●B⢸                     │
+ ● BETA            LOCALIZED    │              ⡸  ⢸                     │
+   5.6318 Hz ḟ-6.3e-4         10┤             ⢀⠇  ⢸                     │
+   ███████████████░░░░   79%    │             ⠈⢑⠆ ⢸                     │
+   az 163° el 51° ±0.18         │              ⠈⠒⢄⡀⠒⠂◆A                 │
+                                │                ⢠⠘⡄                    │
+ ▲ GAMMA           CANDIDATE    │                ⠉⢀⠵                    │
+   0.5328 Hz ±5.5e-4           0┤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⢀⠤⠢⠤⠒⠑⡄⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤    │
+   ██████████░░░░░░░░░   54%    │             ⡠⠊⠁ ⢸   ⠈⠉⠉⠱⡀             │                                             ⣀
+   no far-field fix (σ 1.72)    │        ⡠⠒⠒⠉⠉    ⢸       ⠱⡀  ⢀⡠⢄       │                                         ⣀⠤⠒⠉
+                                │     ⢀⡠⠊         ⢸        ⠉⠉⠉⠁ ⠈▲C   10┤                                     ⣀⠤⠒⠉
+ INTERFERENCE                   │⣀⠤⠔⠂?13.3        ⢸                     │                         ⠠?      ⣀⠤⠒⠉
+ ? 13.30 Hz unassigned       -10┤                 ⢸                     │                      ⣀⠔⠊    ⣀⠤⠒⠉
+                                │                 ⢸                     │                  ⣀⠤⠔⠊ ⡠⠔⠠▲C⠉
+ EVENTS                         │                 ⢸                     │            ⣀⣀⣀⣀⠔⠊ ⢀⠤⣀⠤⠒⠉
+  32s ▲ GAMMA candidate         │                 ⢸                     │         ⢀⡠⠊ ⣀⣀⠤⠤⣀⠤⠒⠉
+  40s ● BETA candidate          │                 ⢸                     │       ⢀⠔⠁ ⡔⠉⣀⠤⠒⠉⠤⠊
+  48s ◆ ALPHA candidate         └──────┬──────────┬──────────┬──────    │         ⣀⠤⠒⠉⠤⠒⠉⠎
+  80s ● BETA lock acquired            -10         0         10          │     ⣀⠤⠒⠉⢀⡠⠊
+  80s ● BETA localized                        Re Σ (σ)                  │⠒⣀⠤⠂slope ½
+                                                                        │⠉       ⡔⠁
+                              COHERENCE  |ΣZ| / Σ|Z|                    │     ⢀⠔⠊
+                              ◆ ALPHA ██████░░░░ 0.62  noise 0.28 (2    │  ⢀⡠⠊⠁
+                              ● BETA  ████████░░ 0.82  noise 0.28 (3   1┤⡠⠔⠁
+                              ▲ GAMMA ████████░░ 0.78  noise 0.28 (3    │
+                              ? 13.30Hz ██████████ 0.97  noise 0.28     │
+                                                                        │
+                                                                        │
+                                                                        │
+                                                                        │
+                                                                        └──┬─────────────────────────┬─────────────────
+                                                                          10                        100
+                                                                                      integration time (s)
+ 0s   ━━━━━━━·━·━·━━━━━━┃───────────────────────────────────────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  n/N event  g goto  Tab signal  f focus  +/- zoom  m compare  i inspect  Space play  ? help  q quit

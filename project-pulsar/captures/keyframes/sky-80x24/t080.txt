@@ -1,0 +1,24 @@
+ PULSAR ┃ SKY · overview ┃ t   80.0s (analysis 80s) ┃ ❚❚ ×4 ┃ seed 62
+▶◆ ALPHA     CANDIDATE                             N
+   1.0446 Hz ±2.5e-4                         ⢀⣀⠤⢀⡀⢀⠠⠠⠄⠄⢀⣀
+   ███░░░░░░░░░░   26%                    ⢀⠠⡰⢀⠄⠈⠄⠐◆⡋A⠁⠒⠁⠆⠂⠦⡀
+   az 353° el 42° ±0.7                   ⠠⡰⠁⠎⠐ ⢀⡀⢀⡠⢊⡀⠈⠠⡀⠡⢀⠈⡸⠳⡀
+                                       ⢀⠘⠈⠄⠌⠢⠄⠎⠐⣀?⠐⠥⠈⠄⠠⢀⠄⡀⢀⠅⠂⠁⣄
+ ● BETA      LOCALIZED                 ⡜⠈⢀⡀⠄⠂⠂⠁⠁⠁⠁⠂⠂⠄⡀⡀⠠⠠⡠⠊ ⡐⢆⠈⡄
+   5.6318 Hz ḟ-6.3e-4                 ⠠⠐⠈ ⠈⠒⢄⡜⠈⡠⠂⠠⠠⡑⠈⠂⠁⠂⡀⠁⠄ ⠄⢘⢀⠂
+   ██████████░░░   79%              W ⠠⠠⡧⠄⠠⡀⠂⠐⠕⠁⢀⠤⠤+⢀⠐⠉⠈⠈⠠⠁⠈⠂⠠⠠⢼ E
+   az 163° el 51° ±0.1                ⢸⡀⠈⠁⡀  ⠠⢈ ⠁⠂⡀⡂⠐⢀⠄⠄⠈⠔⠡⢀ ⢐⠐⣸
+                                       ⢇⠐⡄⢡ ⠂⠐⠂⠂⠤ ⠠⠠⠆⠡⡈⠒⢄⡀⣀⠡⢀⡜⡂⠇
+ ▲ GAMMA     CANDIDATE                 ⠘⠈⠁⠈⠁⢀⠔⢀⠠⠢⢀⠠⠁⡠⠖⠄⣄⠂⢣⠐ ⢁⢀⠁
+   0.5328 Hz ±5.5e-4                    ⠈⠨⠇⠅⡀  ⢀⠄⠈⡅⠈⣟●⠁B⢀⠎⠈⢍⠐⠂
+   ███████░░░░░░   54%                    ⠙⠚⠄⠘⠠⠄⢂⠃⠁⠈⠓⠚⢉⠤⠊⢉⡤⠚⠁
+   no far-field fix (σ                      ⠈⠁⠒⠤⠤⠤⠈⣀⠒⠊⠁⠐⠚⠉
+                                                   S
+ INTERFERENCE           ◆ ALPHA  CANDIDATE
+ ? 13.30 Hz unassigned    az 353° el 42°  1σ 0.77×0.74
+                        ● BETA   LOCALIZED
+ EVENTS                   az 163° el 51°  1σ 0.18×0.13
+  80s ● BETA lock acqu  ▲ GAMMA  CANDIDATE
+  80s ● BETA localized    unconstrained  1σ 1.72×1.28
+ 0s   ━━━━·━··━━━┃──────────────────────────────────────────────────────── 480s
+ 1-6 view  ←→ time  Tab signal  f focus  m compare  i inspect  ? help  q quit
