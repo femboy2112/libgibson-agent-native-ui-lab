@@ -1,0 +1,15 @@
+[package]
+name = "project-pulsar"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+libgibson = { git = "https://github.com/femboy2112/libgibson", rev = "068807d0932d5e04f271048e8b0003bbaea7d857" }
+
+# The observatory runs a real periodogram + folding pipeline at start-up; keep
+# debug builds (and `cargo test`) fast. Optimization level never changes the
+# deterministic output (Rust floating point has no fast-math).
+[profile.dev]
+opt-level = 2
